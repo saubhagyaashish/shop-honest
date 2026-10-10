@@ -1,6 +1,6 @@
 # Shop Honest: Architecture
 
-> Status: **design, backend not yet built.** The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
+> Status: **Phase 1 built** (backend skeleton: API, event log, resumable SSE, replay mode, running locally). Agents come next. The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
 >
 > Related: [API reference](API.md) · [Decision records](decisions/README.md)
 
@@ -163,8 +163,8 @@ Event ordering rules (enforced by the runner and checked in tests):
 
 ```mermaid
 flowchart LR
-  ts[web/src/shared/contract.ts] -- generate --> schema[shared/contract.schema.json]
-  schema -- generate / check --> py[backend/app/contract/*.py<br/>Pydantic models]
+  ts[web/src/shared/contract.ts] -- npm run schema --> schema[shared/contract.schema.json]
+  schema -- checked by tests --> py[backend/app/contract/models.py<br/>Pydantic models]
   schema -- validate in tests --> tests[backend contract tests:<br/>every emitted event must validate]
 ```
 
@@ -315,7 +315,7 @@ shophonest/
 │   │   ├── stores/              # firestore, gcs, bigquery + in-memory fallbacks
 │   │   ├── legal/               # loads shared/legal.json, builds exposure
 │   │   └── replay/              # recordings/*.json and the replay player
-│   ├── scripts/                 # record.py, seed_bigquery.py, export_schema.py
+│   ├── scripts/                 # record.py, seed_bigquery.py
 │   ├── tests/                   # unit + contract tests
 │   └── evals/                   # answer_key.py, dataset.py
 ├── shared/                      # contract.schema.json (generated), legal.json

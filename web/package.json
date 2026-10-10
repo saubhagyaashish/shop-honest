@@ -10,7 +10,10 @@
     "lint": "oxlint",
     "test": "vitest run",
     "capture": "tsx scripts/capture-screens.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:live": "vite --mode live",
+    "schema": "ts-json-schema-generator --path src/shared/contract.ts --type \"*\" --expose all --tsconfig tsconfig.app.json --out ../shared/contract.schema.json",
+    "recordings": "tsx scripts/export-recordings.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
@@ -39,6 +42,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
     "playwright": "^1.64.0",
+    "ts-json-schema-generator": "^2.9.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",

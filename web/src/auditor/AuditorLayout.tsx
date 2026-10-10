@@ -15,10 +15,16 @@ export function AuditorLayout() {
             </Link>
             <span className="hidden text-sm font-medium text-ink/60 lg:inline">dark-pattern audits under India’s CCPA guidelines</span>
             <div className="ml-auto flex items-center gap-3 print:hidden">
-              {auditSource.mode === 'mock' && (
+              {auditSource.mode === 'mock' ? (
                 <span title="Audits replay real captures of the sample stores. The live agent backend plugs into the same event stream.">
                   <Sticker tone="sun" rotate={2}>
                     <span className="h-2 w-2 animate-blink rounded-full bg-ink" /> demo mode
+                  </Sticker>
+                </span>
+              ) : (
+                <span title="Audits come from the Shop Honest backend API.">
+                  <Sticker tone="lime" rotate={2}>
+                    <span className="h-2 w-2 animate-blink rounded-full bg-ink" /> live API
                   </Sticker>
                 </span>
               )}

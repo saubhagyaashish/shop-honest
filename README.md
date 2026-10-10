@@ -19,7 +19,7 @@ Live at **<https://shop-honest.web.app>**.
 
 ## Architecture
 
-The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Firestore, Cloud Storage, BigQuery) is designed and documented; it is being built next.
+The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Firestore, Cloud Storage, BigQuery) is designed and documented. **Phase 1 is built**: a FastAPI backend with the full API, a resumable event stream and replay mode, running locally. The agents come next.
 
 - [**Architecture**](docs/ARCHITECTURE.md): system context, agents, audit flow, data model, model providers, security, costs, evaluation, roadmap
 - [**API reference**](docs/API.md): endpoints, the event stream, the event catalogue with examples
@@ -28,8 +28,8 @@ The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Fires
 ```
 shophonest/
 ├── web/        React app: dashboard, report, PDF, demo store (built)
-├── backend/    Python FastAPI + ADK agents + Playwright (planned)
-├── shared/     contract.schema.json, legal.json (planned)
+├── backend/    Python FastAPI API + audit runner (Phase 1); ADK agents + Playwright next
+├── shared/     contract.schema.json (generated from web/src/shared/contract.ts)
 └── docs/       architecture, API, decision records
 ```
 
@@ -45,6 +45,22 @@ npm run dev                       # http://localhost:5173
 | Command | What it does |
 |---|---|
 | `VITE_MOCK_BLOCK_AT=checkout npm run dev` | Replays the sample audits as if a sign-in wall stopped the agent at that step (shows the partial-coverage UI) |
+| `npm run dev:live` | Dashboard talking to the local backend (see below) instead of the mock |
+| `npm run schema` | Regenerates `shared/contract.schema.json` after changing `contract.ts` |
+| `npm run recordings` | Re-exports the replay recordings the backend plays (`backend/app/replay/recordings/`) |
 | `npm run capture` | Walks both stores in Chromium and refreshes screenshots and bounding boxes for the mock audits |
 | `npm test` | Unit tests (trust score; mock audits match the answer key) |
 | `npm run typecheck` / `npm run lint` / `npm run build` | Checks and production build |
+
+## Run the backend
+
+Needs [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 for the project).
+
+```sh
+cd backend
+uv sync                                          # install
+uv run pytest                                    # 32 tests: API, stream, URL guard, contract
+uv run uvicorn app.main:app --reload --port 8080
+```
+
+Then, in another terminal, `cd web && npm run dev:live` and open <http://localhost:5173>: the header shows **live API** and audits stream from the backend. Settings are environment variables (or `backend/.env`); see [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).

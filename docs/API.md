@@ -68,6 +68,10 @@ Response `200 OK`
 - **End:** the server closes the stream after the terminal event (`audit.completed` or `audit.failed`). Connecting after the audit has finished replays the whole log and closes.
 - Opening the stream of an audit that is still `queued` is fine: it waits for the first event.
 
+### `POST /api/audits/{auditId}/fast-forward`: skip ahead (replays only)
+
+Plays the rest of a replayed audit without delays; this powers "Skip to report". `202 {"ok": true}`. Returns `409 not_replay` for live audits, which can't be sped up.
+
 ### `GET /api/health`
 
 `200 OK` → `{ "ok": true, "version": "<git sha>" }`. Used by Cloud Run.
@@ -85,9 +89,13 @@ Every non-2xx response has the same shape:
 | 400 | `invalid_url` | Not an http(s) URL, or malformed |
 | 403 | `host_not_allowed` | Host not on `ALLOWED_HOSTS`, or it resolves to a private/metadata address |
 | 404 | `audit_not_found` | Unknown `auditId` |
-| 409 | `no_recording` | `mode: "replay"` requested but no recording exists for this URL |
+| 409 | `no_recording` | No recorded run exists for this URL (Phase 1 serves only recordings) |
+| 409 | `not_replay` | Fast-forward requested for a live audit |
+| 400 | `invalid_request` | The body doesn't match the schema (e.g. an unknown `mode`) |
 | 429 | `rate_limited` | Too many live audits from this requester |
+| 501 | `live_unavailable` | `mode: "live"` requested before the agents are switched on (until Phase 2) |
 | 503 | `at_capacity` | All audit slots are busy; retry shortly |
+| 404 / 405 | `not_found` / `method_not_allowed` | Unknown route or wrong HTTP method |
 
 Failures *during* an audit are not HTTP errors: they arrive on the stream as `audit.failed`.
 
@@ -224,5 +232,6 @@ A full audit lists all five steps (or the reachable ones plus one `blocked` step
 
 ## Client notes (web app)
 
-- `web/src/auditor/source/sseSource.ts` implements this API. Set `VITE_AUDIT_SOURCE=live` to use it.
-- Planned tweak when the backend lands: let `EventSource` reconnect on transient errors (resume makes it safe) and only report `audit.failed` after repeated failures.
+- `web/src/auditor/source/sseSource.ts` implements this API. `npm run dev:live` (or `VITE_AUDIT_SOURCE=live`) uses it; in development Vite proxies `/api` to the backend on `127.0.0.1:8080`.
+- `EventSource` reconnects on its own and resumes via `Last-Event-ID`; the client only reports `audit.failed` after 3 consecutive errors with no event in between.
+- Error messages from the API (e.g. the allowlist message) are shown to the user as they are.

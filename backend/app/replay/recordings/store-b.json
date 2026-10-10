@@ -1,0 +1,624 @@
+{
+  "version": 1,
+  "store": "store-b",
+  "pathPrefix": "/demo/store-b/",
+  "source": "scripted-mock",
+  "recordedAt": "2026-10-10T17:27:02.912Z",
+  "placeholders": {
+    "auditId": "__AUDIT_ID__",
+    "origin": "__ORIGIN__"
+  },
+  "events": [
+    {
+      "delayMs": 0,
+      "event": {
+        "type": "audit.started",
+        "auditId": "__AUDIT_ID__",
+        "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
+        "startedAt": "2026-10-10T17:27:02.912Z"
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Launching a fresh browser: 1280×800, no cookies, not signed in."
+      }
+    },
+    {
+      "delayMs": 700,
+      "event": {
+        "type": "step.started",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro"
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Opened the product page. No modal or interstitial appeared."
+      }
+    },
+    {
+      "delayMs": 1000,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Staying on the page for 8 s, like a shopper reading the details."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
+        "screenshotUrl": "/mock/screens/b/product.jpg"
+      }
+    },
+    {
+      "delayMs": 250,
+      "event": {
+        "type": "price.observed",
+        "step": "product",
+        "label": "Product page",
+        "total": {
+          "amount": 1508,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 1600,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Urgency signals: \"Festive Sale ends Sun, 11 Oct, 11:59 PM IST\", a fixed date and time. Stock reads \"In stock\", with no scarcity claim."
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "Pulling 13 weeks of price history for SonicBuds Pro ANC Wireless Earbuds…"
+      }
+    },
+    {
+      "delayMs": 1600,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "Sold at the ₹1,999 MRP in 12 of 14 weekly observations; ₹1,499 only since the sale began. The 25% discount is genuine. ✓"
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "A ₹9 platform fee is disclosed next to the price. I'll check it's the only extra."
+      }
+    },
+    {
+      "delayMs": 1000,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Reloading the page for a second look."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.captured",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
+        "screenshotUrl": "/mock/screens/b/product-reload.jpg"
+      }
+    },
+    {
+      "delayMs": 1400,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Sale deadline unchanged after the reload. A fixed, real deadline is legitimate urgency. ✓"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "variant",
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=ocean"
+      }
+    },
+    {
+      "delayMs": 800,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Choosing colour: Ocean Blue."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "variant",
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=ocean",
+        "screenshotUrl": "/mock/screens/b/variant.jpg"
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Price stays ₹1,499 on every colour. ✓"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "cart",
+        "url": "__ORIGIN__/demo/store-b/cart"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Added 1 × SonicBuds Pro (Ocean Blue) to the cart. Opening the cart."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "cart",
+        "url": "__ORIGIN__/demo/store-b/cart",
+        "screenshotUrl": "/mock/screens/b/cart.jpg"
+      }
+    },
+    {
+      "delayMs": 250,
+      "event": {
+        "type": "price.observed",
+        "step": "cart",
+        "label": "Cart",
+        "total": {
+          "amount": 1508,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "evidence",
+        "message": "Cart holds exactly what I added: 1 line. ✓"
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Protection plan is offered as an unticked opt-in with neutral wording. ✓"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "checkout",
+        "url": "__ORIGIN__/demo/store-b/checkout"
+      }
+    },
+    {
+      "delayMs": 800,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Proceeding to checkout with the saved address."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "checkout",
+        "url": "__ORIGIN__/demo/store-b/checkout",
+        "screenshotUrl": "/mock/screens/b/checkout.jpg"
+      }
+    },
+    {
+      "delayMs": 250,
+      "event": {
+        "type": "price.observed",
+        "step": "checkout",
+        "label": "Checkout",
+        "total": {
+          "amount": 1508,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 1400,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Membership checkbox is unticked; terms in normal type with one-click cancellation. ✓"
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Delivery options are two equal cards, with free standard pre-selected. ✓"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "payment",
+        "url": "__ORIGIN__/demo/store-b/payment"
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "payment",
+        "url": "__ORIGIN__/demo/store-b/payment",
+        "screenshotUrl": "/mock/screens/b/payment.jpg"
+      }
+    },
+    {
+      "delayMs": 250,
+      "event": {
+        "type": "price.observed",
+        "step": "payment",
+        "label": "Payment",
+        "total": {
+          "amount": 1508,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 1500,
+      "event": {
+        "type": "agent.log",
+        "agent": "evidence",
+        "message": "Reconciling prices: product ₹1,499 + ₹9 disclosed fee → payment ₹1,508. No new charges. ✓"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Stopped before paying. No order was placed."
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "adjudicator",
+        "message": "No findings. Every check passed; nothing to escalate."
+      }
+    },
+    {
+      "delayMs": 1100,
+      "event": {
+        "type": "agent.log",
+        "agent": "reporter",
+        "message": "Building the audit report…"
+      }
+    },
+    {
+      "delayMs": 1000,
+      "event": {
+        "type": "audit.completed",
+        "report": {
+          "auditId": "__AUDIT_ID__",
+          "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
+          "startedAt": "2026-10-10T17:27:02.912Z",
+          "completedAt": "2026-10-10T17:27:02.912Z",
+          "trustScore": 100,
+          "steps": [
+            {
+              "step": "product",
+              "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
+              "screenshotUrl": "/mock/screens/b/product.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "variant",
+              "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=ocean",
+              "screenshotUrl": "/mock/screens/b/variant.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "cart",
+              "url": "__ORIGIN__/demo/store-b/cart",
+              "screenshotUrl": "/mock/screens/b/cart.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "checkout",
+              "url": "__ORIGIN__/demo/store-b/checkout",
+              "screenshotUrl": "/mock/screens/b/checkout.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "payment",
+              "url": "__ORIGIN__/demo/store-b/payment",
+              "screenshotUrl": "/mock/screens/b/payment.jpg",
+              "status": "audited"
+            }
+          ],
+          "findings": [],
+          "summary": "No deceptive patterns found on all 5 steps: urgency, pricing, cart contents, consent and fees matched what the shopper was shown.",
+          "exposure": {
+            "priceDrift": {
+              "advertised": {
+                "amount": 1508,
+                "currency": "INR"
+              },
+              "payable": {
+                "amount": 1508,
+                "currency": "INR"
+              },
+              "lines": [],
+              "claimedSaving": {
+                "amount": 500,
+                "currency": "INR"
+              },
+              "genuineSaving": {
+                "amount": 500,
+                "currency": "INR"
+              }
+            },
+            "strictest": "GB",
+            "disclaimer": "Shop Honest maps findings to laws and public enforcement outcomes to show exposure. It is not legal advice. Penalties shown are statutory maximums or past outcomes, not a prediction for this business.",
+            "jurisdictions": [
+              {
+                "code": "IN",
+                "name": "India",
+                "law": "Consumer Protection Act, 2019 and the CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "regulator": "Central Consumer Protection Authority (CCPA)",
+                "status": "in_force",
+                "maxPenalty": "Up to ₹10 lakh per contravention, ₹50 lakh for each later one (s 21). Criminal: up to 2 years and ₹10 lakh, or 5 years and ₹50 lakh for repeat offences (s 89).",
+                "penaltyHeadline": "Up to ₹50 lakh + jail for repeat offences",
+                "precedents": [
+                  {
+                    "id": "in-physicswallah",
+                    "jurisdiction": "IN",
+                    "company": "PhysicsWallah",
+                    "regulator": "CCPA",
+                    "date": "2026-08",
+                    "outcome": "₹5 lakh penalty",
+                    "amount": {
+                      "amount": 500000,
+                      "currency": "INR"
+                    },
+                    "patternIds": [
+                      "basket_sneaking"
+                    ],
+                    "summary": "A ₹10 donation was pre-added to orders. Reported to Parliament in August 2026.",
+                    "sourceUrl": "https://www.aninews.in/news/business/govt-says-ccpa-imposes-rs-20-lakh-for-dark-patterns-steps-up-action-against-deceptive-online-practices20260806161831/",
+                    "confidence": "reported"
+                  },
+                  {
+                    "id": "in-zepto",
+                    "jurisdiction": "IN",
+                    "company": "Zepto",
+                    "regulator": "CCPA",
+                    "date": "2026-08",
+                    "outcome": "₹7 lakh penalty",
+                    "amount": {
+                      "amount": 700000,
+                      "currency": "INR"
+                    },
+                    "patternIds": [
+                      "drip_pricing",
+                      "basket_sneaking"
+                    ],
+                    "summary": "Penalised for drip pricing and basket sneaking, the largest of the dark-pattern penalties reported to Parliament.",
+                    "sourceUrl": "https://www.entertales.com/ccpa-fine-zepto-bookmyshow-indigo-dark-patterns/",
+                    "confidence": "reported"
+                  }
+                ],
+                "citations": {}
+              },
+              {
+                "code": "SG",
+                "name": "Singapore",
+                "law": "Consumer Protection (Fair Trading) Act (CPFTA) and the CCCS Guidelines on Price Transparency (2020)",
+                "regulator": "Competition and Consumer Commission of Singapore (CCCS)",
+                "status": "in_force",
+                "maxPenalty": "CCCS obtains court declarations and injunctions; breaching an injunction can lead to court-ordered fines or jail. Consumers can also claim compensation.",
+                "penaltyHeadline": "Court orders; breaches can mean fines or jail",
+                "precedents": [
+                  {
+                    "id": "sg-footwear-subscription",
+                    "jurisdiction": "SG",
+                    "company": "Online footwear retailer (unnamed)",
+                    "regulator": "CCCS, State Courts",
+                    "date": "2020-01",
+                    "outcome": "Court injunction and 3-year compliance orders",
+                    "patternIds": [
+                      "subscription_trap"
+                    ],
+                    "summary": "Shoppers buying shoes were signed up to a monthly membership disclosed only in fine print.",
+                    "sourceUrl": "https://www.allenandgledhill.com/sg/publication/articles/14284/court-orders-e-commerce-retailer-to-cease-unfair-trade-practices-and-stop-using-subscription-traps",
+                    "confidence": "reported"
+                  },
+                  {
+                    "id": "sg-abc-bargain",
+                    "jurisdiction": "SG",
+                    "company": "ABC Bargain Centre",
+                    "regulator": "CCCS",
+                    "date": "2020-10",
+                    "outcome": "Undertaking to stop misleading time-limited sales",
+                    "patternIds": [
+                      "false_urgency"
+                    ],
+                    "summary": "\"Closing down\" and \"fire sale\" ads ran with no end date, implying a short-lived price benefit.",
+                    "sourceUrl": "https://cccs.gov.sg/-/media/custom/ccs/files/media-and-publications/media-releases/abc-bargain-centre-16-oct-20/media-release_-abc-valudollar-cease-misleading-ads-w-infogx.ashx",
+                    "confidence": "official"
+                  }
+                ],
+                "citations": {}
+              },
+              {
+                "code": "GB",
+                "name": "United Kingdom",
+                "law": "Digital Markets, Competition and Consumers Act 2024 (Part 4) and the Consumer Contracts Regulations 2013",
+                "regulator": "Competition and Markets Authority (CMA)",
+                "status": "in_force",
+                "maxPenalty": "The CMA can fine directly: up to 10% of global turnover (or £300,000), plus daily penalties and consumer redress orders.",
+                "penaltyHeadline": "Up to 10% of global turnover",
+                "precedents": [
+                  {
+                    "id": "gb-marks-electrical",
+                    "jurisdiction": "GB",
+                    "company": "Marks Electrical",
+                    "regulator": "CMA",
+                    "date": "2026-06",
+                    "outcome": "£720,000 fine and about £600,000 in refunds",
+                    "amount": {
+                      "amount": 720000,
+                      "currency": "GBP"
+                    },
+                    "patternIds": [
+                      "basket_sneaking"
+                    ],
+                    "summary": "Nearly 40,000 customers were opted into paid recycling and unpacking services through pre-ticked boxes.",
+                    "sourceUrl": "https://thelens.slaughterandmay.com/post/102n4qw/cma-settles-with-marks-electrical-over-investigation-into-pre-selected-extra-char",
+                    "confidence": "reported"
+                  },
+                  {
+                    "id": "gb-aa-bsm",
+                    "jurisdiction": "GB",
+                    "company": "AA Driving School and BSM",
+                    "regulator": "CMA",
+                    "date": "2026-04",
+                    "outcome": "Infringement notice and about £760,000 in consumer redress",
+                    "patternIds": [
+                      "drip_pricing"
+                    ],
+                    "summary": "The CMA’s first infringement decision under the new regime, over fees not shown upfront.",
+                    "sourceUrl": "https://www.whitecase.com/insight-alert/hidden-fees-real-consequences-cma-issues-its-first-infringement-decision-under-uks",
+                    "confidence": "reported"
+                  }
+                ],
+                "citations": {}
+              },
+              {
+                "code": "EU",
+                "name": "European Union",
+                "law": "Unfair Commercial Practices Directive, Consumer Rights Directive, Price Indication Directive and Digital Services Act",
+                "regulator": "National consumer authorities; European Commission for the DSA",
+                "status": "in_force",
+                "maxPenalty": "Widespread consumer-law infringements: at least 4% of annual turnover or €2 million. DSA: up to 6% of worldwide annual turnover.",
+                "penaltyHeadline": "Up to 6% of global turnover",
+                "precedents": [
+                  {
+                    "id": "eu-x-dsa",
+                    "jurisdiction": "EU",
+                    "company": "X",
+                    "regulator": "European Commission",
+                    "date": "2025-12-05",
+                    "outcome": "€120 million fine",
+                    "amount": {
+                      "amount": 120000000,
+                      "currency": "EUR"
+                    },
+                    "patternIds": [
+                      "interface_interference"
+                    ],
+                    "summary": "The first DSA fine. It included an Art. 25 deceptive-design breach: a “verified” checkmark anyone could buy.",
+                    "sourceUrl": "https://digital-strategy.ec.europa.eu/en/news/commission-fines-x-eu120-million-under-digital-services-act",
+                    "confidence": "official"
+                  }
+                ],
+                "citations": {}
+              },
+              {
+                "code": "US",
+                "name": "United States",
+                "law": "FTC Act §5, Restore Online Shoppers’ Confidence Act (ROSCA) and the FTC Guides Against Deceptive Pricing",
+                "regulator": "Federal Trade Commission (FTC)",
+                "status": "in_force",
+                "maxPenalty": "Injunctions, consumer refunds, and civil penalties per violation for ROSCA and other rule breaches.",
+                "penaltyHeadline": "Civil penalties + refunds (Amazon paid $2.5B)",
+                "precedents": [
+                  {
+                    "id": "us-amazon-prime",
+                    "jurisdiction": "US",
+                    "company": "Amazon",
+                    "regulator": "FTC",
+                    "date": "2025-09-25",
+                    "outcome": "$2.5 billion ($1B civil penalty and $1.5B in refunds)",
+                    "amount": {
+                      "amount": 2500000000,
+                      "currency": "USD"
+                    },
+                    "patternIds": [
+                      "subscription_trap"
+                    ],
+                    "summary": "Shoppers were enrolled in Prime without clear consent, and cancelling was made hard.",
+                    "sourceUrl": "https://www.fortune.com/2025/09/25/amazon-ftc-settlement-prime-automatic-renewal-lina-khan-dark-patterns",
+                    "confidence": "reported"
+                  }
+                ],
+                "citations": {}
+              },
+              {
+                "code": "KR",
+                "name": "South Korea",
+                "law": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                "regulator": "Korea Fair Trade Commission (KFTC)",
+                "status": "in_force",
+                "maxPenalty": "Corrective orders, administrative fines (reported at ₩1–5 million per breach) and business suspension of up to 12 months.",
+                "penaltyHeadline": "Fines + up to 12-month business suspension",
+                "precedents": [],
+                "citations": {}
+              },
+              {
+                "code": "AU",
+                "name": "Australia",
+                "law": "Australian Consumer Law (Competition and Consumer Act 2010, Sch. 2)",
+                "regulator": "Australian Competition and Consumer Commission (ACCC)",
+                "status": "in_force",
+                "maxPenalty": "Unfair trading practices (from 1 Jul 2027): the greater of A$100 million, 3× the benefit gained, or 30% of adjusted turnover.",
+                "penaltyHeadline": "Up to A$100M or 30% of turnover (from Jul 2027)",
+                "upcoming": {
+                  "law": "Unfair Trading Practices ban (ACL s 28B) and transaction-charge disclosure (s 48A)",
+                  "effectiveFrom": "2027-07-01",
+                  "summary": "Bans design that manipulates or unreasonably distorts consumer decisions, and adds drip-pricing and subscription rules."
+                },
+                "precedents": [],
+                "citations": {}
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
