@@ -2,17 +2,21 @@
 // quoted string comes from a real walk of the stores (captures.json), so the
 // mock looks exactly like the live agent will, minus the model calls.
 
-import type { AgentName, AuditEvent, AuditReport, Finding, JourneyStep, Severity, StepCapture } from '../../shared/contract'
+import type { AgentName, AuditEvent, AuditReport, Finding, JourneyStep, Money, PriceDrift, PriceDriftLine, Severity, StepCapture } from '../../shared/contract'
 import { JOURNEY_STEPS } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { ANSWER_KEY } from '../../store/answerKey'
 import type { ExpectedFinding, FrameId } from '../../store/answerKey'
 import { discountPercent, findProduct, formatINR, HERO_SLUG, PLUS_MEMBERSHIP, PROTECTION_PLAN } from '../../store/catalog'
+import { STEP_LABEL } from '../labels'
+import { formatMoney } from '../money'
 import type { StoreId } from '../../store/catalog'
 import { STORES } from '../../store/variants'
 import { REVIEW_THRESHOLD, trustScore } from '../score'
 import type { Captures, CapturedFrame } from './captures'
 import capturesJson from './captures.json'
+import { FIXES } from './fixes'
+import { buildExposure } from './legal'
 
 const CAPTURES = capturesJson as unknown as Captures
 
@@ -56,6 +60,43 @@ class Ctx {
 
   url(id: FrameId): string {
     return this.origin + this.frame(id).url
+  }
+
+  /** Order total as the page displayed it on this frame. */
+  total(id: FrameId): Money {
+    return inr(Number(this.text(id, '#order-total').replace(/[^\d]/g, '')))
+  }
+}
+
+function inr(amount: number): Money {
+  return { amount, currency: 'INR' }
+}
+
+/** What the product page led the shopper to expect, then what each later step demanded. */
+function priceDrift(c: Ctx): PriceDrift {
+  const setup = STORES[c.storeId]
+  const p = priceFacts(c.storeId)
+  const findingFor = (patternId: string) => ANSWER_KEY[c.storeId].find((f) => f.patternId === patternId)?.id
+  const lines: PriceDriftLine[] = []
+  if (setup.behaviour.autoAddProtection) {
+    lines.push({ label: PROTECTION_PLAN.name, amount: inr(PROTECTION_PLAN.price), kind: 'sneaked_item', firstSeen: 'cart', findingId: findingFor('basket_sneaking') })
+  }
+  if (setup.behaviour.membershipTickedByDefault) {
+    lines.push({ label: `${PLUS_MEMBERSHIP.name} membership`, amount: inr(PLUS_MEMBERSHIP.monthly), kind: 'subscription', firstSeen: 'checkout', recurring: 'monthly', findingId: findingFor('subscription_trap') })
+  }
+  if (setup.behaviour.feesAtPaymentOnly) {
+    for (const fee of setup.paymentStepFees) {
+      lines.push({ label: fee.label, amount: inr(fee.amount), kind: 'fee', firstSeen: 'payment', findingId: findingFor('drip_pricing') })
+    }
+  }
+  const disputed = p.mrp !== p.priorMrp
+  return {
+    advertised: inr(p.price + setup.upfrontPlatformFee),
+    payable: c.total('payment'),
+    lines,
+    claimedSaving: inr(p.mrp - p.price),
+    genuineSaving: inr(p.priorMrp - p.price),
+    savingFindingId: disputed ? findingFor('misleading_price') : undefined,
   }
 }
 
@@ -238,6 +279,7 @@ function buildFinding(c: Ctx, expected: ExpectedFinding, n: Narrative): Finding 
       elementText: c.text(first.frame, first.selector),
       observations: n.observations,
     },
+    remediation: FIXES[expected.patternId],
   }
 }
 
@@ -247,6 +289,14 @@ const PRIMARY_FRAME: Record<JourneyStep, FrameId> = {
   cart: 'cart',
   checkout: 'checkout',
   payment: 'payment',
+}
+
+/** Frames on which the agent reads the running total. */
+const PRICE_LABEL: Partial<Record<FrameId, string>> = {
+  product: 'Product page',
+  cart: 'Cart',
+  checkout: 'Checkout',
+  payment: 'Payment',
 }
 
 class ScriptBuilder {
@@ -271,6 +321,11 @@ class ScriptBuilder {
   capture(frameId: FrameId, delayMs = 500) {
     const f = this.c.frame(frameId)
     this.emit({ type: 'step.captured', step: f.step, url: this.c.url(frameId), screenshotUrl: f.src }, delayMs)
+    const label = PRICE_LABEL[frameId]
+    if (label) {
+      const total = frameId === 'product' ? priceDrift(this.c).advertised : this.c.total(frameId)
+      this.emit({ type: 'price.observed', step: f.step, label, total }, 250)
+    }
   }
   finding(id: string, delayMs = 900) {
     const f = this.byId.get(id)
@@ -373,7 +428,14 @@ function scriptStoreB(b: ScriptBuilder, c: Ctx) {
   b.log('navigator', 'Stopped before paying. No order was placed.', 900)
 }
 
-export function buildMockAudit(storeId: StoreId, auditId: string, origin: string): ScriptedEvent[] {
+export interface MockOptions {
+  /** Simulate a sign-in wall at this step: the walk stops there and later steps are not audited. */
+  blockAt?: JourneyStep
+}
+
+const SIGN_IN_REQUIRED = 'Sign-in required'
+
+export function buildMockAudit(storeId: StoreId, auditId: string, origin: string, options: MockOptions = {}): ScriptedEvent[] {
   const c = new Ctx(storeId, origin)
   const narratives = storeId === 'a' ? storeANarratives(c) : {}
   const allFindings = ANSWER_KEY[storeId].map((expected) => buildFinding(c, expected, narratives[expected.id]))
@@ -386,40 +448,76 @@ export function buildMockAudit(storeId: StoreId, auditId: string, origin: string
   if (storeId === 'a') scriptStoreA(b, c)
   else scriptStoreB(b, c)
 
-  const confirmed = b.findings.filter((f) => f.status === 'confirmed')
-  const review = b.findings.filter((f) => f.status === 'needs_review')
-  b.log(
-    'adjudicator',
-    confirmed.length + review.length === 0
-      ? 'No findings. Every check passed; nothing to escalate.'
-      : `${confirmed.length} findings confirmed, ${review.length} sent to human review. Every confirmed finding carries a screenshot and a rule citation.`,
-    1200,
-  )
-  b.log('reporter', 'Building the audit report…', 1100)
+  const fullStep = (step: JourneyStep): StepCapture => ({ step, url: c.url(PRIMARY_FRAME[step]), screenshotUrl: c.frame(PRIMARY_FRAME[step]).src, status: 'audited' })
+  let events = b.events
+  let findings = b.findings
+  let steps = JOURNEY_STEPS.map(fullStep)
+  let drift = priceDrift(c)
+  const blockAt = options.blockAt
 
-  const steps: StepCapture[] = JOURNEY_STEPS.map((step) => {
-    const f = c.frame(PRIMARY_FRAME[step])
-    return { step, url: c.url(PRIMARY_FRAME[step]), screenshotUrl: f.src }
+  if (blockAt) {
+    // Cut the walk where the sign-in wall appears; only what was seen before it counts.
+    const cut = events.findIndex((e) => e.event.type === 'step.started' && e.event.step === blockAt)
+    events = events.slice(0, cut + 1)
+    const kept = new Set(events.flatMap((e) => (e.event.type === 'finding' ? [e.event.finding.id] : [])))
+    findings = findings.filter((f) => kept.has(f.id))
+    const reached = JOURNEY_STEPS.slice(0, JOURNEY_STEPS.indexOf(blockAt))
+    const prices = events.flatMap((e) => (e.event.type === 'price.observed' ? [e.event.total] : []))
+    drift = {
+      ...drift,
+      lines: drift.lines.filter((l) => reached.includes(l.firstSeen)),
+      payable: prices[prices.length - 1] ?? drift.advertised,
+    }
+    const url = c.url(PRIMARY_FRAME[blockAt])
+    steps = [...reached.map(fullStep), { step: blockAt, url, status: 'blocked', blockedReason: SIGN_IN_REQUIRED }]
+    events.push({
+      delayMs: 1200,
+      event: { type: 'agent.log', agent: 'navigator', message: `${STEP_LABEL[blockAt]} asks me to sign in. I have no account for this site, so I stopped here rather than create one.` },
+    })
+    events.push({ delayMs: 600, event: { type: 'step.blocked', step: blockAt, url, reason: SIGN_IN_REQUIRED } })
+  }
+
+  const confirmed = findings.filter((f) => f.status === 'confirmed')
+  const review = findings.filter((f) => f.status === 'needs_review')
+  const audited = steps.filter((s) => s.status !== 'blocked')
+  events.push({
+    delayMs: 1200,
+    event: {
+      type: 'agent.log',
+      agent: 'adjudicator',
+      message:
+        confirmed.length + review.length === 0
+          ? 'No findings. Every check passed; nothing to escalate.'
+          : `${confirmed.length} findings confirmed, ${review.length} sent to human review. Every confirmed finding carries a screenshot and a rule citation.`,
+    },
   })
-  const productPrice = priceFacts(storeId).price
-  const paymentTotal = c.text('payment', '#order-total')
-  const paymentAmount = Number(paymentTotal.replace(/[^\d]/g, ''))
+  events.push({ delayMs: 1100, event: { type: 'agent.log', agent: 'reporter', message: 'Building the audit report…' } })
+
+  const extra = drift.payable.amount - drift.advertised.amount
+  const pct = Math.round((drift.payable.amount / drift.advertised.amount - 1) * 100)
   const stepsHit = new Set(confirmed.map((f) => f.step)).size
+  const notAudited = blockAt
+    ? ` ${JOURNEY_STEPS.slice(JOURNEY_STEPS.indexOf(blockAt)).map((st) => STEP_LABEL[st]).join(' and ')} could not be audited: ${SIGN_IN_REQUIRED.toLowerCase()}.`
+    : ''
+  const where = blockAt ? `the ${audited.length} steps the agent could reach` : `all ${steps.length} steps`
   const summary =
     confirmed.length === 0
-      ? `No deceptive patterns found. The agent walked all ${steps.length} steps, and urgency, pricing, cart contents, consent and fees all matched what the shopper was shown.`
-      : `${confirmed.length} violations confirmed across ${stepsHit} of ${steps.length} journey steps, and ${review.length} claim sent for human review. The amount payable rose from ${formatINR(productPrice)} on the product page to ${paymentTotal} at payment (+${Math.round((paymentAmount / productPrice - 1) * 100)}%).`
+      ? `No deceptive patterns found on ${where}: urgency, pricing, cart contents, consent and fees matched what the shopper was shown.${notAudited}`
+      : `${confirmed.length} violations confirmed across ${stepsHit} of ${blockAt ? `the ${audited.length} reachable` : steps.length} journey steps, and ${review.length} claim sent for human review.` +
+        (extra > 0 ? ` The amount payable rose from ${formatMoney(drift.advertised)} on the product page to ${formatMoney(drift.payable)} (+${pct}%).` : '') +
+        notAudited
 
   const report: AuditReport = {
     auditId,
     targetUrl,
     startedAt,
     completedAt: startedAt,
-    trustScore: trustScore(b.findings),
+    trustScore: trustScore(findings),
     steps,
-    findings: b.findings,
+    findings,
     summary,
+    exposure: buildExposure(findings, drift),
   }
-  b.emit({ type: 'audit.completed', report }, 1000)
-  return b.events
+  events.push({ delayMs: 1000, event: { type: 'audit.completed', report } })
+  return events
 }

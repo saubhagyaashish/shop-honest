@@ -1,4 +1,5 @@
-import type { AuditEvent } from '../../shared/contract'
+import type { AuditEvent, JourneyStep } from '../../shared/contract'
+import { JOURNEY_STEPS } from '../../shared/contract'
 import { sampleForUrl } from '../samples'
 import { buildMockAudit } from '../mock/scripts'
 import type { ScriptedEvent } from '../mock/scripts'
@@ -16,6 +17,12 @@ interface Run {
 function storeFromAuditId(auditId: string): StoreId | undefined {
   const m = /^mock-([ab])-/.exec(auditId)
   return m ? (m[1] as StoreId) : undefined
+}
+
+/** Set VITE_MOCK_BLOCK_AT=checkout (or cart, payment…) to replay audits that hit a sign-in wall. */
+function simulatedWall(): JourneyStep | undefined {
+  const step = import.meta.env.VITE_MOCK_BLOCK_AT as string | undefined
+  return JOURNEY_STEPS.find((s) => s === step)
 }
 
 /** Replays scripted audits of the demo stores with realistic pacing. */
@@ -51,7 +58,7 @@ export function createMockSource(): AuditSource {
       }
       const startedAt = new Date().toISOString()
       const run: Run = {
-        events: buildMockAudit(storeId, auditId, window.location.origin),
+        events: buildMockAudit(storeId, auditId, window.location.origin, { blockAt: simulatedWall() }),
         next: 0,
         deliver: (e) => onEvent(stamp(e, startedAt)),
       }

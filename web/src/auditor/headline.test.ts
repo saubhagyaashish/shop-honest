@@ -1,0 +1,35 @@
+import { describe, expect, it } from 'vitest'
+import type { AuditEvent } from '../shared/contract'
+import { buildHeadline, summariseRisk } from './headline'
+import { buildMockAudit } from './mock/scripts'
+
+function report(storeId: 'a' | 'b') {
+  const last = buildMockAudit(storeId, `mock-${storeId}-t`, 'http://localhost').at(-1)!.event as Extract<AuditEvent, { type: 'audit.completed' }>
+  return last.report
+}
+
+describe('headline', () => {
+  it('leads with the count and the overcharge for a rigged store', () => {
+    expect(buildHeadline(report('a'))).toEqual({ lead: '8 dark patterns found.', punch: 'Shoppers pay 26% more than the price they saw.' })
+  })
+
+  it('reassures for a clean store', () => {
+    expect(buildHeadline(report('b'))).toEqual({ lead: 'No dark patterns found.', punch: 'What shoppers see is what they pay.' })
+  })
+})
+
+describe('risk summary', () => {
+  it('headlines the strictest regime where rules are broken', () => {
+    const r = summariseRisk(report('a'))
+    expect(r.focus?.code).toBe('GB')
+    expect(r.focus?.penaltyHeadline).toBe('Up to 10% of global turnover')
+    expect(r.regionsBroken).toBe(7)
+  })
+
+  it('finds no broken rules for a clean store', () => {
+    const r = summariseRisk(report('b'))
+    expect(r.focus).toBeUndefined()
+    expect(r.regionsBroken).toBe(0)
+    expect(r.regionsChecked).toBe(7)
+  })
+})

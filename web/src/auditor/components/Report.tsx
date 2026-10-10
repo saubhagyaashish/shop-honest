@@ -1,191 +1,248 @@
-import { motion } from 'motion/react'
-import { useState } from 'react'
-import type { ReactNode } from 'react'
-import type { AuditReport, Finding, Severity } from '../../shared/contract'
+import { useMemo, useState } from 'react'
+import type { AuditReport, Finding, JourneyStep, JurisdictionCode, Severity } from '../../shared/contract'
+import { JOURNEY_STEPS } from '../../shared/contract'
+import { Lock } from 'lucide-react'
 import { STEP_LABEL } from '../labels'
-import { Confetti } from '../ui/Confetti'
-import { CountUp } from '../ui/CountUp'
+import { coverageOf } from '../coverage'
+import { formatMoney } from '../money'
+import { SectionHead } from '../ui/SectionHead'
 import { Sticker } from '../ui/Sticker'
-import { buttonClass, TONE_BG } from '../ui/styles'
-import type { Tone } from '../ui/styles'
+import { buttonClass } from '../ui/styles'
 import type { LogEntry } from '../useAudit'
 import { AgentLog } from './AgentLog'
+import { DamageSection } from './DamageSection'
 import { EvidenceViewer } from './Evidence'
-import { FindingCard } from './FindingCard'
-import { TrustScore } from './TrustScore'
+import { ExposureSection } from './ExposureSection'
+import { FindingRow } from './FindingCard'
+import { ReportNav } from './ReportNav'
+import type { NavItem } from './ReportNav'
+import { VerdictHero } from './VerdictHero'
 
-type Decision = 'approved' | 'dismissed'
+export type Decision = 'approved' | 'dismissed'
 
 const SEVERITY_ORDER: Severity[] = ['high', 'medium', 'low']
 
-export function Report({ report, logs }: { report: AuditReport; logs: LogEntry[] }) {
-  const [open, setOpen] = useState<Finding | null>(null)
-  const [decisions, setDecisions] = useState<Record<string, Decision>>({})
+interface ReportProps {
+  report: AuditReport
+  logs: LogEntry[]
+  jurisdiction: JurisdictionCode
+  onJurisdiction: (code: JurisdictionCode) => void
+  decisions: Record<string, Decision>
+  onDecide: (findingId: string, decision: Decision | undefined) => void
+  pdfBusy: boolean
+  onDownloadPdf: () => void
+}
 
-  const confirmed = report.findings
-    .filter((f) => f.status === 'confirmed')
-    .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) || b.confidence - a.confidence)
+export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, onDecide, pdfBusy, onDownloadPdf }: ReportProps) {
+  const exposure = report.exposure
+  const region = exposure?.jurisdictions.find((j) => j.code === jurisdiction)
+  const confirmed = useMemo(
+    () =>
+      report.findings
+        .filter((f) => f.status === 'confirmed')
+        .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) || b.confidence - a.confidence),
+    [report.findings],
+  )
   const review = report.findings.filter((f) => f.status === 'needs_review')
   const clean = report.findings.length === 0
-  const pending = review.filter((f) => !decisions[f.id]).length
-  const durationS = Math.max(1, Math.round((Date.parse(report.completedAt) - Date.parse(report.startedAt)) / 1000))
+  const coverage = coverageOf(report.steps)
+  const lastAudited = coverage.audited[coverage.audited.length - 1]
+
+  const [viewing, setViewing] = useState<Finding | null>(null)
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(confirmed[0] ? [confirmed[0].id] : []))
+  const [step, setStep] = useState<JourneyStep | null>(null)
+
+  /** Money each finding costs the shopper, shown on its row. */
+  const impact = useMemo(() => {
+    const out: Record<string, string> = {}
+    const drift = exposure?.priceDrift
+    if (!drift) return out
+    const sums: Record<string, number> = {}
+    for (const l of drift.lines) if (l.findingId) sums[l.findingId] = (sums[l.findingId] ?? 0) + l.amount.amount
+    for (const [id, amount] of Object.entries(sums)) out[id] = `+${formatMoney({ amount, currency: drift.payable.currency })}`
+    if (drift.savingFindingId && drift.claimedSaving && drift.genuineSaving) {
+      out[drift.savingFindingId] = `${formatMoney({ amount: drift.claimedSaving.amount - drift.genuineSaving.amount, currency: drift.payable.currency })} fake`
+    }
+    return out
+  }, [exposure])
+
+  const navItems = useMemo<NavItem[]>(
+    () => [
+      { id: 'overview', label: 'Overview' },
+      ...(exposure ? [{ id: 'money', label: 'Money 💸' }, { id: 'legal', label: 'Legal ⚖️' }] : []),
+      { id: 'findings', label: 'Findings', count: confirmed.length },
+      ...(review.length ? [{ id: 'review', label: 'Review', count: review.length }] : []),
+      { id: 'trail', label: 'Audit trail' },
+    ],
+    [exposure, confirmed.length, review.length],
+  )
+
+  const toggle = (id: string) =>
+    setExpanded((s) => {
+      const next = new Set(s)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const jumpToFinding = (id: string) => {
+    setStep(null)
+    setExpanded((s) => new Set(s).add(id))
+    requestAnimationFrame(() => document.getElementById(`finding-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const rowProps = (f: Finding) => ({
+    finding: f,
+    open: expanded.has(f.id),
+    onToggle: () => toggle(f.id),
+    onOpenEvidence: () => setViewing(f),
+    citation: region?.citations[f.id],
+    regionName: region?.name,
+    precedents: region?.precedents.filter((p) => p.patternIds.includes(f.patternId)) ?? [],
+    impact: impact[f.id],
+  })
+
+  const shown = step ? confirmed.filter((f) => f.step === step) : confirmed
 
   return (
-    <div className="space-y-12">
-      {/* Verdict */}
-      <motion.section
-        className="brutal relative grid gap-8 rounded-3xl bg-white p-6 md:grid-cols-[auto_minmax(0,1fr)] md:items-center md:p-10"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        {clean && <Confetti />}
-        <TrustScore score={report.trustScore} />
-        <div>
-          <Sticker tone="sun" rotate={-2}>the verdict</Sticker>
-          <p className="mt-3 font-display text-xl leading-snug font-bold sm:text-2xl">{report.summary}</p>
-          <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Violations" value={confirmed.length} tone={confirmed.length ? 'pink' : 'lime'} />
-            <Stat label="For review" value={review.length} tone={review.length ? 'sun' : 'white'} />
-            <Stat label="Steps walked" value={report.steps.length} tone="lilac" />
-            <Stat label="Audit time" value={durationS} suffix="s" tone="white" />
-          </dl>
-        </div>
-      </motion.section>
+    <div className="mx-auto max-w-[1200px]">
+      <VerdictHero
+        report={report}
+        pdfBusy={pdfBusy}
+        onDownloadPdf={onDownloadPdf}
+        onSeeFixes={() => document.getElementById('findings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
+      <ReportNav items={navItems} className="mt-3" />
 
-      {/* Journey filmstrip */}
-      <section>
-        <SectionTitle kicker="the walk">Journey walked</SectionTitle>
-        <ol className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {report.steps.map((s, i) => {
-            const hits = report.findings.filter((f) => f.step === s.step)
-            const hitsConfirmed = hits.filter((f) => f.status === 'confirmed').length
-            const hitsReview = hits.length - hitsConfirmed
-            return (
-              <motion.li
-                key={s.step}
-                className="brutal-sm overflow-hidden rounded-2xl bg-white"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
-              >
-                <div className="relative aspect-[16/11] overflow-hidden border-b-2 border-ink bg-cream">
-                  <img src={s.screenshotUrl} alt={STEP_LABEL[s.step]} className="w-full" />
-                  <span className="absolute top-2 left-2 grid h-7 w-7 place-items-center rounded-lg border-2 border-ink bg-white font-display text-sm font-extrabold">
-                    {i + 1}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs font-bold">
-                  <span>{STEP_LABEL[s.step]}</span>
-                  {hits.length > 0 ? (
-                    <span className="flex gap-1">
-                      {hitsConfirmed > 0 && <span className="rounded-md border-2 border-ink bg-pink px-1.5">{hitsConfirmed} 🚩</span>}
-                      {hitsReview > 0 && <span className="rounded-md border-2 border-ink bg-sun px-1.5">{hitsReview} 🤔</span>}
+      <div className="mt-6 space-y-16">
+        {exposure && (
+          <DamageSection drift={exposure.priceDrift} onJumpToFinding={jumpToFinding} stoppedAfter={!coverage.complete && lastAudited ? STEP_LABEL[lastAudited] : undefined} />
+        )}
+
+        {exposure && <ExposureSection exposure={exposure} findings={report.findings} jurisdiction={jurisdiction} onJurisdiction={onJurisdiction} />}
+
+        <section id="findings" className="scroll-mt-32">
+          <SectionHead
+            kicker="the receipts 🧾"
+            title={clean ? 'Nothing caught' : 'What we caught'}
+            count={confirmed.length}
+            note={clean ? undefined : 'Each row is one trick. Open it for the screenshot, the rule it breaks and the fix.'}
+          />
+
+          <ol className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {JOURNEY_STEPS.map((stepId, i) => {
+              const st = report.steps.find((c) => c.step === stepId)
+              const audited = st !== undefined && st.status !== 'blocked'
+              const hits = confirmed.filter((f) => f.step === stepId).length
+              const selected = step === stepId
+              if (!audited) {
+                return (
+                  <li key={stepId}>
+                    <div className="flex w-full items-center gap-2.5 rounded-xl border-2 border-dashed border-ink/40 bg-white/60 p-1.5 pr-3" title={st?.blockedReason ?? 'Not reached'}>
+                      <span className="grid h-11 w-16 shrink-0 place-items-center rounded-md border-2 border-dashed border-ink/30 bg-cream">
+                        <Lock size={16} strokeWidth={2.6} className="text-ink/50" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-[13px] font-bold text-ink/60">
+                          {i + 1}. {STEP_LABEL[stepId]}
+                        </span>
+                        <span className="text-[12px] font-bold text-ink/50">{st?.blockedReason ? 'not audited' : 'not reached'}</span>
+                      </span>
+                    </div>
+                  </li>
+                )
+              }
+              return (
+                <li key={stepId}>
+                  <button
+                    type="button"
+                    onClick={() => setStep(selected ? null : stepId)}
+                    disabled={hits === 0}
+                    aria-pressed={selected}
+                    className={`flex w-full items-center gap-2.5 rounded-xl border-2 border-ink p-1.5 pr-3 text-left transition-[transform,box-shadow] disabled:cursor-default ${
+                      selected ? 'bg-ink text-cream shadow-brutal' : 'bg-white shadow-brutal-sm enabled:hover:-translate-y-0.5'
+                    }`}
+                  >
+                    <span className="relative h-11 w-16 shrink-0 overflow-hidden rounded-md border-2 border-ink bg-cream">
+                      <img src={st.screenshotUrl} alt="" className="w-full" />
                     </span>
-                  ) : (
-                    <span className="rounded-md border-2 border-ink bg-lime px-1.5">clean</span>
-                  )}
+                    <span className="min-w-0">
+                      <span className="block truncate text-[13px] font-bold">
+                        {i + 1}. {STEP_LABEL[stepId]}
+                      </span>
+                      <span className={`text-[12px] font-bold ${hits ? (selected ? 'text-pink' : 'text-[#d6336c]') : selected ? 'text-lime' : 'text-green-700'}`}>
+                        {hits ? `${hits} caught` : 'clean ✓'}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+
+          {clean ? (
+            <div className="brutal mt-5 rounded-3xl bg-lime p-8">
+              <div className="font-display text-[34px] leading-tight font-extrabold">LEGIT. ✅</div>
+              <p className="mt-1 font-display text-[20px] font-bold">No dark patterns found on any step.</p>
+              <p className="mt-2 max-w-2xl text-[15px]">
+                Every urgency claim, price, cart line, consent box and fee matched what the shopper was shown. The audit trail below lists each check.
+              </p>
+            </div>
+          ) : (
+            <>
+              {step && (
+                <div className="mt-4 flex items-center gap-3 text-sm font-semibold">
+                  Showing {shown.length} finding{shown.length === 1 ? '' : 's'} at {STEP_LABEL[step]}
+                  <button type="button" onClick={() => setStep(null)} className="font-bold underline underline-offset-2">
+                    show all
+                  </button>
                 </div>
-              </motion.li>
-            )
-          })}
-        </ol>
-      </section>
-
-      {clean && (
-        <section className="brutal relative overflow-hidden rounded-3xl bg-lime p-8 sm:p-10">
-          <div className="font-display text-6xl font-extrabold tracking-tight sm:text-7xl">LEGIT. ✅</div>
-          <p className="mt-2 font-display text-2xl font-bold">No dark patterns found.</p>
-          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed">
-            Every urgency claim, price, cart line, consent box and fee was checked against what the shopper was shown, and all of it held up. The squad chat below shows each check the agents made.
-          </p>
+              )}
+              <div className="mt-5 space-y-3">
+                {shown.map((f) => (
+                  <FindingRow key={f.id} {...rowProps(f)} />
+                ))}
+              </div>
+            </>
+          )}
         </section>
-      )}
 
-      {confirmed.length > 0 && (
-        <section>
-          <SectionTitle kicker="the receipts 🧾" count={confirmed.length}>
-            Confirmed violations
-          </SectionTitle>
-          <div className="mt-5 space-y-6">
-            {confirmed.map((f) => (
-              <FindingCard key={f.id} finding={f} onOpenEvidence={() => setOpen(f)} />
-            ))}
-          </div>
+        {review.length > 0 && (
+          <section id="review" className="scroll-mt-32">
+            <SectionHead
+              kicker="human review queue"
+              title="Your call 🤔"
+              count={review.length}
+              note="Below the confidence threshold, so the agents won’t assert these on their own."
+            />
+            <div className="mt-5 space-y-3">
+              {review.map((f) => (
+                <FindingRow
+                  key={f.id}
+                  {...rowProps(f)}
+                  actions={<ReviewActions decision={decisions[f.id]} onDecide={(d) => onDecide(f.id, d)} onUndo={() => onDecide(f.id, undefined)} />}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section id="trail" className="scroll-mt-32 break-before-page">
+          <details className="group brutal rounded-3xl bg-white" open={clean}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
+              <span className="font-display text-[22px] font-extrabold">
+                Squad chat 💬 <span className="ml-1 text-sm font-semibold text-ink/50">{logs.length} messages · full audit trail</span>
+              </span>
+              <span className="sticker bg-white transition group-open:rotate-180 print:hidden">▾</span>
+            </summary>
+            <div className="max-h-[560px] overflow-y-auto border-t-2 border-ink bg-cream px-6 py-5 print:max-h-none">
+              <AgentLog logs={logs} follow={false} />
+            </div>
+          </details>
         </section>
-      )}
+      </div>
 
-      {review.length > 0 && (
-        <section>
-          <SectionTitle kicker="human review queue" count={review.length}>
-            Your call 🤔
-          </SectionTitle>
-          <p className="mt-2 max-w-2xl text-[15px] text-ink/70">
-            Below the confidence threshold, so the agents won’t assert these on their own. {pending > 0 ? `${pending} waiting on you.` : 'All reviewed. Nice.'}
-          </p>
-          <div className="mt-5 space-y-6">
-            {review.map((f) => (
-              <FindingCard
-                key={f.id}
-                finding={f}
-                onOpenEvidence={() => setOpen(f)}
-                footer={
-                  <ReviewActions
-                    decision={decisions[f.id]}
-                    onDecide={(d) => setDecisions((all) => ({ ...all, [f.id]: d }))}
-                    onUndo={() =>
-                      setDecisions((all) => {
-                        const next = { ...all }
-                        delete next[f.id]
-                        return next
-                      })
-                    }
-                  />
-                }
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="break-before-page">
-        <details className="group brutal rounded-3xl bg-white" open={clean}>
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
-            <span className="font-display text-xl font-extrabold">
-              Squad chat 💬 <span className="ml-1 text-sm font-semibold text-ink/50">{logs.length} messages · full audit trail</span>
-            </span>
-            <span className="sticker bg-white transition group-open:rotate-180 print:hidden">▾</span>
-          </summary>
-          <div className="max-h-[560px] overflow-y-auto border-t-2 border-ink bg-cream px-6 py-5 print:max-h-none">
-            <AgentLog logs={logs} follow={false} />
-          </div>
-        </details>
-      </section>
-
-      {open && <EvidenceViewer finding={open} onClose={() => setOpen(null)} />}
-    </div>
-  )
-}
-
-function Stat({ label, value, tone, suffix = '' }: { label: string; value: number; tone: Tone; suffix?: string }) {
-  return (
-    <div className={`brutal-sm rounded-2xl px-3.5 py-3 ${TONE_BG[tone]}`}>
-      <dt className="text-[11px] font-extrabold tracking-wider uppercase opacity-70">{label}</dt>
-      <dd className="mt-0.5 font-display text-4xl font-extrabold">
-        <CountUp value={value} suffix={suffix} />
-      </dd>
-    </div>
-  )
-}
-
-function SectionTitle({ children, kicker, count }: { children: ReactNode; kicker: string; count?: number }) {
-  return (
-    <div>
-      <Sticker tone="white" rotate={-2}>{kicker}</Sticker>
-      <h2 className="mt-2 flex items-center gap-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-        {children}
-        {count !== undefined && <span className="sticker bg-ink !text-sm text-cream">{count}</span>}
-      </h2>
+      {viewing && <EvidenceViewer finding={viewing} onClose={() => setViewing(null)} />}
     </div>
   )
 }
@@ -193,24 +250,24 @@ function SectionTitle({ children, kicker, count }: { children: ReactNode; kicker
 function ReviewActions({ decision, onDecide, onUndo }: { decision?: Decision; onDecide: (d: Decision) => void; onUndo: () => void }) {
   if (decision) {
     return (
-      <div className="mt-5 flex items-center gap-3">
+      <>
         <Sticker tone={decision === 'approved' ? 'pink' : 'white'} rotate={-2}>
-          {decision === 'approved' ? '🚩 Confirmed by reviewer' : '👋 Dismissed by reviewer'}
+          {decision === 'approved' ? '🚩 Confirmed' : '👋 Dismissed'}
         </Sticker>
         <button type="button" onClick={onUndo} className="text-xs font-bold underline print:hidden">
           Undo
         </button>
-      </div>
+      </>
     )
   }
   return (
-    <div className="mt-5 flex flex-wrap gap-3 print:hidden">
+    <>
       <button type="button" onClick={() => onDecide('approved')} className={buttonClass('pink', 'sm')}>
         Confirm 🚩
       </button>
       <button type="button" onClick={() => onDecide('dismissed')} className={buttonClass('white', 'sm')}>
         Dismiss 👋
       </button>
-    </div>
+    </>
   )
 }

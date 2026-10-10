@@ -26,6 +26,7 @@ npm run dev                       # http://localhost:5173
 
 | Command | What it does |
 |---|---|
+| `VITE_MOCK_BLOCK_AT=checkout npm run dev` | Replays the sample audits as if a sign-in wall stopped the agent at that step (shows the partial-coverage UI) |
 | `npm run capture` | Walks both stores in Chromium and refreshes screenshots and bounding boxes for the mock audits |
 | `npm test` | Unit tests (trust score; mock audits match the answer key) |
 | `npm run typecheck` / `npm run lint` / `npm run build` | Checks and production build |

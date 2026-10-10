@@ -1,14 +1,17 @@
-import { ArrowLeft, Printer, RotateCcw, SkipForward } from 'lucide-react'
+import { ArrowLeft, FileDown, LoaderCircle, RotateCcw, SkipForward } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
+import type { JurisdictionCode } from '../../shared/contract'
 import { useDocumentTitle } from '../../shared/useDocumentTitle'
 import { AgentLog } from '../components/AgentLog'
 import { FindingFeedItem } from '../components/FindingCard'
 import { JourneyTimeline } from '../components/JourneyTimeline'
 import { LiveBrowser } from '../components/LiveBrowser'
+import { PriceMeter } from '../components/PriceMeter'
 import { Report } from '../components/Report'
+import type { Decision } from '../components/Report'
 import { Sticker } from '../ui/Sticker'
 import { buttonClass, TONE_BG } from '../ui/styles'
 import type { Tone } from '../ui/styles'
@@ -22,6 +25,10 @@ export function AuditPage() {
   // After completion, switch to the report on our own unless the viewer picked a view.
   const [autoReport, setAutoReport] = useState(false)
   const [chosenView, setChosenView] = useState<'live' | 'report' | null>(null)
+  // Shared by the report and the PDF so both say the same thing.
+  const [jurisdiction, setJurisdiction] = useState<JurisdictionCode>('IN')
+  const [decisions, setDecisions] = useState<Record<string, Decision>>({})
+  const [pdfState, setPdfState] = useState<'idle' | 'building' | 'error'>('idle')
   const elapsed = useElapsed(state)
   useDocumentTitle(state.status === 'completed' ? 'Audit report · Shop Honest' : 'Scanning… · Shop Honest')
 
@@ -35,7 +42,27 @@ export function AuditPage() {
   const runAgain = () => {
     setAutoReport(false)
     setChosenView(null)
+    setDecisions({})
     setRunKey((k) => k + 1)
+  }
+  const decide = (findingId: string, decision: Decision | undefined) =>
+    setDecisions((all) => {
+      const next = { ...all }
+      if (decision) next[findingId] = decision
+      else delete next[findingId]
+      return next
+    })
+  const downloadPdf = async () => {
+    if (!state.report) return
+    setPdfState('building')
+    try {
+      const { downloadAuditPdf } = await import('../pdf/download')
+      await downloadAuditPdf({ report: state.report, logs: state.logs, jurisdiction, decisions })
+      setPdfState('idle')
+    } catch (err) {
+      console.error(err)
+      setPdfState('error')
+    }
   }
 
   const running = state.status === 'running' || state.status === 'connecting'
@@ -43,7 +70,7 @@ export function AuditPage() {
   const review = state.findings.length - confirmed
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 pb-8 sm:px-6">
+    <div className={`mx-auto px-4 pb-8 sm:px-6 ${view === 'report' ? 'max-w-[1248px] pb-24' : 'max-w-[1440px]'}`}>
       {/* Audit header */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 py-5">
         <Link to="/" className={buttonClass('white', 'sm', 'print:hidden')}>
@@ -52,7 +79,7 @@ export function AuditPage() {
         <div className="order-last flex w-full min-w-0 items-center gap-3 sm:order-none sm:w-auto sm:flex-1">
           <StatusSticker status={state.status} />
           <span className="truncate rounded-lg border-2 border-ink bg-white px-2.5 py-1 font-mono text-[13px]">{state.targetUrl ?? '…'}</span>
-          <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums">{elapsed}</span>
+          {view !== 'report' && <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums">{elapsed}</span>}
         </div>
         <div className="flex flex-wrap items-center gap-2.5 print:hidden">
           {running && skipAhead && (
@@ -77,9 +104,19 @@ export function AuditPage() {
               <button type="button" onClick={runAgain} className={buttonClass('white', 'sm')}>
                 <RotateCcw size={16} strokeWidth={2.6} aria-hidden="true" /> Run again
               </button>
-              <button type="button" onClick={() => window.print()} className={buttonClass('lime', 'sm')}>
-                <Printer size={16} strokeWidth={2.6} aria-hidden="true" /> Save as PDF
+              {view !== 'report' && (
+              <button type="button" onClick={downloadPdf} disabled={pdfState === 'building'} className={buttonClass('lime', 'sm')}>
+                {pdfState === 'building' ? (
+                  <>
+                    <LoaderCircle size={16} strokeWidth={2.6} className="animate-spin" aria-hidden="true" /> Building PDF…
+                  </>
+                ) : (
+                  <>
+                    <FileDown size={16} strokeWidth={2.6} aria-hidden="true" /> {pdfState === 'error' ? 'Retry PDF' : 'Download PDF report'}
+                  </>
+                )}
               </button>
+              )}
             </>
           )}
         </div>
@@ -91,18 +128,36 @@ export function AuditPage() {
         </div>
       )}
 
-      {state.status !== 'failed' && view === 'report' && state.report && <Report report={state.report} logs={state.logs} />}
+      {state.status !== 'failed' && view === 'report' && state.report && (
+        <Report
+          report={state.report}
+          logs={state.logs}
+          jurisdiction={jurisdiction}
+          onJurisdiction={setJurisdiction}
+          decisions={decisions}
+          onDecide={decide}
+          pdfBusy={pdfState === 'building'}
+          onDownloadPdf={downloadPdf}
+        />
+      )}
 
       {state.status !== 'failed' && view === 'live' && (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:h-[calc(100vh-11.5rem)] lg:min-h-[560px] lg:grid-cols-[210px_minmax(0,1fr)_minmax(320px,390px)]">
-          <aside className="space-y-5">
+          <aside className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1 lg:pb-2">
             <Panel title="The journey">
-              <JourneyTimeline currentStep={state.currentStep} visited={state.stepsVisited} findings={state.findings} done={state.status === 'completed'} />
+              <JourneyTimeline
+                currentStep={state.currentStep}
+                visited={state.stepsVisited}
+                findings={state.findings}
+                done={state.status === 'completed'}
+                blocked={state.blocked}
+              />
             </Panel>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+            <div className="grid grid-cols-2 gap-3">
               <Counter label="Caught 🚩" value={confirmed} tone={confirmed ? 'pink' : 'white'} />
               <Counter label="For review 🤔" value={review} tone={review ? 'sun' : 'white'} />
             </div>
+            <PriceMeter trail={state.priceTrail} />
           </aside>
 
           <div className="flex max-h-[70vh] min-h-0 flex-col lg:max-h-none">
@@ -112,6 +167,7 @@ export function AuditPage() {
               findings={state.findings}
               latestFindingId={state.latestFindingId}
               busy={running}
+              blockedReason={state.blocked?.reason}
             />
           </div>
 
@@ -153,11 +209,11 @@ function Panel({ title, count, className = '', bodyClass = '', children }: { tit
 
 function Counter({ label, value, tone }: { label: string; value: number; tone: Tone }) {
   return (
-    <div className={`brutal rounded-2xl px-4 py-3 transition-colors ${TONE_BG[tone]}`}>
+    <div className={`brutal rounded-2xl px-3 py-2.5 transition-colors ${TONE_BG[tone]}`}>
       <div className="text-[11px] font-extrabold tracking-wider uppercase">{label}</div>
       <motion.div
         key={value}
-        className="font-display text-5xl leading-tight font-extrabold tabular-nums"
+        className="font-display text-4xl leading-tight font-extrabold tabular-nums"
         initial={{ scale: 1.7, rotate: -10 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 400, damping: 14 }}

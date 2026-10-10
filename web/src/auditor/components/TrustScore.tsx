@@ -10,11 +10,12 @@ const BAND_TONE: Record<ScoreBand, Tone> = { trustworthy: 'lime', concerns: 'sun
 const ARC = 'M24 112 A88 88 0 0 1 200 112'
 
 /** Chunky half-ring gauge, 0–100, with the verdict sticker. */
-export function TrustScore({ score }: { score: number }) {
+export function TrustScore({ score, size = 'md' }: { score: number; size?: 'sm' | 'md' }) {
   const band = scoreBand(score)
+  const sm = size === 'sm'
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-60">
+      <div className={`relative ${sm ? 'w-48' : 'w-60'}`}>
         <svg viewBox="0 0 224 128" className="w-full" role="img" aria-label={`Trust score ${score} out of 100: ${BAND_LABEL[band]}`}>
           <path d={ARC} fill="none" stroke="#111" strokeWidth="30" strokeLinecap="round" />
           <path d={ARC} fill="none" stroke="#fff8ec" strokeWidth="22" strokeLinecap="round" />
@@ -32,21 +33,21 @@ export function TrustScore({ score }: { score: number }) {
           )}
         </svg>
         <div className="absolute inset-x-0 bottom-0 text-center">
-          <CountUp value={score} className="font-display text-6xl leading-none font-extrabold" />
+          <CountUp value={score} className={`font-display leading-none font-extrabold ${sm ? 'text-5xl' : 'text-6xl'}`} />
           <div className="text-xs font-bold text-ink/50">out of 100</div>
         </div>
       </div>
       <motion.div
-        className="mt-4"
+        className={sm ? 'mt-3' : 'mt-4'}
         initial={{ scale: 2, rotate: -20, opacity: 0 }}
         animate={{ scale: 1, rotate: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.9 }}
       >
-        <Sticker tone={BAND_TONE[band]} rotate={-5} className="!px-5 !py-2 font-display !text-2xl">
+        <Sticker tone={BAND_TONE[band]} rotate={-5} className={`font-display ${sm ? '!px-4 !py-1.5 !text-xl' : '!px-5 !py-2 !text-2xl'}`}>
           {BAND_VIBE[band]}
         </Sticker>
       </motion.div>
-      <div className="mt-3 text-xs font-bold tracking-wider text-ink/60 uppercase">{BAND_LABEL[band]}</div>
+      <div className={`${sm ? 'mt-2' : 'mt-3'} text-xs font-bold tracking-wider text-ink/60 uppercase`}>{BAND_LABEL[band]}</div>
     </div>
   )
 }

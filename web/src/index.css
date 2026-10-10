@@ -151,3 +151,15 @@ body {
   .brutal, .brutal-sm, .brutal-btn, .sticker { box-shadow: none !important; }
   .dot-grid { background-image: none; }
 }
+
+/* Torn till-receipt edges (report "The damage" section) */
+.receipt-edge {
+  height: 12px;
+  background:
+    linear-gradient(135deg, #ffffff 6px, transparent 0) 0 0 / 12px 12px repeat-x,
+    linear-gradient(-135deg, #ffffff 6px, transparent 0) 0 0 / 12px 12px repeat-x;
+}
+.receipt-edge-bottom { transform: rotate(180deg); }
+.receipt-outline {
+  filter: drop-shadow(1.5px 0 0 #111) drop-shadow(-1.5px 0 0 #111) drop-shadow(0 1.5px 0 #111) drop-shadow(0 -1.5px 0 #111) drop-shadow(5px 5px 0 #111);
+}

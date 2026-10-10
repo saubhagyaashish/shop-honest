@@ -11,10 +11,12 @@ interface Props {
   findings: Finding[]
   latestFindingId?: string
   busy: boolean
+  /** Shown over the page when the agent was stopped, e.g. "Sign-in required". */
+  blockedReason?: string
 }
 
 /** The agent's browser: latest screenshot, a scan sweep, and a stamp on every catch. */
-export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, busy }: Props) {
+export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, busy, blockedReason }: Props) {
   const scroller = useRef<HTMLDivElement>(null)
   const image = useRef<HTMLImageElement>(null)
 
@@ -40,7 +42,7 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
     : { left: '62%', top: '9%' }
 
   return (
-    <div className="brutal flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white">
+    <div className="brutal flex max-h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white">
       <div className="flex items-center gap-3 border-b-2 border-ink bg-cream px-3 py-2.5">
         <div className="flex gap-1.5" aria-hidden="true">
           <span className="h-3 w-3 rounded-full border-2 border-ink bg-pink" />
@@ -56,7 +58,7 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
           </span>
         )}
       </div>
-      <div ref={scroller} className="dot-grid relative min-h-0 flex-1 overflow-y-auto bg-cream">
+      <div ref={scroller} className="dot-grid relative min-h-0 overflow-y-auto bg-cream">
         {screenshotUrl ? (
           <div className="relative">
             <motion.img
@@ -97,8 +99,21 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
                 </div>
               )
             })}
+            {blockedReason && (
+              <div className="absolute inset-0 grid place-items-center bg-ink/35 backdrop-blur-[2px]">
+                <motion.div
+                  className="brutal rounded-2xl bg-sun px-5 py-4 text-center"
+                  initial={{ scale: 0.6, rotate: -8, opacity: 0 }}
+                  animate={{ scale: 1, rotate: -2, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 16 }}
+                >
+                  <div className="font-display text-xl font-extrabold">🔒 {blockedReason}</div>
+                  <div className="mt-1 text-[13px] font-semibold">The agent stopped here. Later steps are not audited.</div>
+                </motion.div>
+              </div>
+            )}
             <AnimatePresence>
-              {busy && (
+              {busy && !blockedReason && (
                 <motion.div
                   className="pointer-events-none absolute z-10"
                   initial={{ opacity: 0 }}
@@ -116,7 +131,7 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
             </AnimatePresence>
           </div>
         ) : (
-          <div className="grid h-full min-h-72 place-items-center p-8 text-center">
+          <div className="grid min-h-72 place-items-center p-8 text-center">
             <div>
               <motion.div className="mx-auto h-12 w-12 rounded-full border-4 border-ink border-t-lime" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
               <p className="mt-4 font-display text-lg font-extrabold">{busy ? 'Opening the page…' : 'Waiting for the agent…'}</p>

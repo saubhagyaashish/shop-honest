@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react'
-import type { AgentName, AuditEvent, AuditReport, Finding, JourneyStep, StepCapture } from '../shared/contract'
+import type { AgentName, AuditEvent, AuditReport, Finding, JourneyStep, Money, StepCapture } from '../shared/contract'
 import { auditSource } from './source'
 
 export interface LogEntry {
@@ -7,6 +7,12 @@ export interface LogEntry {
   at: number
   agent: AgentName
   message: string
+}
+
+export interface PricePoint {
+  step: JourneyStep
+  label: string
+  total: Money
 }
 
 export interface AuditState {
@@ -20,13 +26,17 @@ export interface AuditState {
   captures: StepCapture[]
   findings: Finding[]
   logs: LogEntry[]
+  /** Running totals the agent read along the journey. */
+  priceTrail: PricePoint[]
+  /** Where the agent was stopped, e.g. by a sign-in wall. */
+  blocked?: { step: JourneyStep; reason: string }
   report?: AuditReport
   error?: string
   /** Bumps on every new finding so views can flash it. */
   latestFindingId?: string
 }
 
-const INITIAL: AuditState = { status: 'connecting', stepsVisited: [], captures: [], findings: [], logs: [] }
+const INITIAL: AuditState = { status: 'connecting', stepsVisited: [], captures: [], findings: [], logs: [], priceTrail: [] }
 
 type Action = { type: 'reset' } | { type: 'event'; event: AuditEvent }
 
@@ -54,6 +64,14 @@ function reduce(state: AuditState, action: Action): AuditState {
         ...state,
         logs: [...state.logs, { id: state.logs.length, at: Date.now(), agent: e.agent, message: e.message }],
       }
+    case 'step.blocked':
+      return {
+        ...state,
+        blocked: { step: e.step, reason: e.reason },
+        browser: { url: e.url, screenshotUrl: e.screenshotUrl ?? state.browser?.screenshotUrl },
+      }
+    case 'price.observed':
+      return { ...state, priceTrail: [...state.priceTrail, { step: e.step, label: e.label, total: e.total }] }
     case 'finding':
       return { ...state, findings: [...state.findings, e.finding], latestFindingId: e.finding.id }
     case 'audit.completed':

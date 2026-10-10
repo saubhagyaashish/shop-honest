@@ -12,7 +12,7 @@ export interface PatternInfo {
 const CCPA = 'CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023'
 
 function ccpa(item: number): RuleCitation {
-  return { source: CCPA, clause: `Annexure 1, item ${item}` }
+  return { source: CCPA, clause: `Annexure 1, item ${item}`, verified: true }
 }
 
 // Order and numbering follow Annexure 1 of the notified guidelines (30 Nov 2023).
@@ -115,6 +115,7 @@ export const PATTERNS: Record<PatternId, PatternInfo> = {
     rule: {
       source: 'Consumer Protection Act, 2019',
       clause: 'Sec. 2(28) misleading advertisement; Sec. 2(47) unfair trade practice',
+      verified: true,
     },
     defaultSeverity: 'high',
   },

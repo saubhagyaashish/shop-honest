@@ -1,32 +1,102 @@
-import { Maximize2 } from 'lucide-react'
-import { motion } from 'motion/react'
+import { ChevronDown, Maximize2 } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 import type { ReactNode } from 'react'
-import type { Finding } from '../../shared/contract'
+import type { Finding, Precedent, RuleCitation } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { STEP_LABEL } from '../labels'
 import { PATTERN_ICON } from '../patternIcons'
 import { REVIEW_THRESHOLD } from '../score'
-import { AgentTag, ConfidenceMeter, SeverityBadge, StatusBadge } from './bits'
+import { AgentTag, ConfidenceMeter, SeverityBadge } from './bits'
 import { Polaroid } from './Evidence'
 
-/** Full finding as it appears in the report. */
-export function FindingCard({ finding, onOpenEvidence, footer }: { finding: Finding; onOpenEvidence: () => void; footer?: ReactNode }) {
-  const pattern = PATTERNS[finding.patternId]
+const SEVERITY_BAR = { high: 'bg-pink', medium: 'bg-sun', low: 'bg-ink/20' } as const
+
+interface FindingRowProps {
+  finding: Finding
+  open: boolean
+  onToggle: () => void
+  onOpenEvidence: () => void
+  /** Citation for the selected region; falls back to the finding's primary rule. */
+  citation?: RuleCitation
+  regionName?: string
+  precedents?: Precedent[]
+  /** Money this finding costs the shopper, e.g. "+₹199". */
+  impact?: string
+  /** Shown on the row itself, e.g. reviewer buttons. */
+  actions?: ReactNode
+}
+
+/** One finding as a compact, expandable row. */
+export function FindingRow({ finding, open, onToggle, onOpenEvidence, citation, regionName, precedents = [], impact, actions }: FindingRowProps) {
+  const rule = citation ?? finding.rule
   const Icon = PATTERN_ICON[finding.patternId]
+  const review = finding.status === 'needs_review'
+  return (
+    <article id={`finding-${finding.id}`} className={`scroll-mt-36 overflow-hidden rounded-2xl border-2 border-ink bg-white break-inside-avoid ${open ? 'shadow-brutal' : 'shadow-brutal-sm'}`}>
+      <div className="flex flex-col sm:flex-row sm:items-stretch">
+        <button type="button" onClick={onToggle} aria-expanded={open} className="relative flex min-w-0 flex-1 items-center gap-3 py-3 pr-4 pl-6 text-left hover:bg-cream/60">
+          <span className={`absolute inset-y-0 left-0 w-2 ${review ? 'bg-sun' : SEVERITY_BAR[finding.severity]}`} aria-hidden="true" />
+          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-ink ${review ? 'bg-sun' : 'bg-pink'}`}>
+            <Icon size={18} strokeWidth={2.6} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-extrabold tracking-wide uppercase">
+              {PATTERNS[finding.patternId].name}
+              <span className="text-ink/30">·</span>
+              <span className="text-ink/60">{STEP_LABEL[finding.step]}</span>
+              <SeverityBadge severity={finding.severity} />
+            </span>
+            <span className="mt-0.5 block text-[15px] leading-snug font-bold">{finding.title}</span>
+            <span className="mt-0.5 block truncate text-[12px] text-ink/55">
+              {regionName ? `${regionName}: ` : ''}
+              {rule.clause}
+            </span>
+          </span>
+          {impact && <span className="hidden shrink-0 rounded-lg border-2 border-ink bg-pink px-2 py-0.5 font-mono text-[13px] font-bold sm:inline">{impact}</span>}
+          <ChevronDown size={20} strokeWidth={2.6} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+        {actions && <div className="flex shrink-0 items-center gap-2 border-t-2 border-ink/10 px-4 py-2 sm:border-t-0 sm:border-l-2 sm:py-0">{actions}</div>}
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="detail"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <FindingDetail finding={finding} rule={rule} regionName={regionName} precedents={precedents} onOpenEvidence={onOpenEvidence} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </article>
+  )
+}
+
+function FindingDetail({
+  finding,
+  rule,
+  regionName,
+  precedents,
+  onOpenEvidence,
+}: {
+  finding: Finding
+  rule: RuleCitation
+  regionName?: string
+  precedents: Precedent[]
+  onOpenEvidence: () => void
+}) {
   const frames = finding.evidence.frames
   const review = finding.status === 'needs_review'
   return (
-    <motion.article
-      className="brutal grid overflow-hidden rounded-3xl bg-white break-inside-avoid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
-    >
+    <div className="grid border-t-2 border-ink md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <button
         type="button"
         onClick={onOpenEvidence}
-        className={`group dot-grid relative flex flex-col justify-center gap-6 border-b-2 border-ink p-6 text-left md:border-r-2 md:border-b-0 ${review ? 'bg-sun/25' : 'bg-pink/15'}`}
+        className={`group dot-grid relative flex flex-col justify-center gap-5 border-b-2 border-ink p-5 text-left md:border-r-2 md:border-b-0 ${review ? 'bg-sun/25' : 'bg-pink/15'}`}
         aria-label="Open screenshot evidence"
       >
         {frames.map((f, i) => (
@@ -37,19 +107,8 @@ export function FindingCard({ finding, onOpenEvidence, footer }: { finding: Find
         </span>
       </button>
 
-      <div className="flex flex-col p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`grid h-8 w-8 place-items-center rounded-lg border-2 border-ink ${review ? 'bg-sun' : 'bg-pink'}`}>
-            <Icon size={16} strokeWidth={2.6} aria-hidden="true" />
-          </span>
-          <span className="text-sm font-extrabold">{pattern.name}</span>
-          <SeverityBadge severity={finding.severity} />
-          <span className="ml-auto">
-            <StatusBadge status={finding.status} />
-          </span>
-        </div>
-        <h3 className="mt-3 font-display text-[22px] leading-tight font-extrabold tracking-tight">{finding.title}</h3>
-        <p className="mt-2 text-[15px] leading-relaxed text-ink/75">{finding.explanation}</p>
+      <div className="flex flex-col p-5">
+        <p className="text-[15px] leading-relaxed text-ink/80">{finding.explanation}</p>
 
         <ul className="mt-4 space-y-1.5 text-sm">
           {finding.evidence.observations.map((o) => (
@@ -61,13 +120,32 @@ export function FindingCard({ finding, onOpenEvidence, footer }: { finding: Find
         </ul>
 
         <div className="mt-4 rounded-xl border-2 border-dashed border-ink bg-cream px-3 py-2.5 text-[13px]">
-          <span className="font-extrabold">📜 Rule breached:</span> {finding.rule.source}, {finding.rule.clause}
+          <span className="font-extrabold">📜 Rule broken{regionName ? ` (${regionName})` : ''}:</span> {rule.source}, {rule.clause}
+          {rule.verified === false && <span className="ml-1 text-[11px] font-semibold text-ink/50">(clause to confirm)</span>}
         </div>
 
+        <div className="mt-3 rounded-xl border-2 border-ink bg-lime/40 px-3 py-2.5 text-[13px]">
+          <span className="font-extrabold">🛠 Fix:</span> {finding.remediation}
+        </div>
+
+        {precedents.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {precedents.map((p) => (
+              <a
+                key={p.id}
+                href={p.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-lg border-2 border-ink bg-pink px-2 py-0.5 text-[12px] font-bold"
+                title={p.summary}
+              >
+                💸 Cost {p.company} {p.outcome.split(' (')[0]} · {p.regulator} ↗
+              </a>
+            ))}
+          </div>
+        )}
+
         <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 text-xs font-medium text-ink/70">
-          <span>
-            Step: <b className="text-ink">{STEP_LABEL[finding.step]}</b>
-          </span>
           <span className="flex items-center gap-1.5">
             Found by <AgentTag agent={finding.detectedBy} />
           </span>
@@ -75,9 +153,8 @@ export function FindingCard({ finding, onOpenEvidence, footer }: { finding: Find
             Confidence <ConfidenceMeter value={finding.confidence} threshold={REVIEW_THRESHOLD} />
           </span>
         </div>
-        {footer}
       </div>
-    </motion.article>
+    </div>
   )
 }
 
