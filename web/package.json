@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "dev:live": "vite --mode live",
     "schema": "ts-json-schema-generator --path src/shared/contract.ts --type \"*\" --expose all --tsconfig tsconfig.app.json --out ../shared/contract.schema.json",
-    "recordings": "tsx scripts/export-recordings.ts"
+    "recordings": "tsx scripts/export-recordings.ts",
+    "knowledge": "tsx scripts/export-knowledge.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

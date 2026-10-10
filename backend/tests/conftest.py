@@ -1,5 +1,7 @@
 import json
 from collections.abc import AsyncIterator
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import httpx
 import pytest
@@ -7,6 +9,9 @@ from jsonschema import Draft7Validator
 
 from app.config import REPO_DIR, Settings
 from app.main import create_app
+
+if TYPE_CHECKING:
+    from app.agents.checks import Evidence
 
 SCHEMA = json.loads((REPO_DIR / "shared" / "contract.schema.json").read_text(encoding="utf-8"))
 EVENT_VALIDATOR = Draft7Validator({"$ref": "#/definitions/AuditEvent", "definitions": SCHEMA["definitions"]})
@@ -20,7 +25,7 @@ async def fake_resolver(host: str) -> list[str]:
 
 
 def make_settings(**overrides: object) -> Settings:
-    return Settings(_env_file=None, **{"replay_speed": 0, **overrides})
+    return Settings(_env_file=None, **{"replay_speed": 0, "enable_live": False, **overrides})
 
 
 @pytest.fixture
@@ -54,3 +59,21 @@ async def run_audit(client: httpx.AsyncClient, url: str = STORE_A) -> tuple[str,
     assert stream.status_code == 200
     assert stream.headers["content-type"].startswith("text/event-stream")
     return audit_id, parse_sse(stream.text)
+
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def load_walk(store: str) -> tuple["Evidence", list[dict]]:
+    """Evidence and steps from a real walk of a demo store (tests/fixtures, made by scripts/capture_signals.py)."""
+    from app.agents.checks import Evidence
+    from app.browser.capture import Capture
+
+    data = json.loads((FIXTURES / f"signals-{store}.json").read_text(encoding="utf-8"))
+    captures = {
+        label: Capture(
+            n=c["n"], step=c["step"], label=label, url=c["url"], screenshot_url=f"/frames/{c['n']}.jpg", signals=c["signals"]
+        )
+        for label, c in data["captures"].items()
+    }
+    return Evidence(captures=captures, added_items=data["addedItems"]), data["steps"]

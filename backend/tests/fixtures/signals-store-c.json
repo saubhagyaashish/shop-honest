@@ -1,0 +1,464 @@
+{
+ "addedItems": [
+  "SonicBuds Pro ANC Wireless Earbuds"
+ ],
+ "captures": {
+  "product-popup": {
+   "n": 1,
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 917,
+    "timers": [
+     {
+      "text": "Deal ends in 09:59",
+      "seconds": 599,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.42420937840785167,
+       "w": 0.14708251953125,
+       "h": 0.04362050163576881
+      }
+     }
+    ],
+    "deadlines": [],
+    "stock": [
+     {
+      "text": "Hurry, only 2 left in stock!",
+      "count": 2,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.46892039258451473,
+       "w": 0.1420166015625,
+       "h": 0.027262813522355506
+      }
+     }
+    ],
+    "salesClaims": [
+     {
+      "text": "🔥 120+ bought in the last 24 hours",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.28680479825517996,
+       "w": 0.185498046875,
+       "h": 0.03489640130861505
+      }
+     }
+    ],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 3999,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "dialogs": [
+     {
+      "text": "WAIT! ONE-TIME OFFER Extra 10% off on your first order Unlock my 10% offNo thanks, I prefer paying full price",
+      "buttons": [
+       {
+        "text": "Unlock my 10% off",
+        "bbox": {
+         "x": 0.365625,
+         "y": 0.4822791712104689,
+         "w": 0.26875,
+         "h": 0.05234460196292257
+        }
+       },
+       {
+        "text": "No thanks, I prefer paying full price",
+        "bbox": {
+         "x": 0.4195068359375,
+         "y": 0.5389858233369684,
+         "w": 0.160986328125,
+         "h": 0.026172300981461286
+        }
+       }
+      ],
+      "bbox": {
+       "x": 0.346875,
+       "y": 0.28380588876772084,
+       "w": 0.30625,
+       "h": 0.3047982551799346
+      }
+     }
+    ],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "product-first": {
+   "n": 2,
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 917,
+    "timers": [
+     {
+      "text": "Deal ends in 09:57",
+      "seconds": 597,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.42420937840785167,
+       "w": 0.14708251953125,
+       "h": 0.04362050163576881
+      }
+     }
+    ],
+    "deadlines": [],
+    "stock": [
+     {
+      "text": "Hurry, only 2 left in stock!",
+      "count": 2,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.46892039258451473,
+       "w": 0.1420166015625,
+       "h": 0.027262813522355506
+      }
+     }
+    ],
+    "salesClaims": [
+     {
+      "text": "🔥 120+ bought in the last 24 hours",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.28680479825517996,
+       "w": 0.185498046875,
+       "h": 0.03489640130861505
+      }
+     }
+    ],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 3999,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "product-reload": {
+   "n": 3,
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 917,
+    "timers": [
+     {
+      "text": "Deal ends in 09:59",
+      "seconds": 599,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.42420937840785167,
+       "w": 0.14708251953125,
+       "h": 0.04362050163576881
+      }
+     }
+    ],
+    "deadlines": [],
+    "stock": [
+     {
+      "text": "Hurry, only 2 left in stock!",
+      "count": 2,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.46892039258451473,
+       "w": 0.1420166015625,
+       "h": 0.027262813522355506
+      }
+     }
+    ],
+    "salesClaims": [
+     {
+      "text": "🔥 120+ bought in the last 24 hours",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.28680479825517996,
+       "w": 0.185498046875,
+       "h": 0.03489640130861505
+      }
+     }
+    ],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 3999,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "variant": {
+   "n": 4,
+   "step": "variant",
+   "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro?colour=pearl",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro?colour=pearl",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 917,
+    "timers": [
+     {
+      "text": "Deal ends in 09:59",
+      "seconds": 599,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.42420937840785167,
+       "w": 0.14708251953125,
+       "h": 0.04362050163576881
+      }
+     }
+    ],
+    "deadlines": [],
+    "stock": [
+     {
+      "text": "Hurry, only 2 left in stock!",
+      "count": 2,
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.46892039258451473,
+       "w": 0.1420166015625,
+       "h": 0.027262813522355506
+      }
+     }
+    ],
+    "salesClaims": [
+     {
+      "text": "🔥 120+ bought in the last 24 hours",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.28680479825517996,
+       "w": 0.185498046875,
+       "h": 0.03489640130861505
+      }
+     }
+    ],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 3999,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "cart": {
+   "n": 5,
+   "step": "cart",
+   "url": "http://localhost:5173/demo/store-c/cart",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-c/cart",
+    "title": "Shopping Cart | BazaarNest",
+    "heading": "My Cart (2)",
+    "width": 1280,
+    "height": 800,
+    "timers": [],
+    "deadlines": [],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 3999,
+     "text": "₹3,999 ₹1,499",
+     "bbox": {
+      "x": 0.15,
+      "y": 0.326875,
+      "w": 0.496875,
+      "h": 0.035
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [
+     {
+      "name": "SonicBuds Pro ANC Wireless Earbuds",
+      "text": "SonicBuds Pro ANC Wireless Earbuds Pearl White ₹3,999 ₹1,499 REMOVE",
+      "amount": 1499,
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.251875,
+       "w": 0.603125,
+       "h": 0.1625
+      }
+     },
+     {
+      "name": "1-Year Accidental Damage Protection",
+      "text": "1-Year Accidental Damage Protection 12 months · Sold by BazaarNest Care ₹199 REMOVE",
+      "amount": 199,
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.404375,
+       "w": 0.603125,
+       "h": 0.1625
+      }
+     }
+    ],
+    "summary": {
+     "rows": [
+      {
+       "label": "Price (2 items)",
+       "amount": 4198,
+       "text": "Price (2 items) ₹4,198",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.205625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Discount",
+       "amount": -2500,
+       "text": "Discount − ₹2,500",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.245625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Delivery charges",
+       "amount": 0,
+       "text": "Delivery charges FREE",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.285625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      }
+     ],
+     "total": {
+      "label": "Total amount",
+      "amount": 1698,
+      "text": "Total amount ₹1,698",
+      "bbox": {
+       "x": 0.684375,
+       "y": 0.325625,
+       "w": 0.240625,
+       "h": 0.05625
+      }
+     },
+     "bbox": {
+      "x": 0.66875,
+      "y": 0.129375,
+      "w": 0.271875,
+      "h": 0.32875
+     }
+    },
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "checkout": {
+   "n": 6,
+   "step": "checkout",
+   "url": "http://localhost:5173/demo/store-c/checkout",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-c/checkout",
+    "title": "Checkout | BazaarNest",
+    "heading": "Login",
+    "width": 1280,
+    "height": 800,
+    "timers": [],
+    "deadlines": [],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": null,
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [],
+    "signInWall": {
+     "reason": "Sign-in required",
+     "bbox": {
+      "x": 0.436865234375,
+      "y": 0.129375,
+      "w": 0.366259765625,
+      "h": 0.4475
+     }
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro",
+   "screenshotUrl": "/api/audits/fixture/frames/2.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "variant",
+   "url": "http://localhost:5173/demo/store-c/p/sonicbuds-pro?colour=pearl",
+   "screenshotUrl": "/api/audits/fixture/frames/4.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "cart",
+   "url": "http://localhost:5173/demo/store-c/cart",
+   "screenshotUrl": "/api/audits/fixture/frames/5.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "checkout",
+   "url": "http://localhost:5173/demo/store-c/checkout",
+   "status": "blocked",
+   "blockedReason": "Sign-in required",
+   "screenshotUrl": "/api/audits/fixture/frames/6.jpg"
+  }
+ ]
+}

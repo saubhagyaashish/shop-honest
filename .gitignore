@@ -13,3 +13,4 @@ test-results/
 .ruff_cache/
 .pytest_cache/
 .vite/
+backend/var/

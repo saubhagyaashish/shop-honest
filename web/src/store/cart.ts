@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { EXPRESS_DELIVERY_PRICE, PLUS_MEMBERSHIP, PROTECTION_PLAN } from './catalog'
-import type { Colour, Product, StoreId } from './catalog'
+import type { Colour, Product } from './catalog'
 import type { StoreSetup } from './variants'
 
 export interface CartLine {
@@ -25,13 +25,14 @@ export interface ShopState {
 
 const EMPTY: ShopState = { lines: [], plus: null, delivery: 'standard' }
 
-function storageKey(storeId: StoreId) {
-  return `bazaarnest-shop-${storeId}`
+/** Per store instance (route key), so stores sharing data (A and C) keep separate carts. */
+function storageKey(storeKey: string) {
+  return `bazaarnest-shop-${storeKey}`
 }
 
-function load(storeId: StoreId): ShopState {
+function load(storeKey: string): ShopState {
   try {
-    const raw = localStorage.getItem(storageKey(storeId))
+    const raw = localStorage.getItem(storageKey(storeKey))
     return raw ? { ...EMPTY, ...(JSON.parse(raw) as ShopState) } : EMPTY
   } catch {
     return EMPTY
@@ -50,15 +51,15 @@ function protectionLine(): CartLine {
 }
 
 export function useShopState(setup: StoreSetup) {
-  const [state, setState] = useState<ShopState>(() => load(setup.id))
+  const [state, setState] = useState<ShopState>(() => load(setup.key))
 
   useEffect(() => {
     try {
-      localStorage.setItem(storageKey(setup.id), JSON.stringify(state))
+      localStorage.setItem(storageKey(setup.key), JSON.stringify(state))
     } catch {
       // Storage unavailable (private mode): the cart just won't survive a reload.
     }
-  }, [setup.id, state])
+  }, [setup.key, state])
 
   const addProduct = useCallback(
     (product: Product, colour: Colour) => {

@@ -1,3 +1,4 @@
+import type { JourneyStep } from '../shared/contract'
 import type { StoreId } from './catalog'
 
 /**
@@ -22,6 +23,8 @@ export interface StoreBehaviour {
   lopsidedDeliveryChoice: boolean
   /** "120+ bought in the last 24 hours" with nothing behind it. */
   buyersClaim: boolean
+  /** A sign-in wall at this step: a logged-out shopper (or agent) can't get past it. */
+  signInWallAt?: JourneyStep
 }
 
 export interface StoreSetup {
@@ -74,8 +77,18 @@ export const STORES: Record<StoreId, StoreSetup> = {
   },
 }
 
+/** Store A's data and tricks, but checkout needs an account: the logged-out shopper's view. */
+export const STORE_C: StoreSetup = {
+  ...STORES.a,
+  key: 'store-c',
+  behaviour: { ...STORES.a.behaviour, signInWallAt: 'checkout' },
+}
+
+/** Every store instance served under /demo/. */
+export const ALL_STORES: StoreSetup[] = [STORES.a, STORES.b, STORE_C]
+
 export function storeForKey(key: string | undefined): StoreSetup | undefined {
-  return Object.values(STORES).find((s) => s.key === key)
+  return ALL_STORES.find((s) => s.key === key)
 }
 
 export function storePath(setup: StoreSetup, path = ''): string {

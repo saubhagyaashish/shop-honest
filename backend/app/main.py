@@ -13,6 +13,7 @@ from app.errors import install_error_handlers
 from app.replay.player import RecordingLibrary
 from app.runner.runner import AuditRunner
 from app.stores.events import MemoryEventLog
+from app.stores.frames import LocalFrameStore
 
 
 def create_app(settings: Settings | None = None, resolver: Resolver = system_resolver) -> FastAPI:
@@ -34,7 +35,8 @@ def create_app(settings: Settings | None = None, resolver: Resolver = system_res
     app.state.resolver = resolver
     app.state.events = MemoryEventLog()
     app.state.library = RecordingLibrary.load(settings.recordings_dir)
-    app.state.runner = AuditRunner(app.state.events, settings)
+    app.state.frames = LocalFrameStore(settings.frames_dir)
+    app.state.runner = AuditRunner(app.state.events, settings, frames=app.state.frames, resolver=resolver)
 
     install_error_handlers(app)
     if settings.cors_origins:

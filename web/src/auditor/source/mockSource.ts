@@ -1,9 +1,10 @@
 import type { AuditEvent, JourneyStep } from '../../shared/contract'
 import { JOURNEY_STEPS } from '../../shared/contract'
 import { sampleForUrl } from '../samples'
-import { buildMockAudit } from '../mock/scripts'
+import { buildMockAuditForStore } from '../mock/scripts'
 import type { ScriptedEvent } from '../mock/scripts'
-import type { StoreId } from '../../store/catalog'
+import { storeForKey } from '../../store/variants'
+import type { StoreSetup } from '../../store/variants'
 import { UnsupportedTargetError } from './AuditSource'
 import type { AuditSource } from './AuditSource'
 
@@ -14,9 +15,9 @@ interface Run {
   deliver: (e: AuditEvent) => void
 }
 
-function storeFromAuditId(auditId: string): StoreId | undefined {
-  const m = /^mock-([ab])-/.exec(auditId)
-  return m ? (m[1] as StoreId) : undefined
+function storeFromAuditId(auditId: string): StoreSetup | undefined {
+  const m = /^mock-(store-[a-z])-/.exec(auditId)
+  return m ? storeForKey(m[1]) : undefined
 }
 
 /** Set VITE_MOCK_BLOCK_AT=checkout (or cart, payment…) to replay audits that hit a sign-in wall. */
@@ -44,21 +45,21 @@ export function createMockSource(): AuditSource {
       const sample = sampleForUrl(targetUrl)
       if (!sample) {
         throw new UnsupportedTargetError(
-          'This demo build replays audits of the two sample stores. Auditing any URL arrives with the agent backend.',
+          'This demo build replays audits of the sample stores. Auditing any URL arrives with the agent backend.',
         )
       }
-      return `mock-${sample.storeId}-${Date.now().toString(36)}`
+      return `mock-${sample.key}-${Date.now().toString(36)}`
     },
 
     subscribe(auditId, onEvent) {
-      const storeId = storeFromAuditId(auditId)
-      if (!storeId) {
+      const store = storeFromAuditId(auditId)
+      if (!store) {
         onEvent({ type: 'audit.failed', error: `Unknown audit "${auditId}".` })
         return () => {}
       }
       const startedAt = new Date().toISOString()
       const run: Run = {
-        events: buildMockAudit(storeId, auditId, window.location.origin, { blockAt: simulatedWall() }),
+        events: buildMockAuditForStore(store, auditId, window.location.origin, { blockAt: simulatedWall() }),
         next: 0,
         deliver: (e) => onEvent(stamp(e, startedAt)),
       }

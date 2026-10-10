@@ -6,15 +6,18 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import APIRouter, Header, Query, Request, Response
+from fastapi.responses import FileResponse
 from sse_starlette import EventSourceResponse
 
 from app.browser.url_guard import check_target
 from app.config import Settings
 from app.contract.models import TERMINAL_EVENTS, AuditStatusResponse, CreateAuditRequest, CreateAuditResponse
 from app.errors import ApiError
+from app.journeys import journey_for
 from app.replay.player import RecordingLibrary, origin_of
 from app.runner.runner import AuditRunner
 from app.stores.events import AuditRecord, EventLog
+from app.stores.frames import FrameStore
 
 router = APIRouter(prefix="/api")
 
@@ -53,26 +56,44 @@ async def health(request: Request) -> dict[str, Any]:
 async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAuditResponse:
     settings = _settings(request)
     url = await check_target(body.targetUrl, settings, request.app.state.resolver)
-
-    if body.mode == "live" or settings.model_provider != "replay":
-        raise ApiError(
-            501,
-            "live_unavailable",
-            "Live audits aren't switched on yet. This deployment replays recorded runs of the demo stores.",
-        )
-    recording = _library(request).match(url)
-    if recording is None:
-        raise ApiError(409, "no_recording", "There's no recorded run for this page yet. Try one of the demo stores.")
-
     runner = _runner(request)
     if runner.active >= settings.max_concurrent_audits:
         raise ApiError(503, "at_capacity", "All audit slots are busy. Try again in a moment.")
 
+    # auto: a recorded run if there is one, otherwise a live run.
+    recording = _library(request).match(url) if body.mode != "live" else None
+    if recording is None and body.mode == "replay":
+        raise ApiError(409, "no_recording", "There's no recorded run for this page yet. Try one of the demo stores.")
+
     audit_id = f"aud_{secrets.token_hex(6)}"
-    record = AuditRecord(audit_id=audit_id, target_url=url, mode="replay")
+    if recording is not None:
+        record = AuditRecord(audit_id=audit_id, target_url=url, mode="replay")
+        await _events(request).create(record)
+        await runner.start_replay(record, recording, origin_of(url))
+        return CreateAuditResponse(auditId=audit_id, mode="replay", eventsUrl=f"/api/audits/{audit_id}/events")
+
+    if not settings.enable_live:
+        if body.mode == "auto":
+            raise ApiError(409, "no_recording", "There's no recorded run for this page yet. Try one of the demo stores.")
+        raise ApiError(
+            501,
+            "live_unavailable",
+            "Live audits are switched off in this deployment. It replays recorded runs of the demo stores.",
+        )
+    journey = journey_for(url)
+    if journey is None:
+        raise ApiError(
+            409,
+            "no_navigator",
+            "The agents don't know how to shop this site yet. Try one of the demo stores; any-store navigation is coming.",
+        )
+    if runner.active_live >= settings.max_live_audits:
+        raise ApiError(503, "at_capacity", "Every live browser is busy. Try again in a minute, or replay a recorded run.")
+
+    record = AuditRecord(audit_id=audit_id, target_url=url, mode="live")
     await _events(request).create(record)
-    await runner.start_replay(record, recording, origin_of(url))
-    return CreateAuditResponse(auditId=audit_id, mode="replay", eventsUrl=f"/api/audits/{audit_id}/events")
+    await runner.start_live(record, journey)
+    return CreateAuditResponse(auditId=audit_id, mode="live", eventsUrl=f"/api/audits/{audit_id}/events")
 
 
 @router.get("/audits/{audit_id}", response_model=AuditStatusResponse, response_model_exclude_none=True)
@@ -115,6 +136,16 @@ async def stream_events(
             await events.wait(audit_id, position, max_wait=HEARTBEAT_SECONDS)
 
     return EventSourceResponse(stream(), ping=HEARTBEAT_SECONDS, headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@router.get("/audits/{audit_id}/frames/{n}.jpg", response_class=FileResponse)
+async def get_frame(audit_id: str, n: int, request: Request) -> FileResponse:
+    await _record_or_404(request, audit_id)
+    frames: FrameStore = request.app.state.frames
+    path = frames.path(audit_id, n)
+    if path is None:
+        raise ApiError(404, "not_found", f"Audit {audit_id} has no frame {n}.")
+    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400, immutable"})
 
 
 @router.post("/audits/{audit_id}/fast-forward", status_code=202)

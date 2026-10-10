@@ -1,0 +1,106 @@
+{
+  "store-a": {
+    "blockedAt": null,
+    "findings": [
+      {
+        "id": "a-guilt-decline",
+        "patternId": "confirm_shaming",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-inflated-mrp",
+        "patternId": "misleading_price",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-restarting-timer",
+        "patternId": "false_urgency",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-frozen-stock",
+        "patternId": "false_urgency",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-buyers-claim",
+        "patternId": "false_urgency",
+        "step": "product",
+        "status": "needs_review"
+      },
+      {
+        "id": "a-added-protection",
+        "patternId": "basket_sneaking",
+        "step": "cart",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-ticked-membership",
+        "patternId": "subscription_trap",
+        "step": "checkout",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-lopsided-delivery",
+        "patternId": "interface_interference",
+        "step": "checkout",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-late-fees",
+        "patternId": "drip_pricing",
+        "step": "payment",
+        "status": "confirmed"
+      }
+    ]
+  },
+  "store-b": {
+    "blockedAt": null,
+    "findings": []
+  },
+  "store-c": {
+    "blockedAt": "checkout",
+    "findings": [
+      {
+        "id": "a-guilt-decline",
+        "patternId": "confirm_shaming",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-inflated-mrp",
+        "patternId": "misleading_price",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-restarting-timer",
+        "patternId": "false_urgency",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-frozen-stock",
+        "patternId": "false_urgency",
+        "step": "product",
+        "status": "confirmed"
+      },
+      {
+        "id": "a-buyers-claim",
+        "patternId": "false_urgency",
+        "step": "product",
+        "status": "needs_review"
+      },
+      {
+        "id": "a-added-protection",
+        "patternId": "basket_sneaking",
+        "step": "cart",
+        "status": "confirmed"
+      }
+    ]
+  }
+}

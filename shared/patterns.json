@@ -1,0 +1,156 @@
+{
+  "false_urgency": {
+    "name": "False urgency",
+    "description": "Falsely stating or implying urgency or scarcity to rush a purchase.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 1",
+      "verified": true
+    },
+    "fix": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+  },
+  "basket_sneaking": {
+    "name": "Basket sneaking",
+    "description": "Adding products, services or charges to the cart without the user’s consent.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 2",
+      "verified": true
+    },
+    "fix": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it."
+  },
+  "confirm_shaming": {
+    "name": "Confirm shaming",
+    "description": "Using guilt, fear or ridicule to steer the user towards a choice.",
+    "defaultSeverity": "medium",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 3",
+      "verified": true
+    },
+    "fix": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button."
+  },
+  "forced_action": {
+    "name": "Forced action",
+    "description": "Forcing an unrelated action (sign-up, app download, purchase) to continue.",
+    "defaultSeverity": "medium",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 4",
+      "verified": true
+    },
+    "fix": "Let shoppers finish the purchase without signing up, downloading an app or buying something unrelated."
+  },
+  "subscription_trap": {
+    "name": "Subscription trap",
+    "description": "Enrolling users in recurring payments by default or making exit hard.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 5",
+      "verified": true
+    },
+    "fix": "Leave memberships unticked by default, show the recurring price in normal type, and allow one-click online cancellation."
+  },
+  "interface_interference": {
+    "name": "Interface interference",
+    "description": "Visual design that highlights one option and obscures the alternative.",
+    "defaultSeverity": "medium",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 6",
+      "verified": true
+    },
+    "fix": "Give paid and free choices equal visual weight, for example two equally styled options."
+  },
+  "bait_and_switch": {
+    "name": "Bait and switch",
+    "description": "Advertising one outcome and delivering another, usually costlier.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 7",
+      "verified": true
+    },
+    "fix": "Only advertise variants and prices that are actually available to buy."
+  },
+  "drip_pricing": {
+    "name": "Drip pricing",
+    "description": "Revealing charges only late in the journey instead of upfront.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 8",
+      "verified": true
+    },
+    "fix": "Include every unavoidable fee in the price shown on the product page, or show it clearly beside that price."
+  },
+  "disguised_advertisement": {
+    "name": "Disguised advertisement",
+    "description": "Paid placements presented as editorial or organic content.",
+    "defaultSeverity": "medium",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 9",
+      "verified": true
+    },
+    "fix": "Label paid placements clearly as ads or sponsored content."
+  },
+  "nagging": {
+    "name": "Nagging",
+    "description": "Repeated requests or interruptions unrelated to the purchase.",
+    "defaultSeverity": "low",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 10",
+      "verified": true
+    },
+    "fix": "Ask once, respect the answer, and do not repeat the prompt during the same visit."
+  },
+  "trick_question": {
+    "name": "Trick question",
+    "description": "Confusing or double-negative wording that misleads the user’s choice.",
+    "defaultSeverity": "medium",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 11",
+      "verified": true
+    },
+    "fix": "Write consent choices as plain, positive statements, without double negatives."
+  },
+  "saas_billing": {
+    "name": "SaaS billing",
+    "description": "Recurring charges collected silently, e.g. after a free trial.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 12",
+      "verified": true
+    },
+    "fix": "Remind users before a trial converts to paid, and charge only with clear consent."
+  },
+  "rogue_malware": {
+    "name": "Rogue malware",
+    "description": "Software that misleads users into paying or installing malware.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+      "clause": "Annexure 1, item 13",
+      "verified": true
+    },
+    "fix": "Remove any software that misleads users into paying or installing it."
+  },
+  "misleading_price": {
+    "name": "Inflated reference price",
+    "description": "A discount calculated off an MRP that was never the real selling price.",
+    "defaultSeverity": "high",
+    "rule": {
+      "source": "Consumer Protection Act, 2019",
+      "clause": "Sec. 2(28) misleading advertisement; Sec. 2(47) unfair trade practice",
+      "verified": true
+    },
+    "fix": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP."
+  }
+}

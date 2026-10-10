@@ -3,6 +3,24 @@ import type { AuditSource } from './AuditSource'
 
 /** Consecutive stream errors, with no event in between, before we give up. */
 const MAX_RETRIES = 3
+/** Audits this tab started as live runs (kept across a refresh). */
+const LIVE_KEY = 'shophonest-live-audits'
+
+function liveAudits(): string[] {
+  try {
+    return JSON.parse(sessionStorage.getItem(LIVE_KEY) ?? '[]') as string[]
+  } catch {
+    return []
+  }
+}
+
+function rememberLive(auditId: string) {
+  try {
+    sessionStorage.setItem(LIVE_KEY, JSON.stringify([...liveAudits().slice(-20), auditId]))
+  } catch {
+    // storage unavailable: the Skip button just stays visible
+  }
+}
 
 /**
  * Talks to the backend (docs/API.md):
@@ -14,14 +32,15 @@ export function createSseSource(baseUrl = ''): AuditSource {
   return {
     mode: 'live',
 
-    async start(targetUrl) {
+    async start(targetUrl, options) {
       const res = await fetch(`${baseUrl}/api/audits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUrl }),
+        body: JSON.stringify({ targetUrl, mode: options?.live ? 'live' : 'auto' }),
       })
       if (!res.ok) throw new Error(await errorMessage(res))
-      const { auditId } = (await res.json()) as { auditId: string }
+      const { auditId, mode } = (await res.json()) as { auditId: string; mode: 'replay' | 'live' }
+      if (mode === 'live') rememberLive(auditId)
       return auditId
     },
 
@@ -54,6 +73,10 @@ export function createSseSource(baseUrl = ''): AuditSource {
 
     skipAhead(auditId) {
       void fetch(`${baseUrl}/api/audits/${encodeURIComponent(auditId)}/fast-forward`, { method: 'POST' })
+    },
+
+    canSkipAhead(auditId) {
+      return !liveAudits().includes(auditId)
     },
   }
 }

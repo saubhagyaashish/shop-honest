@@ -24,7 +24,7 @@ Request
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `targetUrl` | string (http/https URL) | yes | A product page. Must pass the URL guard (allowlist, no private or metadata addresses). |
-| `mode` | `"auto"` · `"replay"` · `"live"` | no, default `auto` | `auto`: replay a recorded run if one exists for this URL, otherwise live. `live`: always run the agents (rate-limited). |
+| `mode` | `"auto"` · `"replay"` · `"live"` | no, default `auto` | `auto`: replay a recorded run if one exists for this URL, otherwise run live. `replay`: only a recorded run. `live`: always a fresh run by the agents in a real browser (capped at `MAX_LIVE_AUDITS` at a time). |
 
 Response `202 Accepted`
 
@@ -32,7 +32,9 @@ Response `202 Accepted`
 { "auditId": "aud_7Kq2m9", "mode": "replay", "eventsUrl": "/api/audits/aud_7Kq2m9/events" }
 ```
 
-The web client only needs `auditId`; the other fields are informational.
+`mode` says which one you got. The web client remembers live audit ids so it doesn't offer "Skip to report" for them.
+
+A live audit needs a *journey* for the site: today that's the BazaarNest demo stores (`/demo/<store>/p/<product>`). Other allowed sites get `409 no_navigator` until general navigation lands (Phase 5).
 
 ### `GET /api/audits/{auditId}`: status and report
 
@@ -68,6 +70,12 @@ Response `200 OK`
 - **End:** the server closes the stream after the terminal event (`audit.completed` or `audit.failed`). Connecting after the audit has finished replays the whole log and closes.
 - Opening the stream of an audit that is still `queued` is fine: it waits for the first event.
 
+### `GET /api/audits/{auditId}/frames/{n}.jpg`: a screenshot from a live audit
+
+The full-page JPEG the Navigator captured as frame `n` (1, 2, 3…). Live events cite these in `screenshotUrl` (on `step.captured`, `step.blocked`, the report's steps and every evidence frame). `404 audit_not_found` for an unknown audit, `404 not_found` for an unknown frame. Cached privately for a day. Frames live on local disk (`FRAMES_DIR`) for now and move to Cloud Storage when deployed.
+
+Replayed audits point at static files instead (`/mock/screens/…` for the scripted recordings, `/recordings/<store>/<n>.jpg` for recorded live runs).
+
 ### `POST /api/audits/{auditId}/fast-forward`: skip ahead (replays only)
 
 Plays the rest of a replayed audit without delays; this powers "Skip to report". `202 {"ok": true}`. Returns `409 not_replay` for live audits, which can't be sped up.
@@ -89,15 +97,16 @@ Every non-2xx response has the same shape:
 | 400 | `invalid_url` | Not an http(s) URL, or malformed |
 | 403 | `host_not_allowed` | Host not on `ALLOWED_HOSTS`, or it resolves to a private/metadata address |
 | 404 | `audit_not_found` | Unknown `auditId` |
-| 409 | `no_recording` | No recorded run exists for this URL (Phase 1 serves only recordings) |
+| 409 | `no_recording` | `mode: "replay"` (or `auto` with live audits switched off) and no recorded run exists for this URL |
+| 409 | `no_navigator` | A live audit was needed but the agents don't have a journey for this site yet |
 | 409 | `not_replay` | Fast-forward requested for a live audit |
 | 400 | `invalid_request` | The body doesn't match the schema (e.g. an unknown `mode`) |
 | 429 | `rate_limited` | Too many live audits from this requester |
-| 501 | `live_unavailable` | `mode: "live"` requested before the agents are switched on (until Phase 2) |
-| 503 | `at_capacity` | All audit slots are busy; retry shortly |
+| 501 | `live_unavailable` | `mode: "live"` requested on a deployment with `ENABLE_LIVE=false` |
+| 503 | `at_capacity` | All audit slots, or all `MAX_LIVE_AUDITS` live browsers, are busy; retry shortly |
 | 404 / 405 | `not_found` / `method_not_allowed` | Unknown route or wrong HTTP method |
 
-Failures *during* an audit are not HTTP errors: they arrive on the stream as `audit.failed`.
+Failures *during* an audit are not HTTP errors: they arrive on the stream as `audit.failed`. A live audit that is stopped part-way (a sign-in wall, a page that stops responding, a redirect off the allowlist) is not a failure: it sends `step.blocked` and completes with a partial report.
 
 ## Event catalogue
 
@@ -235,3 +244,4 @@ A full audit lists all five steps (or the reachable ones plus one `blocked` step
 - `web/src/auditor/source/sseSource.ts` implements this API. `npm run dev:live` (or `VITE_AUDIT_SOURCE=live`) uses it; in development Vite proxies `/api` to the backend on `127.0.0.1:8080`.
 - `EventSource` reconnects on its own and resumes via `Last-Event-ID`; the client only reports `audit.failed` after 3 consecutive errors with no event in between.
 - Error messages from the API (e.g. the allowlist message) are shown to the user as they are.
+- In live-API mode each sample card also has **Run live**, which sends `mode: "live"`; **Scan it** sends `auto` and gets the recording.

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Zap } from 'lucide-react'
+import { ArrowUpRight, Radio, Zap } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
@@ -50,11 +50,11 @@ export function AuditorHome() {
   const [starting, setStarting] = useState(false)
   useDocumentTitle('Shop Honest · dark patterns, caught in 4K')
 
-  async function run(target: string) {
+  async function run(target: string, live = false) {
     setError(null)
     setStarting(true)
     try {
-      const auditId = await auditSource.start(target)
+      const auditId = await auditSource.start(target, { live })
       navigate(`/audit/${auditId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start the audit.')
@@ -164,12 +164,18 @@ export function AuditorHome() {
       {/* Samples */}
       <section id="samples" className="mx-auto max-w-[1240px] scroll-mt-24 px-4 py-16 sm:px-6">
         <Reveal>
-          <SectionHeading kicker="try it now" title="Pick a store to audit 👇" note="Same product, same journey. One of them is rigged." />
+          <SectionHeading kicker="try it now" title="Pick a store to audit 👇" note="Same product, same journey. One is rigged, one is honest, one hides checkout behind a sign-in." />
         </Reveal>
-        <div className="mt-10 grid gap-8 md:grid-cols-2">
+        <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {SAMPLES.map((s, i) => (
-            <Reveal key={s.storeId} delay={i * 0.1}>
-              <SampleCard sample={s} disabled={starting} onRun={() => run(window.location.origin + s.path)} />
+            <Reveal key={s.key} delay={i * 0.1}>
+              <SampleCard
+                sample={s}
+                index={i}
+                disabled={starting}
+                onRun={() => run(window.location.origin + s.path)}
+                onRunLive={auditSource.mode === 'live' ? () => run(window.location.origin + s.path, true) : undefined}
+              />
             </Reveal>
           ))}
         </div>
@@ -287,19 +293,33 @@ function SectionHeading({ kicker, title, note }: { kicker: string; title: string
   )
 }
 
-function SampleCard({ sample, onRun, disabled }: { sample: Sample; onRun: () => void; disabled: boolean }) {
-  const rigged = sample.storeId === 'a'
+const CARD_BG = { pink: 'bg-pink', lime: 'bg-lime', sun: 'bg-sun' } as Partial<Record<Tone, string>>
+
+function SampleCard({
+  sample,
+  index,
+  onRun,
+  onRunLive,
+  disabled,
+}: {
+  sample: Sample
+  index: number
+  onRun: () => void
+  onRunLive?: () => void
+  disabled: boolean
+}) {
+  const tilt = index % 2 === 0 ? -0.8 : 0.8
   return (
     <motion.article
       className="brutal relative flex h-full flex-col rounded-3xl bg-white"
-      whileHover={{ y: -6, rotate: rigged ? -0.8 : 0.8 }}
+      whileHover={{ y: -6, rotate: tilt }}
       transition={{ type: 'spring', stiffness: 300, damping: 18 }}
     >
-      <div className={`rounded-t-[22px] border-b-2 border-ink p-6 ${rigged ? 'bg-pink' : 'bg-lime'}`}>
-        <StoreIllustration rigged={rigged} />
+      <div className={`rounded-t-[22px] border-b-2 border-ink p-6 ${CARD_BG[sample.tone] ?? 'bg-cream'}`}>
+        <StoreIllustration rigged={sample.storeId === 'a'} locked={sample.key === 'store-c'} />
       </div>
       <span className="absolute -top-4 right-6">
-        <Sticker tone={rigged ? 'pink' : 'lime'} rotate={rigged ? 6 : -5} className="!px-4 !py-1.5 !text-sm">
+        <Sticker tone={sample.tone} rotate={tilt * -7} className="!px-4 !py-1.5 !text-sm">
           {sample.badge}
         </Sticker>
       </span>
@@ -317,6 +337,11 @@ function SampleCard({ sample, onRun, disabled }: { sample: Sample; onRun: () => 
           <button type="button" disabled={disabled} onClick={onRun} className={buttonClass('ink', 'md')}>
             Scan it <Zap size={16} strokeWidth={2.6} aria-hidden="true" />
           </button>
+          {onRunLive && (
+            <button type="button" disabled={disabled} onClick={onRunLive} className={buttonClass('lime', 'md')} title="A fresh audit by the agents, not a recording">
+              Run live <Radio size={16} strokeWidth={2.6} aria-hidden="true" />
+            </button>
+          )}
           <a href={sample.path} target="_blank" rel="noreferrer" className={buttonClass('white', 'md')}>
             Peek store <ArrowUpRight size={16} strokeWidth={2.6} aria-hidden="true" />
           </a>

@@ -50,7 +50,7 @@ export function DamageSection({
         }
       />
 
-      <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="mt-12 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* The receipt */}
         <div className="receipt-outline relative mx-auto w-full max-w-[480px]">
           <div className="receipt-edge" />

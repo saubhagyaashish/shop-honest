@@ -1,0 +1,1336 @@
+{
+  "version": 1,
+  "store": "store-c",
+  "pathPrefix": "/demo/store-c/",
+  "source": "scripted-mock",
+  "recordedAt": "2026-10-10T18:13:54.932Z",
+  "placeholders": {
+    "auditId": "__AUDIT_ID__",
+    "origin": "__ORIGIN__"
+  },
+  "events": [
+    {
+      "delayMs": 0,
+      "event": {
+        "type": "audit.started",
+        "auditId": "__AUDIT_ID__",
+        "targetUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+        "startedAt": "2026-10-10T18:13:54.933Z"
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Launching a fresh browser: 1280×800, no cookies, not signed in."
+      }
+    },
+    {
+      "delayMs": 700,
+      "event": {
+        "type": "step.started",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro"
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Opened the product page. A modal appeared 1.2 s after load, without any action from me."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+        "screenshotUrl": "/mock/screens/a/product-popup.jpg"
+      }
+    },
+    {
+      "delayMs": 1500,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Reading the modal. Its only exit is a link: \"No thanks, I prefer paying full price\"."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "a-guilt-decline",
+          "patternId": "confirm_shaming",
+          "title": "Decline link shames the shopper",
+          "explanation": "A first-order offer opened 1.2 s after the page loaded, without any action from the shopper. Its only exit is a link that frames saying no as a foolish choice, rather than a neutral \"No thanks\".",
+          "severity": "medium",
+          "confidence": 0.91,
+          "status": "confirmed",
+          "step": "product",
+          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "rule": {
+            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+            "clause": "Annexure 1, item 3",
+            "verified": true
+          },
+          "detectedBy": "pattern_analyst",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/mock/screens/a/product-popup.jpg",
+                "caption": "Offer modal on first load",
+                "bbox": {
+                  "x": 0.4179443359375,
+                  "y": 0.6153125,
+                  "w": 0.164111328125,
+                  "h": 0.035
+                }
+              }
+            ],
+            "elementText": "No thanks, I prefer paying full price",
+            "observations": [
+              "Modal appeared unprompted, 1.2 s after load",
+              "Decline wording: \"No thanks, I prefer paying full price\"",
+              "No close (×) button: the shaming link is the only way out"
+            ]
+          },
+          "remediation": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button."
+        }
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Dismissed the modal. Staying on the page for 8 s, like a shopper reading the details."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+        "screenshotUrl": "/mock/screens/a/product.jpg"
+      }
+    },
+    {
+      "delayMs": 250,
+      "event": {
+        "type": "price.observed",
+        "step": "product",
+        "label": "Product page",
+        "total": {
+          "amount": 1499,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 1700,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Urgency signals: a countdown at 09:51, \"Hurry, only 2 left in stock!\" and a sales-volume claim. One look can't tell real from fake, so I've asked Navigator for a second look."
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "Pulling 13 weeks of price history for SonicBuds Pro ANC Wireless Earbuds…"
+      }
+    },
+    {
+      "delayMs": 1600,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "Sold at ₹1,499–₹1,599 all quarter. MRP changed ₹1,999 → ₹3,999 7 days ago."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "a-inflated-mrp",
+          "patternId": "misleading_price",
+          "title": "62% discount is calculated off an MRP raised 7 days ago",
+          "explanation": "The page advertises ₹1,499 as 62% off an MRP of ₹3,999. Over the last 13 weeks the product sold at ₹1,499–₹1,599 against an MRP of ₹1,999. The MRP was raised to ₹3,999 7 days ago and the product has never sold at that price. Against the genuine reference price, the discount is 25%.",
+          "severity": "high",
+          "confidence": 0.93,
+          "status": "confirmed",
+          "step": "product",
+          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "rule": {
+            "source": "Consumer Protection Act, 2019",
+            "clause": "Sec. 2(28) misleading advertisement; Sec. 2(47) unfair trade practice",
+            "verified": true
+          },
+          "detectedBy": "price_historian",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/mock/screens/a/product.jpg",
+                "caption": "Advertised price block",
+                "bbox": {
+                  "x": 0.4328125,
+                  "y": 0.3238822246455834,
+                  "w": 0.490625,
+                  "h": 0.09814612868047982
+                }
+              }
+            ],
+            "elementText": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+            "observations": [
+              "Advertised: ₹1,499, MRP ₹3,999 (62% off)",
+              "Last 13 weeks: sold at ₹1,499–₹1,599, never at ₹3,999",
+              "MRP changed ₹1,999 → ₹3,999, 7 days ago",
+              "Discount against the prior MRP: 25%"
+            ]
+          },
+          "remediation": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP."
+        }
+      }
+    },
+    {
+      "delayMs": 1000,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Reloading the page for a second look."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.captured",
+        "step": "product",
+        "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+        "screenshotUrl": "/mock/screens/a/product-reload.jpg"
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Timer went from 09:51 to 09:59 after the reload: the deadline moved later."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "a-restarting-timer",
+          "patternId": "false_urgency",
+          "title": "Countdown timer restarts on every page load",
+          "explanation": "The \"Deal ends in\" countdown read 09:51 after 8 s on the page. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer is restarting per visit and the urgency it creates is false.",
+          "severity": "high",
+          "confidence": 0.97,
+          "status": "confirmed",
+          "step": "product",
+          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "rule": {
+            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+            "clause": "Annexure 1, item 1",
+            "verified": true
+          },
+          "detectedBy": "pattern_analyst",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/mock/screens/a/product.jpg",
+                "caption": "First look, after 8 s on the page",
+                "bbox": {
+                  "x": 0.4328125,
+                  "y": 0.42202835332606325,
+                  "w": 0.15020751953125,
+                  "h": 0.04798255179934569
+                }
+              },
+              {
+                "screenshotUrl": "/mock/screens/a/product-reload.jpg",
+                "caption": "Second look, straight after reload",
+                "bbox": {
+                  "x": 0.4328125,
+                  "y": 0.42202835332606325,
+                  "w": 0.15020751953125,
+                  "h": 0.04798255179934569
+                }
+              }
+            ],
+            "elementText": "Deal ends in 09:51",
+            "observations": [
+              "Before reload: 09:51",
+              "After reload: 09:59",
+              "The deadline moved later, which a real end time cannot do"
+            ]
+          },
+          "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+        }
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Stock badge is identical on every look and on every colour."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "a-frozen-stock",
+          "patternId": "false_urgency",
+          "title": "\"Only 2 left\" never changes",
+          "explanation": "The scarcity badge shows the same count on first load, after a reload and after switching colour. Different colours normally carry separate stock, so an identical \"2 left\" everywhere is consistent with a hard-coded message rather than live inventory.",
+          "severity": "medium",
+          "confidence": 0.84,
+          "status": "confirmed",
+          "step": "product",
+          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "rule": {
+            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+            "clause": "Annexure 1, item 1",
+            "verified": true
+          },
+          "detectedBy": "pattern_analyst",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/mock/screens/a/product.jpg",
+                "caption": "First look",
+                "bbox": {
+                  "x": 0.4328125,
+                  "y": 0.46564885496183206,
+                  "w": 0.490625,
+                  "h": 0.03489640130861505
+                }
+              },
+              {
+                "screenshotUrl": "/mock/screens/a/product-reload.jpg",
+                "caption": "After reload",
+                "bbox": {
+                  "x": 0.4328125,
+                  "y": 0.46564885496183206,
+                  "w": 0.490625,
+                  "h": 0.03489640130861505
+                }
+              }
+            ],
+            "elementText": "Hurry, only 2 left in stock!",
+            "observations": [
+              "Read on 3 looks: \"Hurry, only 2 left in stock!\" every time",
+              "Looks taken: first load, after a reload, after a colour change",
+              "Same count for Midnight Black and Ocean Blue"
+            ]
+          },
+          "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+        }
+      }
+    },
+    {
+      "delayMs": 1400,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "\"120+ bought in the last 24 hours\" has no source, and nothing on the page can confirm or refute it."
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "adjudicator",
+        "message": "Confidence 0.58 is below the 0.75 threshold. Sending to human review instead of asserting it."
+      }
+    },
+    {
+      "delayMs": 700,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "a-buyers-claim",
+          "patternId": "false_urgency",
+          "title": "\"120+ bought in the last 24 hours\" cannot be verified",
+          "explanation": "This sales-volume claim may well be true: the figure is plausible for a popular product and the agent has no access to order data. Rather than assert a violation, the adjudicator sent it to a reviewer who can check it against real orders.",
+          "severity": "low",
+          "confidence": 0.58,
+          "status": "needs_review",
+          "step": "product",
+          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "rule": {
+            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+            "clause": "Annexure 1, item 1",
+            "verified": true
+          },
+          "detectedBy": "pattern_analyst",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/mock/screens/a/product.jpg",
+                "caption": "Sales-volume claim under the rating",
+                "bbox": {
+                  "x": 0.4328125,
+                  "y": 0.2846237731733915,
+                  "w": 0.188623046875,
+                  "h": 0.03925845147219193
+                }
+              }
+            ],
+            "elementText": "🔥 120+ bought in the last 24 hours",
+            "observations": [
+              "Claim: \"120+ bought in the last 24 hours\"",
+              "No source, timestamp or link behind the figure",
+              "Adjudicator confidence 0.58, below the 0.75 threshold"
+            ]
+          },
+          "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+        }
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "variant",
+        "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro?colour=ocean"
+      }
+    },
+    {
+      "delayMs": 800,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Choosing colour: Ocean Blue."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "variant",
+        "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro?colour=ocean",
+        "screenshotUrl": "/mock/screens/a/variant.jpg"
+      }
+    },
+    {
+      "delayMs": 1300,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Price stays ₹1,499 on every colour, so there's no bait-and-switch between variants."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "cart",
+        "url": "__ORIGIN__/demo/store-c/cart"
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Added 1 × SonicBuds Pro (Ocean Blue) to the cart. Opening the cart."
+      }
+    },
+    {
+      "delayMs": 500,
+      "event": {
+        "type": "step.captured",
+        "step": "cart",
+        "url": "__ORIGIN__/demo/store-c/cart",
+        "screenshotUrl": "/mock/screens/a/cart.jpg"
+      }
+    },
+    {
+      "delayMs": 250,
+      "event": {
+        "type": "price.observed",
+        "step": "cart",
+        "label": "Cart",
+        "total": {
+          "amount": 1698,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 1500,
+      "event": {
+        "type": "agent.log",
+        "agent": "evidence",
+        "message": "Comparing the cart with what I actually added: expected 1 line, found 2."
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "a-added-protection",
+          "patternId": "basket_sneaking",
+          "title": "Protection plan added to the cart without consent",
+          "explanation": "The agent added exactly one item to the cart. The cart then held two lines: a ₹199 \"1-Year Accidental Damage Protection\" had been added automatically. The shopper never ticked, chose or was asked about it.",
+          "severity": "high",
+          "confidence": 0.96,
+          "status": "confirmed",
+          "step": "cart",
+          "pageUrl": "__ORIGIN__/demo/store-c/cart",
+          "rule": {
+            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+            "clause": "Annexure 1, item 2",
+            "verified": true
+          },
+          "detectedBy": "evidence",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/mock/screens/a/cart.jpg",
+                "caption": "Cart after adding one item",
+                "bbox": {
+                  "x": 0.0578125,
+                  "y": 0.401875,
+                  "w": 0.60625,
+                  "h": 0.1675
+                }
+              }
+            ],
+            "elementText": "1-Year Accidental Damage Protection 12 months · Sold by BazaarNest Care ₹199 REMOVE",
+            "observations": [
+              "Added by the agent: 1 line (SonicBuds Pro, Ocean Blue)",
+              "Found in cart: 2 lines",
+              "Extra line: 1-Year Accidental Damage Protection, ₹199",
+              "Cart total ₹1,698 instead of ₹1,499"
+            ]
+          },
+          "remediation": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it."
+        }
+      }
+    },
+    {
+      "delayMs": 900,
+      "event": {
+        "type": "step.started",
+        "step": "checkout",
+        "url": "__ORIGIN__/demo/store-c/checkout"
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Checkout asks me to sign in. I have no account for this site, so I stopped here rather than create one."
+      }
+    },
+    {
+      "delayMs": 600,
+      "event": {
+        "type": "step.blocked",
+        "step": "checkout",
+        "url": "__ORIGIN__/demo/store-c/checkout",
+        "reason": "Sign-in required"
+      }
+    },
+    {
+      "delayMs": 1200,
+      "event": {
+        "type": "agent.log",
+        "agent": "adjudicator",
+        "message": "5 findings confirmed, 1 sent to human review. Every confirmed finding carries a screenshot and a rule citation."
+      }
+    },
+    {
+      "delayMs": 1100,
+      "event": {
+        "type": "agent.log",
+        "agent": "reporter",
+        "message": "Building the audit report…"
+      }
+    },
+    {
+      "delayMs": 1000,
+      "event": {
+        "type": "audit.completed",
+        "report": {
+          "auditId": "__AUDIT_ID__",
+          "targetUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "startedAt": "2026-10-10T18:13:54.933Z",
+          "completedAt": "2026-10-10T18:13:54.933Z",
+          "trustScore": 52,
+          "steps": [
+            {
+              "step": "product",
+              "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "screenshotUrl": "/mock/screens/a/product.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "variant",
+              "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro?colour=ocean",
+              "screenshotUrl": "/mock/screens/a/variant.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "cart",
+              "url": "__ORIGIN__/demo/store-c/cart",
+              "screenshotUrl": "/mock/screens/a/cart.jpg",
+              "status": "audited"
+            },
+            {
+              "step": "checkout",
+              "url": "__ORIGIN__/demo/store-c/checkout",
+              "status": "blocked",
+              "blockedReason": "Sign-in required"
+            }
+          ],
+          "findings": [
+            {
+              "id": "a-guilt-decline",
+              "patternId": "confirm_shaming",
+              "title": "Decline link shames the shopper",
+              "explanation": "A first-order offer opened 1.2 s after the page loaded, without any action from the shopper. Its only exit is a link that frames saying no as a foolish choice, rather than a neutral \"No thanks\".",
+              "severity": "medium",
+              "confidence": 0.91,
+              "status": "confirmed",
+              "step": "product",
+              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "rule": {
+                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "clause": "Annexure 1, item 3",
+                "verified": true
+              },
+              "detectedBy": "pattern_analyst",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/mock/screens/a/product-popup.jpg",
+                    "caption": "Offer modal on first load",
+                    "bbox": {
+                      "x": 0.4179443359375,
+                      "y": 0.6153125,
+                      "w": 0.164111328125,
+                      "h": 0.035
+                    }
+                  }
+                ],
+                "elementText": "No thanks, I prefer paying full price",
+                "observations": [
+                  "Modal appeared unprompted, 1.2 s after load",
+                  "Decline wording: \"No thanks, I prefer paying full price\"",
+                  "No close (×) button: the shaming link is the only way out"
+                ]
+              },
+              "remediation": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button."
+            },
+            {
+              "id": "a-inflated-mrp",
+              "patternId": "misleading_price",
+              "title": "62% discount is calculated off an MRP raised 7 days ago",
+              "explanation": "The page advertises ₹1,499 as 62% off an MRP of ₹3,999. Over the last 13 weeks the product sold at ₹1,499–₹1,599 against an MRP of ₹1,999. The MRP was raised to ₹3,999 7 days ago and the product has never sold at that price. Against the genuine reference price, the discount is 25%.",
+              "severity": "high",
+              "confidence": 0.93,
+              "status": "confirmed",
+              "step": "product",
+              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "rule": {
+                "source": "Consumer Protection Act, 2019",
+                "clause": "Sec. 2(28) misleading advertisement; Sec. 2(47) unfair trade practice",
+                "verified": true
+              },
+              "detectedBy": "price_historian",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/mock/screens/a/product.jpg",
+                    "caption": "Advertised price block",
+                    "bbox": {
+                      "x": 0.4328125,
+                      "y": 0.3238822246455834,
+                      "w": 0.490625,
+                      "h": 0.09814612868047982
+                    }
+                  }
+                ],
+                "elementText": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+                "observations": [
+                  "Advertised: ₹1,499, MRP ₹3,999 (62% off)",
+                  "Last 13 weeks: sold at ₹1,499–₹1,599, never at ₹3,999",
+                  "MRP changed ₹1,999 → ₹3,999, 7 days ago",
+                  "Discount against the prior MRP: 25%"
+                ]
+              },
+              "remediation": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP."
+            },
+            {
+              "id": "a-restarting-timer",
+              "patternId": "false_urgency",
+              "title": "Countdown timer restarts on every page load",
+              "explanation": "The \"Deal ends in\" countdown read 09:51 after 8 s on the page. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer is restarting per visit and the urgency it creates is false.",
+              "severity": "high",
+              "confidence": 0.97,
+              "status": "confirmed",
+              "step": "product",
+              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "rule": {
+                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "clause": "Annexure 1, item 1",
+                "verified": true
+              },
+              "detectedBy": "pattern_analyst",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/mock/screens/a/product.jpg",
+                    "caption": "First look, after 8 s on the page",
+                    "bbox": {
+                      "x": 0.4328125,
+                      "y": 0.42202835332606325,
+                      "w": 0.15020751953125,
+                      "h": 0.04798255179934569
+                    }
+                  },
+                  {
+                    "screenshotUrl": "/mock/screens/a/product-reload.jpg",
+                    "caption": "Second look, straight after reload",
+                    "bbox": {
+                      "x": 0.4328125,
+                      "y": 0.42202835332606325,
+                      "w": 0.15020751953125,
+                      "h": 0.04798255179934569
+                    }
+                  }
+                ],
+                "elementText": "Deal ends in 09:51",
+                "observations": [
+                  "Before reload: 09:51",
+                  "After reload: 09:59",
+                  "The deadline moved later, which a real end time cannot do"
+                ]
+              },
+              "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+            },
+            {
+              "id": "a-frozen-stock",
+              "patternId": "false_urgency",
+              "title": "\"Only 2 left\" never changes",
+              "explanation": "The scarcity badge shows the same count on first load, after a reload and after switching colour. Different colours normally carry separate stock, so an identical \"2 left\" everywhere is consistent with a hard-coded message rather than live inventory.",
+              "severity": "medium",
+              "confidence": 0.84,
+              "status": "confirmed",
+              "step": "product",
+              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "rule": {
+                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "clause": "Annexure 1, item 1",
+                "verified": true
+              },
+              "detectedBy": "pattern_analyst",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/mock/screens/a/product.jpg",
+                    "caption": "First look",
+                    "bbox": {
+                      "x": 0.4328125,
+                      "y": 0.46564885496183206,
+                      "w": 0.490625,
+                      "h": 0.03489640130861505
+                    }
+                  },
+                  {
+                    "screenshotUrl": "/mock/screens/a/product-reload.jpg",
+                    "caption": "After reload",
+                    "bbox": {
+                      "x": 0.4328125,
+                      "y": 0.46564885496183206,
+                      "w": 0.490625,
+                      "h": 0.03489640130861505
+                    }
+                  }
+                ],
+                "elementText": "Hurry, only 2 left in stock!",
+                "observations": [
+                  "Read on 3 looks: \"Hurry, only 2 left in stock!\" every time",
+                  "Looks taken: first load, after a reload, after a colour change",
+                  "Same count for Midnight Black and Ocean Blue"
+                ]
+              },
+              "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+            },
+            {
+              "id": "a-buyers-claim",
+              "patternId": "false_urgency",
+              "title": "\"120+ bought in the last 24 hours\" cannot be verified",
+              "explanation": "This sales-volume claim may well be true: the figure is plausible for a popular product and the agent has no access to order data. Rather than assert a violation, the adjudicator sent it to a reviewer who can check it against real orders.",
+              "severity": "low",
+              "confidence": 0.58,
+              "status": "needs_review",
+              "step": "product",
+              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "rule": {
+                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "clause": "Annexure 1, item 1",
+                "verified": true
+              },
+              "detectedBy": "pattern_analyst",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/mock/screens/a/product.jpg",
+                    "caption": "Sales-volume claim under the rating",
+                    "bbox": {
+                      "x": 0.4328125,
+                      "y": 0.2846237731733915,
+                      "w": 0.188623046875,
+                      "h": 0.03925845147219193
+                    }
+                  }
+                ],
+                "elementText": "🔥 120+ bought in the last 24 hours",
+                "observations": [
+                  "Claim: \"120+ bought in the last 24 hours\"",
+                  "No source, timestamp or link behind the figure",
+                  "Adjudicator confidence 0.58, below the 0.75 threshold"
+                ]
+              },
+              "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+            },
+            {
+              "id": "a-added-protection",
+              "patternId": "basket_sneaking",
+              "title": "Protection plan added to the cart without consent",
+              "explanation": "The agent added exactly one item to the cart. The cart then held two lines: a ₹199 \"1-Year Accidental Damage Protection\" had been added automatically. The shopper never ticked, chose or was asked about it.",
+              "severity": "high",
+              "confidence": 0.96,
+              "status": "confirmed",
+              "step": "cart",
+              "pageUrl": "__ORIGIN__/demo/store-c/cart",
+              "rule": {
+                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "clause": "Annexure 1, item 2",
+                "verified": true
+              },
+              "detectedBy": "evidence",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/mock/screens/a/cart.jpg",
+                    "caption": "Cart after adding one item",
+                    "bbox": {
+                      "x": 0.0578125,
+                      "y": 0.401875,
+                      "w": 0.60625,
+                      "h": 0.1675
+                    }
+                  }
+                ],
+                "elementText": "1-Year Accidental Damage Protection 12 months · Sold by BazaarNest Care ₹199 REMOVE",
+                "observations": [
+                  "Added by the agent: 1 line (SonicBuds Pro, Ocean Blue)",
+                  "Found in cart: 2 lines",
+                  "Extra line: 1-Year Accidental Damage Protection, ₹199",
+                  "Cart total ₹1,698 instead of ₹1,499"
+                ]
+              },
+              "remediation": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it."
+            }
+          ],
+          "summary": "5 violations confirmed across 2 of the 3 reachable journey steps, and 1 claim sent for human review. The amount payable rose from ₹1,499 on the product page to ₹1,698 (+13%). Checkout and Payment could not be audited: sign-in required.",
+          "exposure": {
+            "priceDrift": {
+              "advertised": {
+                "amount": 1499,
+                "currency": "INR"
+              },
+              "payable": {
+                "amount": 1698,
+                "currency": "INR"
+              },
+              "lines": [
+                {
+                  "label": "1-Year Accidental Damage Protection",
+                  "amount": {
+                    "amount": 199,
+                    "currency": "INR"
+                  },
+                  "kind": "sneaked_item",
+                  "firstSeen": "cart",
+                  "findingId": "a-added-protection"
+                }
+              ],
+              "claimedSaving": {
+                "amount": 2500,
+                "currency": "INR"
+              },
+              "genuineSaving": {
+                "amount": 500,
+                "currency": "INR"
+              },
+              "savingFindingId": "a-inflated-mrp"
+            },
+            "strictest": "GB",
+            "disclaimer": "Shop Honest maps findings to laws and public enforcement outcomes to show exposure. It is not legal advice. Penalties shown are statutory maximums or past outcomes, not a prediction for this business.",
+            "jurisdictions": [
+              {
+                "code": "IN",
+                "name": "India",
+                "law": "Consumer Protection Act, 2019 and the CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "regulator": "Central Consumer Protection Authority (CCPA)",
+                "status": "in_force",
+                "maxPenalty": "Up to ₹10 lakh per contravention, ₹50 lakh for each later one (s 21). Criminal: up to 2 years and ₹10 lakh, or 5 years and ₹50 lakh for repeat offences (s 89).",
+                "penaltyHeadline": "Up to ₹50 lakh + jail for repeat offences",
+                "precedents": [
+                  {
+                    "id": "in-physicswallah",
+                    "jurisdiction": "IN",
+                    "company": "PhysicsWallah",
+                    "regulator": "CCPA",
+                    "date": "2026-08",
+                    "outcome": "₹5 lakh penalty",
+                    "amount": {
+                      "amount": 500000,
+                      "currency": "INR"
+                    },
+                    "patternIds": [
+                      "basket_sneaking"
+                    ],
+                    "summary": "A ₹10 donation was pre-added to orders. Reported to Parliament in August 2026.",
+                    "sourceUrl": "https://www.aninews.in/news/business/govt-says-ccpa-imposes-rs-20-lakh-for-dark-patterns-steps-up-action-against-deceptive-online-practices20260806161831/",
+                    "confidence": "reported"
+                  },
+                  {
+                    "id": "in-zepto",
+                    "jurisdiction": "IN",
+                    "company": "Zepto",
+                    "regulator": "CCPA",
+                    "date": "2026-08",
+                    "outcome": "₹7 lakh penalty",
+                    "amount": {
+                      "amount": 700000,
+                      "currency": "INR"
+                    },
+                    "patternIds": [
+                      "drip_pricing",
+                      "basket_sneaking"
+                    ],
+                    "summary": "Penalised for drip pricing and basket sneaking, the largest of the dark-pattern penalties reported to Parliament.",
+                    "sourceUrl": "https://www.entertales.com/ccpa-fine-zepto-bookmyshow-indigo-dark-patterns/",
+                    "confidence": "reported"
+                  }
+                ],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                    "clause": "Annexure 1, item 3",
+                    "verified": true
+                  },
+                  "a-inflated-mrp": {
+                    "source": "Consumer Protection Act, 2019",
+                    "clause": "Sec. 2(28) misleading advertisement; Sec. 2(47) unfair trade practice",
+                    "verified": true
+                  },
+                  "a-restarting-timer": {
+                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                    "clause": "Annexure 1, item 1",
+                    "verified": true
+                  },
+                  "a-frozen-stock": {
+                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                    "clause": "Annexure 1, item 1",
+                    "verified": true
+                  },
+                  "a-buyers-claim": {
+                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                    "clause": "Annexure 1, item 1",
+                    "verified": true
+                  },
+                  "a-added-protection": {
+                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                    "clause": "Annexure 1, item 2",
+                    "verified": true
+                  }
+                }
+              },
+              {
+                "code": "SG",
+                "name": "Singapore",
+                "law": "Consumer Protection (Fair Trading) Act (CPFTA) and the CCCS Guidelines on Price Transparency (2020)",
+                "regulator": "Competition and Consumer Commission of Singapore (CCCS)",
+                "status": "in_force",
+                "maxPenalty": "CCCS obtains court declarations and injunctions; breaching an injunction can lead to court-ordered fines or jail. Consumers can also claim compensation.",
+                "penaltyHeadline": "Court orders; breaches can mean fines or jail",
+                "precedents": [
+                  {
+                    "id": "sg-footwear-subscription",
+                    "jurisdiction": "SG",
+                    "company": "Online footwear retailer (unnamed)",
+                    "regulator": "CCCS, State Courts",
+                    "date": "2020-01",
+                    "outcome": "Court injunction and 3-year compliance orders",
+                    "patternIds": [
+                      "subscription_trap"
+                    ],
+                    "summary": "Shoppers buying shoes were signed up to a monthly membership disclosed only in fine print.",
+                    "sourceUrl": "https://www.allenandgledhill.com/sg/publication/articles/14284/court-orders-e-commerce-retailer-to-cease-unfair-trade-practices-and-stop-using-subscription-traps",
+                    "confidence": "reported"
+                  },
+                  {
+                    "id": "sg-abc-bargain",
+                    "jurisdiction": "SG",
+                    "company": "ABC Bargain Centre",
+                    "regulator": "CCCS",
+                    "date": "2020-10",
+                    "outcome": "Undertaking to stop misleading time-limited sales",
+                    "patternIds": [
+                      "false_urgency"
+                    ],
+                    "summary": "\"Closing down\" and \"fire sale\" ads ran with no end date, implying a short-lived price benefit.",
+                    "sourceUrl": "https://cccs.gov.sg/-/media/custom/ccs/files/media-and-publications/media-releases/abc-bargain-centre-16-oct-20/media-release_-abc-valudollar-cease-misleading-ads-w-infogx.ashx",
+                    "confidence": "official"
+                  }
+                ],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
+                    "clause": "s 4 unfair practice (saying or doing anything that may deceive or mislead a consumer)",
+                    "verified": true
+                  },
+                  "a-inflated-mrp": {
+                    "source": "CCCS Guidelines on Price Transparency (2020)",
+                    "clause": "Price comparisons and discounts",
+                    "verified": true
+                  },
+                  "a-restarting-timer": {
+                    "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
+                    "clause": "s 4 unfair practice (time-limited offers that are not)",
+                    "verified": true
+                  },
+                  "a-frozen-stock": {
+                    "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
+                    "clause": "s 4 unfair practice (time-limited offers that are not)",
+                    "verified": true
+                  },
+                  "a-buyers-claim": {
+                    "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
+                    "clause": "s 4 unfair practice (time-limited offers that are not)",
+                    "verified": true
+                  },
+                  "a-added-protection": {
+                    "source": "CCCS Guidelines on Price Transparency (2020)",
+                    "clause": "Pre-ticked boxes for add-on purchases",
+                    "verified": true
+                  }
+                }
+              },
+              {
+                "code": "GB",
+                "name": "United Kingdom",
+                "law": "Digital Markets, Competition and Consumers Act 2024 (Part 4) and the Consumer Contracts Regulations 2013",
+                "regulator": "Competition and Markets Authority (CMA)",
+                "status": "in_force",
+                "maxPenalty": "The CMA can fine directly: up to 10% of global turnover (or £300,000), plus daily penalties and consumer redress orders.",
+                "penaltyHeadline": "Up to 10% of global turnover",
+                "precedents": [
+                  {
+                    "id": "gb-marks-electrical",
+                    "jurisdiction": "GB",
+                    "company": "Marks Electrical",
+                    "regulator": "CMA",
+                    "date": "2026-06",
+                    "outcome": "£720,000 fine and about £600,000 in refunds",
+                    "amount": {
+                      "amount": 720000,
+                      "currency": "GBP"
+                    },
+                    "patternIds": [
+                      "basket_sneaking"
+                    ],
+                    "summary": "Nearly 40,000 customers were opted into paid recycling and unpacking services through pre-ticked boxes.",
+                    "sourceUrl": "https://thelens.slaughterandmay.com/post/102n4qw/cma-settles-with-marks-electrical-over-investigation-into-pre-selected-extra-char",
+                    "confidence": "reported"
+                  },
+                  {
+                    "id": "gb-aa-bsm",
+                    "jurisdiction": "GB",
+                    "company": "AA Driving School and BSM",
+                    "regulator": "CMA",
+                    "date": "2026-04",
+                    "outcome": "Infringement notice and about £760,000 in consumer redress",
+                    "patternIds": [
+                      "drip_pricing"
+                    ],
+                    "summary": "The CMA’s first infringement decision under the new regime, over fees not shown upfront.",
+                    "sourceUrl": "https://www.whitecase.com/insight-alert/hidden-fees-real-consequences-cma-issues-its-first-infringement-decision-under-uks",
+                    "confidence": "reported"
+                  }
+                ],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "Digital Markets, Competition and Consumers Act 2024",
+                    "clause": "s 228 aggressive practices",
+                    "verified": false
+                  },
+                  "a-inflated-mrp": {
+                    "source": "Digital Markets, Competition and Consumers Act 2024",
+                    "clause": "s 226 misleading actions (false price comparison)",
+                    "verified": true
+                  },
+                  "a-restarting-timer": {
+                    "source": "Digital Markets, Competition and Consumers Act 2024",
+                    "clause": "Sch. 20 banned practices (false limited-time claims); s 226 misleading actions",
+                    "verified": false
+                  },
+                  "a-frozen-stock": {
+                    "source": "Digital Markets, Competition and Consumers Act 2024",
+                    "clause": "Sch. 20 banned practices (false limited-time claims); s 226 misleading actions",
+                    "verified": false
+                  },
+                  "a-buyers-claim": {
+                    "source": "Digital Markets, Competition and Consumers Act 2024",
+                    "clause": "Sch. 20 banned practices (false limited-time claims); s 226 misleading actions",
+                    "verified": false
+                  },
+                  "a-added-protection": {
+                    "source": "Consumer Contracts Regulations 2013",
+                    "clause": "reg 40: no extra payment without express consent; pre-ticked boxes do not count",
+                    "verified": true
+                  }
+                }
+              },
+              {
+                "code": "EU",
+                "name": "European Union",
+                "law": "Unfair Commercial Practices Directive, Consumer Rights Directive, Price Indication Directive and Digital Services Act",
+                "regulator": "National consumer authorities; European Commission for the DSA",
+                "status": "in_force",
+                "maxPenalty": "Widespread consumer-law infringements: at least 4% of annual turnover or €2 million. DSA: up to 6% of worldwide annual turnover.",
+                "penaltyHeadline": "Up to 6% of global turnover",
+                "precedents": [
+                  {
+                    "id": "eu-x-dsa",
+                    "jurisdiction": "EU",
+                    "company": "X",
+                    "regulator": "European Commission",
+                    "date": "2025-12-05",
+                    "outcome": "€120 million fine",
+                    "amount": {
+                      "amount": 120000000,
+                      "currency": "EUR"
+                    },
+                    "patternIds": [
+                      "interface_interference"
+                    ],
+                    "summary": "The first DSA fine. It included an Art. 25 deceptive-design breach: a “verified” checkmark anyone could buy.",
+                    "sourceUrl": "https://digital-strategy.ec.europa.eu/en/news/commission-fines-x-eu120-million-under-digital-services-act",
+                    "confidence": "official"
+                  }
+                ],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "Digital Services Act",
+                    "clause": "Art. 25: online interfaces must not deceive or manipulate users",
+                    "verified": true
+                  },
+                  "a-inflated-mrp": {
+                    "source": "Price Indication Directive",
+                    "clause": "Art. 6a: a discount must refer to the lowest price of the prior 30 days",
+                    "verified": true
+                  },
+                  "a-restarting-timer": {
+                    "source": "Unfair Commercial Practices Directive",
+                    "clause": "Annex I, point 7: false “very limited time” claims are banned outright",
+                    "verified": true
+                  },
+                  "a-frozen-stock": {
+                    "source": "Unfair Commercial Practices Directive",
+                    "clause": "Annex I, point 7: false “very limited time” claims are banned outright",
+                    "verified": true
+                  },
+                  "a-buyers-claim": {
+                    "source": "Unfair Commercial Practices Directive",
+                    "clause": "Annex I, point 7: false “very limited time” claims are banned outright",
+                    "verified": true
+                  },
+                  "a-added-protection": {
+                    "source": "Consumer Rights Directive",
+                    "clause": "Art. 22: express consent for extra payments; no pre-ticked boxes",
+                    "verified": true
+                  }
+                }
+              },
+              {
+                "code": "US",
+                "name": "United States",
+                "law": "FTC Act §5, Restore Online Shoppers’ Confidence Act (ROSCA) and the FTC Guides Against Deceptive Pricing",
+                "regulator": "Federal Trade Commission (FTC)",
+                "status": "in_force",
+                "maxPenalty": "Injunctions, consumer refunds, and civil penalties per violation for ROSCA and other rule breaches.",
+                "penaltyHeadline": "Civil penalties + refunds (Amazon paid $2.5B)",
+                "precedents": [
+                  {
+                    "id": "us-amazon-prime",
+                    "jurisdiction": "US",
+                    "company": "Amazon",
+                    "regulator": "FTC",
+                    "date": "2025-09-25",
+                    "outcome": "$2.5 billion ($1B civil penalty and $1.5B in refunds)",
+                    "amount": {
+                      "amount": 2500000000,
+                      "currency": "USD"
+                    },
+                    "patternIds": [
+                      "subscription_trap"
+                    ],
+                    "summary": "Shoppers were enrolled in Prime without clear consent, and cancelling was made hard.",
+                    "sourceUrl": "https://www.fortune.com/2025/09/25/amazon-ftc-settlement-prime-automatic-renewal-lina-khan-dark-patterns",
+                    "confidence": "reported"
+                  }
+                ],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "FTC Act §5, 15 U.S.C. §45",
+                    "clause": "Unfair or deceptive acts or practices",
+                    "verified": true
+                  },
+                  "a-inflated-mrp": {
+                    "source": "FTC Guides Against Deceptive Pricing",
+                    "clause": "16 CFR §233.1: former price comparisons must reflect a genuine prior price",
+                    "verified": true
+                  },
+                  "a-restarting-timer": {
+                    "source": "FTC Act §5, 15 U.S.C. §45",
+                    "clause": "Unfair or deceptive acts or practices",
+                    "verified": true
+                  },
+                  "a-frozen-stock": {
+                    "source": "FTC Act §5, 15 U.S.C. §45",
+                    "clause": "Unfair or deceptive acts or practices",
+                    "verified": true
+                  },
+                  "a-buyers-claim": {
+                    "source": "FTC Act §5, 15 U.S.C. §45",
+                    "clause": "Unfair or deceptive acts or practices",
+                    "verified": true
+                  },
+                  "a-added-protection": {
+                    "source": "FTC Act §5, 15 U.S.C. §45",
+                    "clause": "Unfair or deceptive acts or practices",
+                    "verified": true
+                  }
+                }
+              },
+              {
+                "code": "KR",
+                "name": "South Korea",
+                "law": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                "regulator": "Korea Fair Trade Commission (KFTC)",
+                "status": "in_force",
+                "maxPenalty": "Corrective orders, administrative fines (reported at ₩1–5 million per breach) and business suspension of up to 12 months.",
+                "penaltyHeadline": "Fines + up to 12-month business suspension",
+                "precedents": [],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
+                    "verified": false
+                  },
+                  "a-inflated-mrp": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
+                    "verified": false
+                  },
+                  "a-restarting-timer": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
+                    "verified": false
+                  },
+                  "a-frozen-stock": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
+                    "verified": false
+                  },
+                  "a-buyers-claim": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
+                    "verified": false
+                  },
+                  "a-added-protection": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Dark-pattern rule: pre-selection of purchase options",
+                    "verified": true
+                  }
+                }
+              },
+              {
+                "code": "AU",
+                "name": "Australia",
+                "law": "Australian Consumer Law (Competition and Consumer Act 2010, Sch. 2)",
+                "regulator": "Australian Competition and Consumer Commission (ACCC)",
+                "status": "in_force",
+                "maxPenalty": "Unfair trading practices (from 1 Jul 2027): the greater of A$100 million, 3× the benefit gained, or 30% of adjusted turnover.",
+                "penaltyHeadline": "Up to A$100M or 30% of turnover (from Jul 2027)",
+                "upcoming": {
+                  "law": "Unfair Trading Practices ban (ACL s 28B) and transaction-charge disclosure (s 48A)",
+                  "effectiveFrom": "2027-07-01",
+                  "summary": "Bans design that manipulates or unreasonably distorts consumer decisions, and adds drip-pricing and subscription rules."
+                },
+                "precedents": [],
+                "citations": {
+                  "a-guilt-decline": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
+                    "verified": false
+                  },
+                  "a-inflated-mrp": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 29 false or misleading representations about price",
+                    "verified": false
+                  },
+                  "a-restarting-timer": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
+                    "verified": false
+                  },
+                  "a-frozen-stock": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
+                    "verified": false
+                  },
+                  "a-buyers-claim": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
+                    "verified": false
+                  },
+                  "a-added-protection": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
+                    "verified": false
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

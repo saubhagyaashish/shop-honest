@@ -12,6 +12,7 @@ import { STEP_LABEL } from '../labels'
 import { formatMoney } from '../money'
 import type { StoreId } from '../../store/catalog'
 import { STORES } from '../../store/variants'
+import type { StoreSetup } from '../../store/variants'
 import { REVIEW_THRESHOLD, trustScore } from '../score'
 import type { Captures, CapturedFrame } from './captures'
 import capturesJson from './captures.json'
@@ -520,4 +521,16 @@ export function buildMockAudit(storeId: StoreId, auditId: string, origin: string
   }
   events.push({ delayMs: 1000, event: { type: 'audit.completed', report } })
   return events
+}
+
+/**
+ * Mock audit for a store instance. Instances can share data (Store C uses
+ * Store A's): the walk stops at the instance's sign-in wall, and URLs point
+ * at the instance's own route.
+ */
+export function buildMockAuditForStore(setup: StoreSetup, auditId: string, origin: string, options: MockOptions = {}): ScriptedEvent[] {
+  const events = buildMockAudit(setup.id, auditId, origin, { blockAt: options.blockAt ?? setup.behaviour.signInWallAt })
+  const dataKey = STORES[setup.id].key
+  if (dataKey === setup.key) return events
+  return JSON.parse(JSON.stringify(events).replaceAll(`/demo/${dataKey}/`, `/demo/${setup.key}/`)) as ScriptedEvent[]
 }

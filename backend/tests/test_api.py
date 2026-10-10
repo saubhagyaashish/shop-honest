@@ -80,9 +80,42 @@ async def test_errors_share_one_shape(client: httpx.AsyncClient):
         res = await client.post("/api/audits", json=body)
         assert (res.status_code, res.json()["error"]["code"]) == (status, code), body
         assert res.json()["error"]["message"]
-    for path in ("/api/audits/aud_nope", "/api/audits/aud_nope/events"):
+    for path in ("/api/audits/aud_nope", "/api/audits/aud_nope/events", "/api/audits/aud_nope/frames/1.jpg"):
         res = await client.get(path)
         assert (res.status_code, res.json()["error"]["code"]) == (404, "audit_not_found")
+
+
+async def test_live_mode_errors_without_starting_a_browser():
+    from app.main import create_app
+
+    app = create_app(make_settings(enable_live=True, max_live_audits=0), resolver=fake_resolver)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        cases = [
+            ({"targetUrl": "http://localhost:5173/some/other/page"}, 409, "no_navigator"),
+            ({"targetUrl": "http://localhost:5173/some/other/page", "mode": "replay"}, 409, "no_recording"),
+            ({"targetUrl": STORE_A, "mode": "live"}, 503, "at_capacity"),
+        ]
+        for body, status, code in cases:
+            res = await client.post("/api/audits", json=body)
+            assert (res.status_code, res.json()["error"]["code"]) == (status, code), body
+        # auto still replays when a recording exists, even with every live browser busy
+        res = await client.post("/api/audits", json={"targetUrl": STORE_A})
+        assert (res.status_code, res.json()["mode"]) == (202, "replay")
+    await app.state.runner.shutdown()
+
+
+async def test_frames_are_served_for_known_audits(tmp_path):
+    from app.main import create_app
+
+    app = create_app(make_settings(frames_dir=tmp_path), resolver=fake_resolver)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        audit_id = (await client.post("/api/audits", json={"targetUrl": STORE_B})).json()["auditId"]
+        assert app.state.frames.save(audit_id, 1, b"\xff\xd8jpeg") == f"/api/audits/{audit_id}/frames/1.jpg"
+        res = await client.get(f"/api/audits/{audit_id}/frames/1.jpg")
+        assert (res.status_code, res.headers["content-type"], res.content) == (200, "image/jpeg", b"\xff\xd8jpeg")
+        res = await client.get(f"/api/audits/{audit_id}/frames/2.jpg")
+        assert (res.status_code, res.json()["error"]["code"]) == (404, "not_found")
+    await app.state.runner.shutdown()
 
 
 async def test_fast_forward_finishes_a_slow_replay():

@@ -42,3 +42,15 @@ describe('coverage', () => {
     expect(buildHeadline(report).punch).toBe('Shoppers pay 13% more than the price they saw.')
   })
 })
+
+describe('store C (sign-in wall at checkout)', () => {
+  it('stops at checkout and uses its own URLs', async () => {
+    const { buildMockAuditForStore } = await import('./mock/scripts')
+    const { STORE_C } = await import('../store/variants')
+    const events = buildMockAuditForStore(STORE_C, 'mock-store-c-t', 'http://localhost').map((e) => e.event)
+    const report = (events.at(-1) as Extract<AuditEvent, { type: 'audit.completed' }>).report
+    expect(coverageOf(report.steps)).toMatchObject({ complete: false, blocked: { step: 'checkout' }, notReached: ['payment'] })
+    expect(report.targetUrl).toBe('http://localhost/demo/store-c/p/sonicbuds-pro')
+    expect(JSON.stringify(events)).not.toContain('/demo/store-a/')
+  })
+})

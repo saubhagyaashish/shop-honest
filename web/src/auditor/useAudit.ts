@@ -90,6 +90,7 @@ export function useAudit(auditId: string | undefined, runKey = 0) {
     return auditSource.subscribe(auditId, (event) => dispatch({ type: 'event', event }))
   }, [auditId, runKey])
 
-  const skipAhead = auditSource.skipAhead && auditId ? () => auditSource.skipAhead!(auditId) : undefined
+  const canSkip = auditId && auditSource.skipAhead && (auditSource.canSkipAhead?.(auditId) ?? true)
+  const skipAhead = canSkip ? () => auditSource.skipAhead!(auditId) : undefined
   return { state, skipAhead }
 }

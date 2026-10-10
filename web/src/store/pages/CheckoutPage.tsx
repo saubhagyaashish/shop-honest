@@ -4,6 +4,7 @@ import { useDocumentTitle } from '../../shared/useDocumentTitle'
 import { EXPRESS_DELIVERY_PRICE, formatINR, PLUS_MEMBERSHIP } from '../catalog'
 import type { Delivery } from '../cart'
 import { OrderSummary } from '../components/OrderSummary'
+import { SignInWall } from '../components/SignInWall'
 import { deliveryDateLabel } from '../dates'
 import { useStore } from '../useStore'
 import { storePath } from '../variants'
@@ -14,6 +15,7 @@ export function CheckoutPage() {
   useDocumentTitle('Checkout | BazaarNest')
 
   if (state.lines.length === 0) return <Navigate to={storePath(setup, '/cart')} replace />
+  if (setup.behaviour.signInWallAt === 'checkout') return <SignInWall />
 
   const toPayment = () => navigate(storePath(setup, '/payment'))
 

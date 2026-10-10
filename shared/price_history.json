@@ -1,0 +1,227 @@
+{
+  "/demo/store-a/p/sonicbuds-pro": {
+    "currency": "INR",
+    "points": [
+      {
+        "daysAgo": 91,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 84,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 77,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 70,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 63,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 56,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 49,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 42,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 35,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 28,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 21,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 14,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 7,
+        "price": 1499,
+        "mrp": 3999
+      },
+      {
+        "daysAgo": 0,
+        "price": 1499,
+        "mrp": 3999
+      }
+    ]
+  },
+  "/demo/store-b/p/sonicbuds-pro": {
+    "currency": "INR",
+    "points": [
+      {
+        "daysAgo": 91,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 84,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 77,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 70,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 63,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 56,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 49,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 42,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 35,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 28,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 21,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 14,
+        "price": 1999,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 7,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 0,
+        "price": 1499,
+        "mrp": 1999
+      }
+    ]
+  },
+  "/demo/store-c/p/sonicbuds-pro": {
+    "currency": "INR",
+    "points": [
+      {
+        "daysAgo": 91,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 84,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 77,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 70,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 63,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 56,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 49,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 42,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 35,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 28,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 21,
+        "price": 1499,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 14,
+        "price": 1599,
+        "mrp": 1999
+      },
+      {
+        "daysAgo": 7,
+        "price": 1499,
+        "mrp": 3999
+      },
+      {
+        "daysAgo": 0,
+        "price": 1499,
+        "mrp": 3999
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 /** Mini storefront doodle for the sample cards. */
-export function StoreIllustration({ rigged }: { rigged: boolean }) {
+export function StoreIllustration({ rigged, locked = false }: { rigged: boolean; locked?: boolean }) {
   return (
     <svg viewBox="0 0 320 170" className="w-full" aria-hidden="true">
       <rect x="6" y="6" width="306" height="158" rx="14" fill="#111" />
@@ -31,6 +31,14 @@ export function StoreIllustration({ rigged }: { rigged: boolean }) {
           <text x="198" y="121" textAnchor="middle" fontSize="12" fontWeight="800" fill="#111" fontFamily="Inter Variable, system-ui">ends Sun 11:59 PM</text>
           <text x="140" y="146" fontSize="12" fontWeight="700" fill="#15803d" fontFamily="Inter Variable, system-ui">in stock ✓</text>
         </>
+      )}
+      {locked && (
+        <g transform="translate(232 112)">
+          <rect x="4" y="4" width="70" height="48" rx="10" fill="#111" />
+          <rect width="70" height="48" rx="10" fill="#ffd23f" stroke="#111" strokeWidth="2.5" />
+          <path d="M26 22v-6a9 9 0 0 1 18 0v6" fill="none" stroke="#111" strokeWidth="3" />
+          <rect x="22" y="22" width="26" height="18" rx="4" fill="#fff" stroke="#111" strokeWidth="2.5" />
+        </g>
       )}
     </svg>
   )

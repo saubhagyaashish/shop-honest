@@ -12,8 +12,8 @@ from tests.conftest import EVENT_VALIDATOR
 LIBRARY = RecordingLibrary.load(Settings(_env_file=None).recordings_dir)
 
 
-def test_both_demo_stores_have_recordings():
-    assert {r.store for r in LIBRARY.recordings} == {"store-a", "store-b"}
+def test_every_demo_store_has_a_recording():
+    assert {r.store for r in LIBRARY.recordings} == {"store-a", "store-b", "store-c"}
 
 
 @pytest.mark.parametrize("recording", LIBRARY.recordings, ids=lambda r: r.store)

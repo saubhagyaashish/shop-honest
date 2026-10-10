@@ -10,6 +10,7 @@ dependencies = [
     "sse-starlette>=3.5,<4",
     "pydantic>=2.14,<3",
     "pydantic-settings>=2.15,<3",
+    "playwright>=1.63,<1.64",
 ]
 
 [dependency-groups]
@@ -23,6 +24,7 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+markers = ["browser: runs a real headless Chromium against web/dist (skipped when it isn't built)"]
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
@@ -32,3 +34,5 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
+# Typographic dashes and arrows are intentional in user-facing text.
+ignore = ["RUF001"]

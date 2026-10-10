@@ -31,6 +31,17 @@ class Settings(BaseSettings):
     recordings_dir: Path = BACKEND_DIR / "app" / "replay" / "recordings"
     cors_origins: CommaList = []
 
+    # Live audits (a real browser walks the store). Off in deployments until the agents are ready.
+    enable_live: bool = True
+    max_live_audits: int = 2
+    # Seconds the Navigator lingers on the product page before its second look.
+    nav_linger_s: float = 8.0
+    nav_step_timeout_s: float = 15.0
+    audit_timeout_s: float = 360.0
+    headless: bool = True
+    frames_dir: Path = BACKEND_DIR / "var" / "frames"
+    shared_dir: Path = REPO_DIR / "shared"
+
     @field_validator("allowed_hosts", "cors_origins", mode="before")
     @classmethod
     def _split(cls, value: object) -> object:

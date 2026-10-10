@@ -1,0 +1,492 @@
+{
+ "addedItems": [
+  "SonicBuds Pro ANC Wireless Earbuds"
+ ],
+ "captures": {
+  "product-first": {
+   "n": 1,
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 905,
+    "timers": [],
+    "deadlines": [
+     {
+      "text": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.4165745856353591,
+       "w": 0.24847412109375,
+       "h": 0.04419889502762431
+      }
+     }
+    ],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 1999,
+     "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout.",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.2950276243093923,
+      "w": 0.4875,
+      "h": 0.11712707182320442
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [
+     {
+      "label": "platform fee",
+      "amount": 9
+     }
+    ],
+    "signInWall": null
+   }
+  },
+  "product-reload": {
+   "n": 2,
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 905,
+    "timers": [],
+    "deadlines": [
+     {
+      "text": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.4165745856353591,
+       "w": 0.24847412109375,
+       "h": 0.04419889502762431
+      }
+     }
+    ],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 1999,
+     "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout.",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.2950276243093923,
+      "w": 0.4875,
+      "h": 0.11712707182320442
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [
+     {
+      "label": "platform fee",
+      "amount": 9
+     }
+    ],
+    "signInWall": null
+   }
+  },
+  "variant": {
+   "n": 3,
+   "step": "variant",
+   "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro?colour=pearl",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro?colour=pearl",
+    "title": "SonicBuds Pro ANC Wireless Earbuds | BazaarNest",
+    "heading": "SonicBuds Pro ANC Wireless Earbuds",
+    "width": 1280,
+    "height": 905,
+    "timers": [],
+    "deadlines": [
+     {
+      "text": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.4165745856353591,
+       "w": 0.24847412109375,
+       "h": 0.04419889502762431
+      }
+     }
+    ],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 1999,
+     "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout.",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.2950276243093923,
+      "w": 0.4875,
+      "h": 0.11712707182320442
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": null,
+    "feeDisclosures": [
+     {
+      "label": "platform fee",
+      "amount": 9
+     }
+    ],
+    "signInWall": null
+   }
+  },
+  "cart": {
+   "n": 4,
+   "step": "cart",
+   "url": "http://localhost:5173/demo/store-b/cart",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-b/cart",
+    "title": "Shopping Cart | BazaarNest",
+    "heading": "My Cart (1)",
+    "width": 1280,
+    "height": 800,
+    "timers": [],
+    "deadlines": [],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": {
+     "price": 1499,
+     "mrp": 1999,
+     "text": "₹1,999 ₹1,499",
+     "bbox": {
+      "x": 0.15,
+      "y": 0.326875,
+      "w": 0.496875,
+      "h": 0.035
+     }
+    },
+    "dialogs": [],
+    "checkboxes": [
+     {
+      "label": "Add 1-Year Accidental Damage Protection for ₹199 Optional. Covers accidental drops and liquid damage for 12 months.",
+      "checked": false,
+      "amount": 199,
+      "recurring": false,
+      "bbox": {
+       "x": 0.075,
+       "y": 0.424375,
+       "w": 0.571875,
+       "h": 0.0925
+      }
+     }
+    ],
+    "cartLines": [
+     {
+      "name": "SonicBuds Pro ANC Wireless Earbuds",
+      "text": "SonicBuds Pro ANC Wireless Earbuds Pearl White ₹1,999 ₹1,499 REMOVE",
+      "amount": 1499,
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.251875,
+       "w": 0.603125,
+       "h": 0.1625
+      }
+     }
+    ],
+    "summary": {
+     "rows": [
+      {
+       "label": "Price (1 item)",
+       "amount": 1999,
+       "text": "Price (1 item) ₹1,999",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.205625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Discount",
+       "amount": -500,
+       "text": "Discount − ₹500",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.245625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Delivery charges",
+       "amount": 0,
+       "text": "Delivery charges FREE",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.285625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Platform fee",
+       "amount": 9,
+       "text": "Platform fee ₹9",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.325625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      }
+     ],
+     "total": {
+      "label": "Total amount",
+      "amount": 1508,
+      "text": "Total amount ₹1,508",
+      "bbox": {
+       "x": 0.684375,
+       "y": 0.365625,
+       "w": 0.240625,
+       "h": 0.05625
+      }
+     },
+     "bbox": {
+      "x": 0.66875,
+      "y": 0.129375,
+      "w": 0.271875,
+      "h": 0.36875
+     }
+    },
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "checkout": {
+   "n": 5,
+   "step": "checkout",
+   "url": "http://localhost:5173/demo/store-b/checkout",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-b/checkout",
+    "title": "Checkout | BazaarNest",
+    "heading": "",
+    "width": 1280,
+    "height": 800,
+    "timers": [],
+    "deadlines": [],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": null,
+    "dialogs": [],
+    "checkboxes": [
+     {
+      "label": "Add BazaarNest Plus: free express delivery and early access to sales ₹99/month, auto-renews. Cancel anytime from My Account in one click.",
+      "checked": false,
+      "amount": 99,
+      "recurring": true,
+      "bbox": {
+       "x": 0.075,
+       "y": 0.359375,
+       "w": 0.571875,
+       "h": 0.06
+      }
+     }
+    ],
+    "cartLines": [],
+    "summary": {
+     "rows": [
+      {
+       "label": "Price (1 item)",
+       "amount": 1999,
+       "text": "Price (1 item) ₹1,999",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.205625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Discount",
+       "amount": -500,
+       "text": "Discount − ₹500",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.245625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Standard delivery",
+       "amount": 0,
+       "text": "Standard delivery FREE",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.285625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Platform fee",
+       "amount": 9,
+       "text": "Platform fee ₹9",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.325625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      }
+     ],
+     "total": {
+      "label": "Total amount",
+      "amount": 1508,
+      "text": "Total amount ₹1,508",
+      "bbox": {
+       "x": 0.684375,
+       "y": 0.365625,
+       "w": 0.240625,
+       "h": 0.05625
+      }
+     },
+     "bbox": {
+      "x": 0.66875,
+      "y": 0.129375,
+      "w": 0.271875,
+      "h": 0.36875
+     }
+    },
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  },
+  "payment": {
+   "n": 6,
+   "step": "payment",
+   "url": "http://localhost:5173/demo/store-b/payment",
+   "signals": {
+    "url": "http://localhost:5173/demo/store-b/payment",
+    "title": "Payment | BazaarNest",
+    "heading": "4 PAYMENT OPTIONS",
+    "width": 1280,
+    "height": 800,
+    "timers": [],
+    "deadlines": [],
+    "stock": [],
+    "salesClaims": [],
+    "priceBlock": null,
+    "dialogs": [],
+    "checkboxes": [],
+    "cartLines": [],
+    "summary": {
+     "rows": [
+      {
+       "label": "Price (1 item)",
+       "amount": 1999,
+       "text": "Price (1 item) ₹1,999",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.205625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Discount",
+       "amount": -500,
+       "text": "Discount − ₹500",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.245625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Standard delivery",
+       "amount": 0,
+       "text": "Standard delivery FREE",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.285625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      },
+      {
+       "label": "Platform fee",
+       "amount": 9,
+       "text": "Platform fee ₹9",
+       "bbox": {
+        "x": 0.684375,
+        "y": 0.325625,
+        "w": 0.240625,
+        "h": 0.035
+       }
+      }
+     ],
+     "total": {
+      "label": "Total amount",
+      "amount": 1508,
+      "text": "Total amount ₹1,508",
+      "bbox": {
+       "x": 0.684375,
+       "y": 0.365625,
+       "w": 0.240625,
+       "h": 0.05625
+      }
+     },
+     "bbox": {
+      "x": 0.66875,
+      "y": 0.129375,
+      "w": 0.271875,
+      "h": 0.36875
+     }
+    },
+    "feeDisclosures": [],
+    "signInWall": null
+   }
+  }
+ },
+ "steps": [
+  {
+   "step": "product",
+   "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro",
+   "screenshotUrl": "/api/audits/fixture/frames/1.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "variant",
+   "url": "http://localhost:5173/demo/store-b/p/sonicbuds-pro?colour=pearl",
+   "screenshotUrl": "/api/audits/fixture/frames/3.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "cart",
+   "url": "http://localhost:5173/demo/store-b/cart",
+   "screenshotUrl": "/api/audits/fixture/frames/4.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "checkout",
+   "url": "http://localhost:5173/demo/store-b/checkout",
+   "screenshotUrl": "/api/audits/fixture/frames/5.jpg",
+   "status": "audited"
+  },
+  {
+   "step": "payment",
+   "url": "http://localhost:5173/demo/store-b/payment",
+   "screenshotUrl": "/api/audits/fixture/frames/6.jpg",
+   "status": "audited"
+  }
+ ]
+}
