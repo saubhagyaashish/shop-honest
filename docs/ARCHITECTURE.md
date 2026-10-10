@@ -1,6 +1,6 @@
 # Shop Honest: Architecture
 
-> Status: **Phase 1 built** (backend skeleton: API, event log, resumable SSE, replay mode, running locally). Agents come next. The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
+> Status: **Phase 2 built** (running locally): the API, event log, resumable SSE and replay mode from Phase 1, plus live audits. A headless Chromium walks the demo stores, real screenshots and prices stream to the UI, and measured checks produce real findings ([ADR-0008](decisions/0008-measured-checks-before-judgement.md)). Gemini judgement comes next. The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
 >
 > Related: [API reference](API.md) · [Decision records](decisions/README.md)
 
@@ -119,6 +119,19 @@ flowchart TB
 
 Two observations need more than one screen: a timer that restarts, or stock that never moves. For these the Navigator deliberately takes a second look (wait, reload, change variant), and the Pattern Analyst is given both captures. That's the core of "this needs an agent, not a classifier".
 
+**What runs today (Phase 2).** The Navigator walks the store with a scripted journey (`backend/app/journeys/`). After each capture, a generic extractor (`backend/app/browser/signals.js`) reads what a shopper can see: timers, stock claims, price and MRP, dialogs, checkboxes, cart lines, the order summary, fee disclosures and sign-in walls, each with a bounding box. Then measured checks run over everything seen so far (`backend/app/agents/checks.py`), so findings stream as soon as their evidence exists:
+
+| Check | Pattern | Evidence |
+|---|---|---|
+| The countdown reads *later* after a reload | `false_urgency` | before and after frames |
+| The same "only N left" on every look and variant | `false_urgency` | first look and another variant |
+| The MRP was never a selling price and was raised recently | `misleading_price` (Price Historian) | price block |
+| The cart holds lines the agent never added | `basket_sneaking` | cart |
+| A paid, recurring option is ticked on arrival | `subscription_trap` | checkout |
+| Fees first appear at payment and weren't disclosed upfront | `drip_pricing` | product page and payment |
+
+The deterministic Reporter (`backend/app/agents/reporter.py`) builds the report: trust score, summary, coverage, `priceDrift` from the order-summary rows each step showed, and `exposure` from `shared/legal.json`. Patterns that need judgement (wording, button prominence, unverifiable claims) wait for the Pattern Analyst in Phase 3.
+
 ## 5. One audit, end to end
 
 ```mermaid
@@ -175,6 +188,8 @@ Endpoints (full details in [API.md](API.md)):
 | `POST` | `/api/audits` | Start an audit → `{auditId, mode}` |
 | `GET` | `/api/audits/{id}` | Status and the final report (for reloads and shared links) |
 | `GET` | `/api/audits/{id}/events` | Server-sent events, resumable |
+| `GET` | `/api/audits/{id}/frames/{n}.jpg` | Screenshots captured by a live audit |
+| `POST` | `/api/audits/{id}/fast-forward` | Skip to the end of a replay |
 | `GET` | `/api/health` | Liveness for Cloud Run |
 
 The frontend already ships the client (`web/src/auditor/source/sseSource.ts`). Switching the deployed site to the backend is `VITE_AUDIT_SOURCE=live`.
@@ -221,7 +236,8 @@ One setting switches every agent ([ADR-0003](decisions/0003-model-providers.md))
 For the public site ([ADR-0004](decisions/0004-replay-and-run-live.md)):
 - **"Scan it"** on a sample store replays a **recorded real run** (`mode: replay`). It costs nothing, starts instantly and can't fail on stage because of network or model latency. The UI states that it is a recorded run and when it was recorded.
 - **"Run live"** starts a fresh audit with the real agents (`mode: live`). It is rate-limited and budget-capped.
-- `backend/scripts/record.py` re-records the sample-store runs after agent changes, so replays always reflect the current agents.
+- `backend/scripts/record.py` re-records the sample-store runs after agent changes, so replays always reflect the current agents. Until Phase 3 the committed recordings stay the scripted mock (all 9 patterns); real recordings replace them once the live agents find the judgement patterns too.
+- Three sample stores: **A** (rigged), **B** (honest control) and **C** (A behind a sign-in wall at checkout). C shows the partial-audit path: the Navigator stops at the wall, says so, and reports on the steps it reached.
 
 ## 10. Security and safety
 
@@ -256,10 +272,11 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 
 | Check | What it proves | Target |
 |---|---|---|
-| **Answer-key eval** (`backend/evals/answer_key.py`) | Run live agents on store A and B; compare with `web/src/store/answerKey.ts` | Store A: ≥ 7 of 8 violations caught, borderline claim → `needs_review`. Store B: **0** findings. |
+| **Answer-key eval** (`backend/evals/answer_key.py`) | Run live audits on stores A, B and C; compare with `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`) | Phase 2 (today): A 6/9, B 0 false alarms, C 4/6 before the wall. Phase 3: A ≥ 8/9 with the borderline claim → `needs_review`. |
 | **Dataset eval** (`backend/evals/dataset.py`) | Pattern Analyst on the public ec-darkpattern text set (2,356 labelled texts) | Report F1 honestly; compare with the published baselines |
 | **Contract tests** | Every event the backend emits validates against `shared/contract.schema.json` | 100% |
-| **Unit tests** | URL guard, budgets, ordering rules, price drift, exposure builder | — |
+| **Unit tests** | URL guard, request guard, every check (positive, and honest variants that must not trigger), price drift, report, exposure | — |
+| **Browser tests** | Real live audits of the built web app (`pytest -m browser`): steps, findings, prices, every event against the schema, record → replay | — |
 | **Golden recordings** | Replay output is byte-stable across releases | — |
 
 The eval numbers go in the README and the pitch: real numbers instead of claims.
@@ -287,6 +304,9 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `STORE_BACKEND` | `memory` · `gcp` | Local fallbacks or Google Cloud |
 | `GCS_BUCKET` / `BQ_DATASET` | `shop-honest-audits` / `shop_honest` | Storage names |
 | `ALLOWED_HOSTS` | `shop-honest.web.app,localhost` | URL allowlist |
+| `ENABLE_LIVE` / `MAX_LIVE_AUDITS` | `true` / `2` | Live audits on or off; how many browsers at once |
+| `NAV_LINGER_S` / `NAV_STEP_TIMEOUT_S` | `8` / `15` | Time on the product page before the second look; per-action timeout |
+| `FRAMES_DIR` | `backend/var/frames` | Where live screenshots go until Cloud Storage |
 | `AUDIT_MAX_STEPS` / `AUDIT_MAX_MODEL_CALLS` / `AUDIT_MAX_TOKENS` / `AUDIT_TIMEOUT_S` | `8` / `40` / `400000` / `360` | Budgets |
 | `REVIEW_THRESHOLD` | `0.75` | Adjudicator cut-off |
 | `CORS_ORIGINS` | `http://localhost:5173` | Development only |
@@ -298,27 +318,28 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 ```
 shophonest/
 ├── web/                         # React app: dashboard, report, PDF, demo store (built)
-├── backend/                     # planned
-│   ├── pyproject.toml           # uv, Python 3.12
-│   ├── Dockerfile               # Playwright Python base image
+├── backend/                     # ✓ = built
+│   ├── pyproject.toml           # ✓ uv, Python 3.12
+│   ├── Dockerfile               # Playwright Python base image (deploy phase)
 │   ├── app/
-│   │   ├── main.py              # FastAPI app and route wiring
-│   │   ├── config.py            # settings from environment variables
-│   │   ├── api/                 # audits.py: POST, GET, SSE events; health
-│   │   ├── contract/            # Pydantic models mirroring contract.ts
-│   │   ├── runner/              # audit orchestration, budgets, event log, ordering rules
-│   │   ├── agents/              # navigator, pattern_analyst, price_historian, evidence,
-│   │   │   └── prompts/         #   adjudicator, reporter; prompt templates
-│   │   ├── browser/             # Playwright session, capture, url_guard.py
-│   │   │   └── journeys/        #   scripted journeys for known stores
-│   │   ├── models/              # provider factory: replay | ollama | gemini
-│   │   ├── stores/              # firestore, gcs, bigquery + in-memory fallbacks
-│   │   ├── legal/               # loads shared/legal.json, builds exposure
-│   │   └── replay/              # recordings/*.json and the replay player
-│   ├── scripts/                 # record.py, seed_bigquery.py
-│   ├── tests/                   # unit + contract tests
-│   └── evals/                   # answer_key.py, dataset.py
-├── shared/                      # contract.schema.json (generated), legal.json
+│   │   ├── main.py              # ✓ FastAPI app and route wiring
+│   │   ├── config.py            # ✓ settings from environment variables
+│   │   ├── knowledge.py         # ✓ loads shared/*.json (patterns, legal, price history)
+│   │   ├── api/                 # ✓ audits.py: POST, GET, SSE events, frames; health
+│   │   ├── contract/            # ✓ Pydantic models mirroring contract.ts
+│   │   ├── runner/              # ✓ runner.py (replay + live), walk.py (what a journey drives)
+│   │   ├── journeys/            # ✓ scripted journeys for known stores (bazaarnest.py)
+│   │   ├── agents/              # ✓ checks.py, reporter.py; next: pattern_analyst, adjudicator,
+│   │   │   └── prompts/         #   prompt templates (Phase 3)
+│   │   ├── browser/             # ✓ session.py (request guard), capture.py, signals.js, url_guard.py
+│   │   ├── models/              # provider factory: replay | ollama | gemini (Phase 3)
+│   │   ├── stores/              # ✓ in-memory event log, local frames; firestore, gcs, bigquery later
+│   │   └── replay/              # ✓ recordings/*.json and the replay player
+│   ├── scripts/                 # ✓ record.py, capture_signals.py; seed_bigquery.py later
+│   ├── tests/                   # ✓ unit, contract and browser tests; fixtures/ = real signals
+│   └── evals/                   # ✓ answer_key.py; dataset.py later
+├── shared/                      # contract.schema.json (generated); legal, patterns, price_history,
+│                                #   answer_key .json (exported by `npm run knowledge`)
 ├── docs/                        # this document, API.md, decisions/
 └── firebase.json                # Hosting (+ /api/** rewrite to Cloud Run)
 ```
@@ -329,7 +350,7 @@ shophonest/
 |---|---|---|
 | **0. Setup** | Python 3.12 (uv), gcloud CLI, billing on `shop-honest` (Blaze), enable Run, Vertex AI, Firestore, Storage, BigQuery, Secret Manager, Artifact Registry; Ollama + `gemma3:4b` | `uv run pytest` passes; `gcloud` authenticated |
 | **1. Skeleton** | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest.web.app runs with `VITE_AUDIT_SOURCE=live` end to end |
-| **2. Navigator** | Playwright scripted journeys for stores A and B (ported from `web/scripts/capture-screens.ts`), real screenshots to GCS, real `step.*` and `price.observed` events | A live run streams real screenshots and prices |
+| **2. Navigator** ✓ | Playwright journeys for stores A, B and C (ported from `web/scripts/capture-screens.ts`), real screenshots (local disk; GCS at deploy), real `step.*` and `price.observed` events, measured checks and a deterministic report, store C's sign-in wall, "Run live" in the UI | A live run streams real screenshots and prices. **Done:** A 6/9, B 0 false alarms, C partial at the wall |
 | **3. Pattern Analyst** | Prompts and schemas with `ollama`, then `gemini`; Evidence + Adjudicator; answer-key eval | Store A ≥ 7/8, store B 0 false positives |
 | **4. Price & report** | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data |
 | **5. Hardening** | One allowlisted real site logged-out (partial coverage path), dataset eval, billing alerts, judging-day settings | Eval numbers in the README; demo rehearsed |

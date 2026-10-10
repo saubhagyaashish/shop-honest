@@ -11,5 +11,6 @@ Short notes on the decisions that shape Shop Honest: what we chose, why, and wha
 | [0005](0005-allowlist-and-safety.md) | Allowlist + SSRF guard; stop at sign-in walls | Accepted |
 | [0006](0006-contract-source-of-truth.md) | The TypeScript contract is the source of truth, via a generated JSON Schema | Accepted |
 | [0007](0007-client-side-pdf.md) | PDF reports are generated in the browser | Accepted |
+| [0008](0008-measured-checks-before-judgement.md) | Measured checks first, model judgement on top | Accepted |
 
 Back to [Architecture](../ARCHITECTURE.md).
