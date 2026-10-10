@@ -15,6 +15,24 @@ Google Cloud AI Builder Cup 2026 · Retail & Commerce. Original concept doc: `Ho
 
 The dashboard currently runs in **demo mode**: audits replay real captures of the sample stores through the same event stream the agent backend will use. The contract is `web/src/shared/contract.ts`. Setting `VITE_AUDIT_SOURCE=live` switches the dashboard to `POST /api/audits` and the SSE stream at `/api/audits/:id/events`.
 
+Live at **<https://shop-honest.web.app>**.
+
+## Architecture
+
+The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Firestore, Cloud Storage, BigQuery) is designed and documented; it is being built next.
+
+- [**Architecture**](docs/ARCHITECTURE.md): system context, agents, audit flow, data model, model providers, security, costs, evaluation, roadmap
+- [**API reference**](docs/API.md): endpoints, the event stream, the event catalogue with examples
+- [**Decision records**](docs/decisions/README.md): why we chose what we chose
+
+```
+shophonest/
+├── web/        React app: dashboard, report, PDF, demo store (built)
+├── backend/    Python FastAPI + ADK agents + Playwright (planned)
+├── shared/     contract.schema.json, legal.json (planned)
+└── docs/       architecture, API, decision records
+```
+
 ## Run it
 
 ```sh
