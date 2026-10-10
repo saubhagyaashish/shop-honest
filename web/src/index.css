@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-store: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* BazaarNest demo store (deliberately plain e-commerce styling) */
+  --color-nest-50: #ecf7f6;
+  --color-nest-100: #cfecea;
+  --color-nest-500: #138a85;
+  --color-nest-600: #0e6f6b;
+  --color-nest-700: #0b5754;
+  --color-nest-900: #06312f;
+  --color-saffron-100: #fff1d6;
+  --color-saffron-400: #ffb627;
+  --color-saffron-500: #f59e0b;
+  --color-saffron-600: #d97706;
+
+  /* Shop Honest */
+  --color-ink: #111111;
+  --color-cream: #fff8ec;
+  --color-lime: #c6f432;
+  --color-pink: #ff5ca8;
+  --color-blue: #3b5bff;
+  --color-sun: #ffd23f;
+  --color-mint: #4ade9a;
+  --color-lilac: #c4b5fd;
+  --color-peach: #ffb38a;
+
+  --shadow-brutal-sm: 2px 2px 0 0 #111111;
+  --shadow-brutal: 4px 4px 0 0 #111111;
+  --shadow-brutal-lg: 7px 7px 0 0 #111111;
+
+  --animate-flash: flash 1.6s ease-out 1;
+  --animate-rise: rise 0.35s ease-out 1;
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-marquee-reverse: marquee 38s linear infinite reverse;
+  --animate-scan: scan 1.3s ease-in-out 1 forwards;
+  --animate-wiggle: wiggle 2.6s ease-in-out infinite;
+  --animate-blink: blink 1s steps(2, start) infinite;
+}
+
+@keyframes flash {
+  0% { box-shadow: 0 0 0 0 rgb(255 92 168 / 0.8); }
+  70% { box-shadow: 0 0 0 16px rgb(255 92 168 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(255 92 168 / 0); }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes scan {
+  0% { top: -6%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 104%; opacity: 0; }
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes blink {
+  to { visibility: hidden; }
+}
+
+/* Neo-brutalist primitives */
+@utility brutal {
+  border: 2px solid var(--color-ink);
+  box-shadow: var(--shadow-brutal);
+}
+@utility brutal-sm {
+  border: 2px solid var(--color-ink);
+  box-shadow: var(--shadow-brutal-sm);
+}
+@utility brutal-btn {
+  border: 2px solid var(--color-ink);
+  box-shadow: var(--shadow-brutal);
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+  &:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-brutal-lg);
+  }
+  &:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--color-ink);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+@utility sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow-brutal-sm);
+}
+@utility dot-grid {
+  background-image: radial-gradient(rgb(17 17 17 / 0.1) 1.1px, transparent 1.3px);
+  background-size: 20px 20px;
+}
+@utility text-outline {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-ink);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+/* 13-pattern flip tiles */
+.flip-card { perspective: 900px; }
+.flip-card-inner { transition: transform 450ms cubic-bezier(0.3, 1.4, 0.5, 1); transform-style: preserve-3d; }
+.flip-card:hover .flip-card-inner,
+.flip-card:focus-visible .flip-card-inner { transform: rotateY(180deg); }
+.flip-card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.flip-card-back { transform: rotateY(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee, .animate-marquee-reverse, .animate-wiggle, .animate-scan, .animate-blink { animation: none !important; }
+  .flip-card-inner { transition: none; }
+  .brutal-btn { transition: none; }
+}
+
+@media print {
+  .brutal, .brutal-sm, .brutal-btn, .sticker { box-shadow: none !important; }
+  .dot-grid { background-image: none; }
+}

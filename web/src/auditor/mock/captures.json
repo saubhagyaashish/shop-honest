@@ -1,0 +1,542 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "capturedAt": "2026-10-10T07:29:09.025Z",
+  "stores": {
+    "a": {
+      "frames": {
+        "product-popup": {
+          "id": "product-popup",
+          "step": "product",
+          "src": "/mock/screens/a/product-popup.jpg",
+          "url": "/demo/store-a/p/sonicbuds-pro",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#deal-timer": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.48375,
+                "w": 0.15020751953125,
+                "h": 0.055
+              },
+              "text": "Deal ends in 09:59"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.53375,
+                "w": 0.490625,
+                "h": 0.04
+              },
+              "text": "Hurry, only 2 left in stock!"
+            },
+            "#buyers-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.32625,
+                "w": 0.188623046875,
+                "h": 0.045
+              },
+              "text": "🔥 120+ bought in the last 24 hours"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.37125,
+                "w": 0.490625,
+                "h": 0.1125
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes"
+            },
+            "#offer-modal-decline": {
+              "bbox": {
+                "x": 0.4179443359375,
+                "y": 0.6153125,
+                "w": 0.164111328125,
+                "h": 0.035
+              },
+              "text": "No thanks, I prefer paying full price"
+            },
+            "#offer-modal": {
+              "bbox": {
+                "x": 0.3453125,
+                "y": 0.3228125,
+                "w": 0.309375,
+                "h": 0.354375
+              },
+              "text": "WAIT! ONE-TIME OFFER Extra 10% off on your first order Unlock my 10% offNo thanks, I prefer paying full price"
+            }
+          }
+        },
+        "product": {
+          "id": "product",
+          "step": "product",
+          "src": "/mock/screens/a/product.jpg",
+          "url": "/demo/store-a/p/sonicbuds-pro",
+          "width": 1280,
+          "height": 917,
+          "elements": {
+            "#deal-timer": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.42202835332606325,
+                "w": 0.15020751953125,
+                "h": 0.04798255179934569
+              },
+              "text": "Deal ends in 09:51"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.46564885496183206,
+                "w": 0.490625,
+                "h": 0.03489640130861505
+              },
+              "text": "Hurry, only 2 left in stock!"
+            },
+            "#buyers-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.2846237731733915,
+                "w": 0.188623046875,
+                "h": 0.03925845147219193
+              },
+              "text": "🔥 120+ bought in the last 24 hours"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.3238822246455834,
+                "w": 0.490625,
+                "h": 0.09814612868047982
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes"
+            }
+          }
+        },
+        "product-reload": {
+          "id": "product-reload",
+          "step": "product",
+          "src": "/mock/screens/a/product-reload.jpg",
+          "url": "/demo/store-a/p/sonicbuds-pro",
+          "width": 1280,
+          "height": 917,
+          "elements": {
+            "#deal-timer": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.42202835332606325,
+                "w": 0.15020751953125,
+                "h": 0.04798255179934569
+              },
+              "text": "Deal ends in 09:59"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.46564885496183206,
+                "w": 0.490625,
+                "h": 0.03489640130861505
+              },
+              "text": "Hurry, only 2 left in stock!"
+            },
+            "#buyers-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.2846237731733915,
+                "w": 0.188623046875,
+                "h": 0.03925845147219193
+              },
+              "text": "🔥 120+ bought in the last 24 hours"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.3238822246455834,
+                "w": 0.490625,
+                "h": 0.09814612868047982
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes"
+            }
+          }
+        },
+        "variant": {
+          "id": "variant",
+          "step": "variant",
+          "src": "/mock/screens/a/variant.jpg",
+          "url": "/demo/store-a/p/sonicbuds-pro?colour=ocean",
+          "width": 1280,
+          "height": 917,
+          "elements": {
+            "#deal-timer": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.42202835332606325,
+                "w": 0.15020751953125,
+                "h": 0.04798255179934569
+              },
+              "text": "Deal ends in 09:59"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.46564885496183206,
+                "w": 0.490625,
+                "h": 0.03489640130861505
+              },
+              "text": "Hurry, only 2 left in stock!"
+            },
+            "#buyers-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.2846237731733915,
+                "w": 0.188623046875,
+                "h": 0.03925845147219193
+              },
+              "text": "🔥 120+ bought in the last 24 hours"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.3238822246455834,
+                "w": 0.490625,
+                "h": 0.09814612868047982
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes"
+            }
+          }
+        },
+        "cart": {
+          "id": "cart",
+          "step": "cart",
+          "src": "/mock/screens/a/cart.jpg",
+          "url": "/demo/store-a/cart",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#order-total": {
+              "bbox": {
+                "x": 0.875830078125,
+                "y": 0.339375,
+                "w": 0.050732421875,
+                "h": 0.045
+              },
+              "text": "₹1,698"
+            },
+            "#line-protect-1y": {
+              "bbox": {
+                "x": 0.0578125,
+                "y": 0.401875,
+                "w": 0.60625,
+                "h": 0.1675
+              },
+              "text": "1-Year Accidental Damage Protection 12 months · Sold by BazaarNest Care ₹199 REMOVE"
+            }
+          }
+        },
+        "checkout": {
+          "id": "checkout",
+          "step": "checkout",
+          "src": "/mock/screens/a/checkout.jpg",
+          "url": "/demo/store-a/checkout",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#plus-optin": {
+              "bbox": {
+                "x": 0.0734375,
+                "y": 0.356875,
+                "w": 0.575,
+                "h": 0.055625
+              },
+              "text": "Add BazaarNest Plus: free express delivery and early access to sales ₹99/month, billed from today. Auto-renews until cancelled via written request."
+            },
+            "#delivery-choice": {
+              "bbox": {
+                "x": 0.0734375,
+                "y": 0.5075,
+                "w": 0.575,
+                "h": 0.256875
+              },
+              "text": "⚡ Get it tomorrow with Express Most customers choose Express delivery UPGRADE TO EXPRESS · ₹79 continue with standard delivery"
+            },
+            "#order-total": {
+              "bbox": {
+                "x": 0.8780517578125,
+                "y": 0.379375,
+                "w": 0.0485107421875,
+                "h": 0.045
+              },
+              "text": "₹1,797"
+            }
+          }
+        },
+        "payment": {
+          "id": "payment",
+          "step": "payment",
+          "src": "/mock/screens/a/payment.jpg",
+          "url": "/demo/store-a/payment",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#fee-lines": {
+              "bbox": {
+                "x": 0.6828125,
+                "y": 0.363125,
+                "w": 0.24375,
+                "h": 0.12
+              },
+              "text": "Platform fee ₹29 Handling fee ₹49 Convenience fee ₹19"
+            },
+            "#order-total": {
+              "bbox": {
+                "x": 0.875732421875,
+                "y": 0.499375,
+                "w": 0.050830078125,
+                "h": 0.045
+              },
+              "text": "₹1,894"
+            }
+          }
+        }
+      },
+      "probes": {
+        "clockBeforeReload": "Deal ends in 09:51",
+        "secondsOnPage": "8"
+      }
+    },
+    "b": {
+      "frames": {
+        "product": {
+          "id": "product",
+          "step": "product",
+          "src": "/mock/screens/b/product.jpg",
+          "url": "/demo/store-b/p/sonicbuds-pro",
+          "width": 1280,
+          "height": 905,
+          "elements": {
+            "#sale-deadline": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.4143646408839779,
+                "w": 0.25159912109375,
+                "h": 0.04861878453038674
+              },
+              "text": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.4585635359116022,
+                "w": 0.490625,
+                "h": 0.03535911602209945
+              },
+              "text": "In stock"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.292817679558011,
+                "w": 0.490625,
+                "h": 0.12154696132596685
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout."
+            }
+          }
+        },
+        "product-reload": {
+          "id": "product-reload",
+          "step": "product",
+          "src": "/mock/screens/b/product-reload.jpg",
+          "url": "/demo/store-b/p/sonicbuds-pro",
+          "width": 1280,
+          "height": 905,
+          "elements": {
+            "#sale-deadline": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.4143646408839779,
+                "w": 0.25159912109375,
+                "h": 0.04861878453038674
+              },
+              "text": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.4585635359116022,
+                "w": 0.490625,
+                "h": 0.03535911602209945
+              },
+              "text": "In stock"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.292817679558011,
+                "w": 0.490625,
+                "h": 0.12154696132596685
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout."
+            }
+          }
+        },
+        "variant": {
+          "id": "variant",
+          "step": "variant",
+          "src": "/mock/screens/b/variant.jpg",
+          "url": "/demo/store-b/p/sonicbuds-pro?colour=ocean",
+          "width": 1280,
+          "height": 905,
+          "elements": {
+            "#sale-deadline": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.4143646408839779,
+                "w": 0.25159912109375,
+                "h": 0.04861878453038674
+              },
+              "text": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST"
+            },
+            "#stock-note": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.4585635359116022,
+                "w": 0.490625,
+                "h": 0.03535911602209945
+              },
+              "text": "In stock"
+            },
+            "#price-block": {
+              "bbox": {
+                "x": 0.4328125,
+                "y": 0.292817679558011,
+                "w": 0.490625,
+                "h": 0.12154696132596685
+              },
+              "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout."
+            }
+          }
+        },
+        "cart": {
+          "id": "cart",
+          "step": "cart",
+          "src": "/mock/screens/b/cart.jpg",
+          "url": "/demo/store-b/cart",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#protection-offer": {
+              "bbox": {
+                "x": 0.0734375,
+                "y": 0.421875,
+                "w": 0.575,
+                "h": 0.0975
+              },
+              "text": "Add 1-Year Accidental Damage Protection for ₹199 Optional. Covers accidental drops and liquid damage for 12 months."
+            },
+            "#fee-lines": {
+              "bbox": {
+                "x": 0.6828125,
+                "y": 0.323125,
+                "w": 0.24375,
+                "h": 0.04
+              },
+              "text": "Platform fee ₹9"
+            },
+            "#order-total": {
+              "bbox": {
+                "x": 0.875927734375,
+                "y": 0.379375,
+                "w": 0.050634765625,
+                "h": 0.045
+              },
+              "text": "₹1,508"
+            }
+          }
+        },
+        "checkout": {
+          "id": "checkout",
+          "step": "checkout",
+          "src": "/mock/screens/b/checkout.jpg",
+          "url": "/demo/store-b/checkout",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#plus-optin": {
+              "bbox": {
+                "x": 0.0734375,
+                "y": 0.356875,
+                "w": 0.575,
+                "h": 0.065
+              },
+              "text": "Add BazaarNest Plus: free express delivery and early access to sales ₹99/month, auto-renews. Cancel anytime from My Account in one click."
+            },
+            "#delivery-choice": {
+              "bbox": {
+                "x": 0.0734375,
+                "y": 0.516875,
+                "w": 0.575,
+                "h": 0.0975
+              },
+              "text": "Standard delivery By Thu, 15 Oct FREE Express delivery By Sun, 11 Oct ₹79"
+            },
+            "#fee-lines": {
+              "bbox": {
+                "x": 0.6828125,
+                "y": 0.323125,
+                "w": 0.24375,
+                "h": 0.04
+              },
+              "text": "Platform fee ₹9"
+            },
+            "#order-total": {
+              "bbox": {
+                "x": 0.875927734375,
+                "y": 0.379375,
+                "w": 0.050634765625,
+                "h": 0.045
+              },
+              "text": "₹1,508"
+            }
+          }
+        },
+        "payment": {
+          "id": "payment",
+          "step": "payment",
+          "src": "/mock/screens/b/payment.jpg",
+          "url": "/demo/store-b/payment",
+          "width": 1280,
+          "height": 800,
+          "elements": {
+            "#fee-lines": {
+              "bbox": {
+                "x": 0.6828125,
+                "y": 0.323125,
+                "w": 0.24375,
+                "h": 0.04
+              },
+              "text": "Platform fee ₹9"
+            },
+            "#order-total": {
+              "bbox": {
+                "x": 0.875927734375,
+                "y": 0.379375,
+                "w": 0.050634765625,
+                "h": 0.045
+              },
+              "text": "₹1,508"
+            }
+          }
+        }
+      },
+      "probes": {
+        "clockBeforeReload": "Festive Sale ends Sun, 11 Oct, 11:59 PM IST",
+        "secondsOnPage": "8"
+      }
+    }
+  }
+}

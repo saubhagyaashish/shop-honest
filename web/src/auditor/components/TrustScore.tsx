@@ -1,0 +1,52 @@
+import { motion } from 'motion/react'
+import { BAND_LABEL, BAND_VIBE, scoreBand } from '../score'
+import type { ScoreBand } from '../score'
+import { CountUp } from '../ui/CountUp'
+import { Sticker } from '../ui/Sticker'
+import type { Tone } from '../ui/styles'
+
+const BAND_STROKE: Record<ScoreBand, string> = { trustworthy: '#c6f432', concerns: '#ffd23f', deceptive: '#ff5ca8' }
+const BAND_TONE: Record<ScoreBand, Tone> = { trustworthy: 'lime', concerns: 'sun', deceptive: 'pink' }
+const ARC = 'M24 112 A88 88 0 0 1 200 112'
+
+/** Chunky half-ring gauge, 0–100, with the verdict sticker. */
+export function TrustScore({ score }: { score: number }) {
+  const band = scoreBand(score)
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-60">
+        <svg viewBox="0 0 224 128" className="w-full" role="img" aria-label={`Trust score ${score} out of 100: ${BAND_LABEL[band]}`}>
+          <path d={ARC} fill="none" stroke="#111" strokeWidth="30" strokeLinecap="round" />
+          <path d={ARC} fill="none" stroke="#fff8ec" strokeWidth="22" strokeLinecap="round" />
+          {score > 0 && (
+            <motion.path
+              d={ARC}
+              fill="none"
+              stroke={BAND_STROKE[band]}
+              strokeWidth="22"
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: score / 100 }}
+              transition={{ duration: 1.1, ease: [0.2, 0.8, 0.2, 1] }}
+            />
+          )}
+        </svg>
+        <div className="absolute inset-x-0 bottom-0 text-center">
+          <CountUp value={score} className="font-display text-6xl leading-none font-extrabold" />
+          <div className="text-xs font-bold text-ink/50">out of 100</div>
+        </div>
+      </div>
+      <motion.div
+        className="mt-4"
+        initial={{ scale: 2, rotate: -20, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.9 }}
+      >
+        <Sticker tone={BAND_TONE[band]} rotate={-5} className="!px-5 !py-2 font-display !text-2xl">
+          {BAND_VIBE[band]}
+        </Sticker>
+      </motion.div>
+      <div className="mt-3 text-xs font-bold tracking-wider text-ink/60 uppercase">{BAND_LABEL[band]}</div>
+    </div>
+  )
+}
