@@ -2,7 +2,11 @@
 
 Every event is stored before it's streamed; its sequence number (1, 2, 3…)
 is the SSE id, so a client can resume from any point. Firestore implements
-the same interface in a later phase.
+the same interface (firestore_events.py).
+
+With several instances, each audit has an owner (the instance running it) that
+writes a heartbeat. An instance serving a viewer can claim an audit whose owner
+went quiet, atomically, so exactly one instance takes over.
 """
 
 import asyncio
@@ -17,6 +21,17 @@ def now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+def seconds_since(iso: str | None) -> float:
+    """Seconds since an ISO timestamp; infinite for None."""
+    if not iso:
+        return float("inf")
+    return (datetime.now(UTC) - datetime.fromisoformat(iso.replace("Z", "+00:00"))).total_seconds()
+
+
+def claimable(owner: str | None, heartbeat_at: str | None, claimer: str, stale_after_s: float) -> bool:
+    return owner in (None, claimer) or seconds_since(heartbeat_at) >= stale_after_s
+
+
 @dataclass
 class AuditRecord:
     audit_id: str
@@ -28,6 +43,11 @@ class AuditRecord:
     completed_at: str | None = None
     report: dict[str, Any] | None = None
     error: str | None = None
+    # The instance running the audit, and when it last said it's alive.
+    owner: str | None = None
+    heartbeat_at: str | None = None
+    # A viewer, on any instance, asked to skip to the end (replays only).
+    skip_requested: bool = False
 
     @property
     def finished(self) -> bool:
@@ -42,6 +62,13 @@ class EventLog(Protocol):
     async def read_after(self, audit_id: str, after: int) -> list[tuple[int, dict[str, Any]]]: ...
     async def last_seq(self, audit_id: str) -> int: ...
     async def wait(self, audit_id: str, after: int, max_wait: float) -> None: ...
+    async def claim(self, audit_id: str, owner: str, stale_after_s: float) -> bool:
+        """Atomically make `owner` the runner if the audit has none, or its owner's heartbeat is older than stale_after_s."""
+        ...
+
+    async def heartbeat(self, audit_id: str, owner: str) -> bool:
+        """Record that `owner` is alive; False if another instance owns the audit now (or it's finished)."""
+        ...
 
 
 class MemoryEventLog:
@@ -86,3 +113,17 @@ class MemoryEventLog:
                 await asyncio.wait_for(condition.wait_for(lambda: len(self._events[audit_id]) > after), max_wait)
             except TimeoutError:
                 pass
+
+    async def claim(self, audit_id: str, owner: str, stale_after_s: float) -> bool:
+        record = self._records.get(audit_id)
+        if record is None or record.finished or not claimable(record.owner, record.heartbeat_at, owner, stale_after_s):
+            return False
+        record.owner, record.heartbeat_at = owner, now_iso()
+        return True
+
+    async def heartbeat(self, audit_id: str, owner: str) -> bool:
+        record = self._records.get(audit_id)
+        if record is None or record.owner != owner:
+            return False
+        record.heartbeat_at = now_iso()
+        return True

@@ -78,7 +78,7 @@ Replayed audits point at static files instead (`/mock/screens/…` for the scrip
 
 ### `POST /api/audits/{auditId}/fast-forward`: skip ahead (replays only)
 
-Plays the rest of a replayed audit without delays; this powers "Skip to report". `202 {"ok": true}`. Returns `409 not_replay` for live audits, which can't be sped up.
+Plays the rest of a replayed audit without delays; this powers "Skip to report". `202 {"ok": true}`. It works whichever instance the request reaches: the skip is stored on the audit, and the instance playing it picks it up within about a second. Returns `409 not_replay` for live audits, which can't be sped up.
 
 ### `GET /api/health`
 

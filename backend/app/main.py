@@ -18,7 +18,13 @@ from app.stores.events import EventLog, MemoryEventLog
 from app.stores.frames import FrameStore, GcsFrameStore, LocalFrameStore
 
 
-def create_app(settings: Settings | None = None, resolver: Resolver = system_resolver, models: ModelSet | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    resolver: Resolver = system_resolver,
+    models: ModelSet | None = None,
+    events: EventLog | None = None,
+) -> FastAPI:
+    """`events` lets tests run two apps on one log, the way Cloud Run instances share Firestore."""
     settings = settings or get_settings()
 
     @asynccontextmanager
@@ -36,6 +42,8 @@ def create_app(settings: Settings | None = None, resolver: Resolver = system_res
     app.state.settings = settings
     app.state.resolver = resolver
     app.state.events, app.state.frames, app.state.limits = _stores(settings)
+    if events is not None:
+        app.state.events = events
     app.state.library = RecordingLibrary.load(settings.recordings_dir)
     app.state.runner = AuditRunner(app.state.events, settings, frames=app.state.frames, resolver=resolver, models=models)
 

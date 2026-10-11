@@ -13,7 +13,7 @@ import pytest
 
 from app.api.limits import MemoryLimits
 from app.config import Settings
-from app.stores.events import AuditRecord, EventLog, MemoryEventLog
+from app.stores.events import AuditRecord, EventLog, MemoryEventLog, now_iso
 from app.stores.frames import FrameStore, LocalFrameStore
 from tests.conftest import STORE_A, fake_resolver, make_settings
 
@@ -114,6 +114,25 @@ async def test_waiting_wakes_on_a_new_event_and_times_out_without_one(events: Ev
     await events.wait(record.audit_id, 0, max_wait=5)
     await task
     assert loop.time() - started < 2
+
+
+async def test_only_one_instance_can_claim_a_quiet_audit(events: EventLog):
+    record = new_record(status="running", owner="a", heartbeat_at=now_iso())
+    await events.create(record)
+    audit_id = record.audit_id
+    assert not await events.claim(audit_id, "b", stale_after_s=60)  # a is alive
+    assert await events.heartbeat(audit_id, "a")
+
+    await events.update(audit_id, heartbeat_at="2026-01-01T00:00:00.000Z")  # a went quiet
+    results = await asyncio.gather(events.claim(audit_id, "b", 30), events.claim(audit_id, "c", 30))
+    assert sorted(results) == [False, True]
+    winner = (await events.get(audit_id)).owner
+    assert winner in ("b", "c")
+    assert not await events.heartbeat(audit_id, "a")  # a learns it lost the audit
+    assert await events.heartbeat(audit_id, winner)
+
+    await events.update(audit_id, status="completed")
+    assert not await events.claim(audit_id, "d", stale_after_s=0)  # finished audits stay put
 
 
 # Frames

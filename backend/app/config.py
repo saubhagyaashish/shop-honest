@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     nav_step_timeout_s: float = 15.0
     audit_timeout_s: float = 360.0
     headless: bool = True
+    # Multi-instance: how often the instance running an audit says it's alive, and how long
+    # without that before another instance takes over (a replay continues; a live audit fails).
+    heartbeat_s: float = 10.0
+    abandoned_after_s: float = 45.0
     frames_dir: Path = BACKEND_DIR / "var" / "frames"
     shared_dir: Path = REPO_DIR / "shared"
 

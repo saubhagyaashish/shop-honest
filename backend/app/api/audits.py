@@ -2,9 +2,9 @@
 
 import asyncio
 import json
+import logging
 import secrets
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Header, Query, Request, Response
@@ -18,10 +18,11 @@ from app.errors import ApiError
 from app.journeys import journey_for
 from app.replay.player import RecordingLibrary, origin_of
 from app.runner.runner import AuditRunner
-from app.stores.events import AuditRecord, EventLog, now_iso
+from app.stores.events import AuditRecord, EventLog, now_iso, seconds_since
 from app.stores.frames import FrameStore
 
 router = APIRouter(prefix="/api")
+log = logging.getLogger(__name__)
 
 HEARTBEAT_SECONDS = 15
 
@@ -50,18 +51,35 @@ async def _record_or_404(request: Request, audit_id: str) -> AuditRecord:
 
 
 async def _settle_if_abandoned(request: Request, record: AuditRecord) -> AuditRecord:
-    """An audit still "running" long after its time limit lost its server (an instance restart): close it."""
-    if record.finished or _seconds_since(record.created_at) < _settings(request).audit_timeout_s + 120:
+    """Take over an audit whose instance went quiet (it restarted or was shut down).
+
+    A replay continues here from the last event stored; a live audit can't
+    resume a dead browser, so it's closed as failed. The claim is atomic, so
+    when several instances notice at once, exactly one acts.
+    """
+    settings = _settings(request)
+    if record.finished:
         return record
-    events = _events(request)
+    quiet = seconds_since(record.heartbeat_at or record.created_at) >= settings.abandoned_after_s
+    overdue = seconds_since(record.created_at) >= settings.audit_timeout_s + 120
+    if not (quiet or overdue):
+        return record
+    events, runner = _events(request), _runner(request)
+    if not await events.claim(record.audit_id, runner.instance, settings.abandoned_after_s):
+        return await events.get(record.audit_id) or record
+    recording = _library(request).match(record.target_url) if record.mode == "replay" else None
+    if recording is not None and not overdue:
+        log.warning("audit %s: owner %s went quiet; resuming the replay here", record.audit_id, record.owner)
+        fresh = await events.get(record.audit_id) or record
+        await runner.start_replay(
+            fresh, recording, origin_of(record.target_url), resume_after=await events.last_seq(record.audit_id)
+        )
+        return fresh
+    log.warning("audit %s: owner %s went quiet; closing it", record.audit_id, record.owner)
     error = "The server running this audit restarted before it finished. Please run it again."
     await events.append(record.audit_id, {"type": "audit.failed", "error": error})
     await events.update(record.audit_id, status="failed", completed_at=now_iso(), error=error)
     return await events.get(record.audit_id) or record
-
-
-def _seconds_since(iso: str) -> float:
-    return (datetime.now(UTC) - datetime.fromisoformat(iso.replace("Z", "+00:00"))).total_seconds()
 
 
 @router.get("/health")
@@ -84,7 +102,7 @@ async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAudi
 
     audit_id = f"aud_{secrets.token_hex(6)}"
     if recording is not None:
-        record = AuditRecord(audit_id=audit_id, target_url=url, mode="replay")
+        record = AuditRecord(audit_id=audit_id, target_url=url, mode="replay", owner=runner.instance, heartbeat_at=now_iso())
         await _events(request).create(record)
         await runner.start_replay(record, recording, origin_of(url))
         return CreateAuditResponse(auditId=audit_id, mode="replay", eventsUrl=f"/api/audits/{audit_id}/events")
@@ -110,7 +128,7 @@ async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAudi
     if refusal := await limits.take(visitor_of(request, settings.google_cloud_project)):
         raise ApiError(429, "rate_limited", refusal)
 
-    record = AuditRecord(audit_id=audit_id, target_url=url, mode="live")
+    record = AuditRecord(audit_id=audit_id, target_url=url, mode="live", owner=runner.instance, heartbeat_at=now_iso())
     await _events(request).create(record)
     await runner.start_live(record, journey)
     return CreateAuditResponse(auditId=audit_id, mode="live", eventsUrl=f"/api/audits/{audit_id}/events")
@@ -148,11 +166,15 @@ async def stream_events(
     async def stream() -> AsyncIterator[dict[str, str]]:
         position = cursor
         while True:
+            fresh = False
             for seq, event in await events.read_after(audit_id, position):
-                position = seq
+                position, fresh = seq, True
                 yield {"id": str(seq), "data": json.dumps(event, ensure_ascii=False, separators=(",", ":"))}
                 if event["type"] in TERMINAL_EVENTS:
                     return
+            if not fresh and (current := await events.get(audit_id)) is not None:
+                # Nothing new for a while: make sure the audit still has a live owner (or take it over).
+                await _settle_if_abandoned(request, current)
             await events.wait(audit_id, position, max_wait=HEARTBEAT_SECONDS)
 
     return EventSourceResponse(stream(), ping=HEARTBEAT_SECONDS, headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
@@ -174,7 +196,11 @@ async def fast_forward(audit_id: str, request: Request) -> dict[str, bool]:
     record = await _record_or_404(request, audit_id)
     if record.mode != "replay":
         raise ApiError(409, "not_replay", "Only replayed audits can be fast-forwarded.")
-    return {"ok": _runner(request).fast_forward(audit_id) or record.finished}
+    if not record.finished:
+        # Instant if this instance runs the replay; the flag reaches it on any other instance within a second.
+        _runner(request).fast_forward(audit_id)
+        await _events(request).update(audit_id, skip_requested=True)
+    return {"ok": True}
 
 
 def _parse_seq(value: str | None) -> int:

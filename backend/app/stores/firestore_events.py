@@ -17,13 +17,14 @@ from typing import Any
 
 from google.cloud import firestore
 
-from app.stores.events import AuditRecord
+from app.stores.events import AuditRecord, claimable, now_iso
 
 RECORD_FIELDS = {f.name for f in dataclasses.fields(AuditRecord)}
 
 
 class FirestoreEventLog:
     def __init__(self, client: firestore.AsyncClient, *, prefix: str = "", retention_days: int = 30, poll_s: float = 1.0) -> None:
+        self._client = client
         self._audits = client.collection(f"{prefix}audits")
         self._retention = timedelta(days=retention_days)
         self._poll_s = poll_s
@@ -105,3 +106,32 @@ class FirestoreEventLog:
         signal = self._signals.pop(audit_id, None)
         if signal is not None:
             signal.set()
+
+    async def claim(self, audit_id: str, owner: str, stale_after_s: float) -> bool:
+        doc = self._doc(audit_id)
+
+        @firestore.async_transactional
+        async def run(transaction: firestore.AsyncTransaction) -> bool:
+            snapshot = await doc.get(transaction=transaction)
+            data = snapshot.to_dict() if snapshot.exists else None
+            if not data or data.get("status") in ("completed", "failed"):
+                return False
+            if not claimable(data.get("owner"), data.get("heartbeat_at"), owner, stale_after_s):
+                return False
+            transaction.update(doc, {"owner": owner, "heartbeat_at": now_iso()})
+            return True
+
+        return await run(self._client.transaction())
+
+    async def heartbeat(self, audit_id: str, owner: str) -> bool:
+        doc = self._doc(audit_id)
+
+        @firestore.async_transactional
+        async def run(transaction: firestore.AsyncTransaction) -> bool:
+            snapshot = await doc.get(transaction=transaction)
+            if not snapshot.exists or (snapshot.to_dict() or {}).get("owner") != owner:
+                return False
+            transaction.update(doc, {"heartbeat_at": now_iso()})
+            return True
+
+        return await run(self._client.transaction())
