@@ -12,5 +12,6 @@ Short notes on the decisions that shape Shop Honest: what we chose, why, and wha
 | [0006](0006-contract-source-of-truth.md) | The TypeScript contract is the source of truth, via a generated JSON Schema | Accepted |
 | [0007](0007-client-side-pdf.md) | PDF reports are generated in the browser | Accepted |
 | [0008](0008-measured-checks-before-judgement.md) | Measured checks first, model judgement on top | Accepted |
+| [0009](0009-grounded-and-verified-model-claims.md) | Model claims are grounded on measured elements and verified before they're reported | Accepted |
 
 Back to [Architecture](../ARCHITECTURE.md).

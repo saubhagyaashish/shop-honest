@@ -10,13 +10,14 @@ from app.api.audits import router
 from app.browser.url_guard import Resolver, system_resolver
 from app.config import Settings, get_settings
 from app.errors import install_error_handlers
+from app.models import ModelSet
 from app.replay.player import RecordingLibrary
 from app.runner.runner import AuditRunner
 from app.stores.events import MemoryEventLog
 from app.stores.frames import LocalFrameStore
 
 
-def create_app(settings: Settings | None = None, resolver: Resolver = system_resolver) -> FastAPI:
+def create_app(settings: Settings | None = None, resolver: Resolver = system_resolver, models: ModelSet | None = None) -> FastAPI:
     settings = settings or get_settings()
 
     @asynccontextmanager
@@ -36,7 +37,7 @@ def create_app(settings: Settings | None = None, resolver: Resolver = system_res
     app.state.events = MemoryEventLog()
     app.state.library = RecordingLibrary.load(settings.recordings_dir)
     app.state.frames = LocalFrameStore(settings.frames_dir)
-    app.state.runner = AuditRunner(app.state.events, settings, frames=app.state.frames, resolver=resolver)
+    app.state.runner = AuditRunner(app.state.events, settings, frames=app.state.frames, resolver=resolver, models=models)
 
     install_error_handlers(app)
     if settings.cors_origins:

@@ -41,6 +41,104 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6712707182320442,
+       "w": 0.175,
+       "h": 0.061878453038674036
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6712707182320442,
+       "w": 0.175,
+       "h": 0.061878453038674036
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [
      {
@@ -89,6 +187,104 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6712707182320442,
+       "w": 0.175,
+       "h": 0.061878453038674036
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6712707182320442,
+       "w": 0.175,
+       "h": 0.061878453038674036
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [
      {
@@ -137,6 +333,104 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6712707182320442,
+       "w": 0.175,
+       "h": 0.061878453038674036
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6712707182320442,
+       "w": 0.175,
+       "h": 0.061878453038674036
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5359116022099447,
+       "w": 0.05,
+       "h": 0.0707182320441989
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [
      {
@@ -200,6 +494,47 @@
       }
      }
     ],
+    "controls": [
+     {
+      "text": "REMOVE",
+      "kind": "button",
+      "checked": null,
+      "section": "My Cart (1)",
+      "look": "text link",
+      "fontPx": 12,
+      "bold": true,
+      "width": 51,
+      "height": 16,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.15,
+       "y": 0.361875,
+       "w": 0.04625244140625,
+       "h": 0.03
+      }
+     },
+     {
+      "text": "PLACE ORDER",
+      "kind": "button",
+      "checked": null,
+      "section": "My Cart (1)",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 178,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.5013671875,
+       "y": 0.543125,
+       "w": 0.1455078125,
+       "h": 0.07
+      }
+     }
+    ],
+    "notes": [],
     "summary": {
      "rows": [
       {
@@ -300,6 +635,85 @@
      }
     ],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "Priya Sharma HOME 98450 12345 221B, 4th Cross, MG Road, Bengaluru, Karnataka 560001",
+      "kind": "radio option",
+      "checked": true,
+      "section": "1 DELIVERY ADDRESS",
+      "look": "text link",
+      "fontPx": 14,
+      "bold": false,
+      "width": 724,
+      "height": 40,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.075,
+       "y": 0.199375,
+       "w": 0.571875,
+       "h": 0.06
+      }
+     },
+     {
+      "text": "Standard delivery By Fri, 16 Oct FREE",
+      "kind": "radio option",
+      "checked": true,
+      "section": "3 DELIVERY SPEED",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": false,
+      "width": 356,
+      "height": 66,
+      "textColour": "dark blue",
+      "background": "pale teal",
+      "bbox": {
+       "x": 0.075,
+       "y": 0.519375,
+       "w": 0.284375,
+       "h": 0.0925
+      }
+     },
+     {
+      "text": "Express delivery By Mon, 12 Oct ₹79",
+      "kind": "radio option",
+      "checked": false,
+      "section": "3 DELIVERY SPEED",
+      "look": "outlined button",
+      "fontPx": 14,
+      "bold": false,
+      "width": 356,
+      "height": 66,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.3625,
+       "y": 0.519375,
+       "w": 0.284375,
+       "h": 0.0925
+      }
+     },
+     {
+      "text": "CONTINUE TO PAYMENT",
+      "kind": "button",
+      "checked": null,
+      "section": "3 DELIVERY SPEED",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 249,
+      "height": 44,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.44576416015625,
+       "y": 0.621875,
+       "w": 0.20111083984375,
+       "h": 0.065
+      }
+     }
+    ],
+    "notes": [],
     "summary": {
      "rows": [
       {
@@ -387,6 +801,123 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "UPI Pay by any UPI app",
+      "kind": "radio option",
+      "checked": true,
+      "section": "4 PAYMENT OPTIONS",
+      "look": "text link",
+      "fontPx": 14,
+      "bold": false,
+      "width": 764,
+      "height": 73,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.179375,
+       "w": 0.603125,
+       "h": 0.10125
+      }
+     },
+     {
+      "text": "Credit / Debit card Visa, Mastercard, RuPay",
+      "kind": "radio option",
+      "checked": false,
+      "section": "4 PAYMENT OPTIONS",
+      "look": "text link",
+      "fontPx": 14,
+      "bold": false,
+      "width": 764,
+      "height": 73,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.270625,
+       "w": 0.603125,
+       "h": 0.10125
+      }
+     },
+     {
+      "text": "Net banking All major banks",
+      "kind": "radio option",
+      "checked": false,
+      "section": "4 PAYMENT OPTIONS",
+      "look": "text link",
+      "fontPx": 14,
+      "bold": false,
+      "width": 764,
+      "height": 73,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.361875,
+       "w": 0.603125,
+       "h": 0.10125
+      }
+     },
+     {
+      "text": "Cash on delivery Pay when it arrives",
+      "kind": "radio option",
+      "checked": false,
+      "section": "4 PAYMENT OPTIONS",
+      "look": "text link",
+      "fontPx": 14,
+      "bold": false,
+      "width": 764,
+      "height": 73,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.059375,
+       "y": 0.453125,
+       "w": 0.603125,
+       "h": 0.10125
+      }
+     },
+     {
+      "text": "‹ Back",
+      "kind": "link",
+      "checked": null,
+      "section": "4 PAYMENT OPTIONS",
+      "look": "text link",
+      "fontPx": 14,
+      "bold": false,
+      "width": 42,
+      "height": 20,
+      "textColour": "dark teal",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.075,
+       "y": 0.579375,
+       "w": 0.03878173828125,
+       "h": 0.035
+      }
+     },
+     {
+      "text": "PAY ₹1,508",
+      "kind": "button",
+      "checked": null,
+      "section": "4 PAYMENT OPTIONS",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 159,
+      "height": 44,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.51630859375,
+       "y": 0.564375,
+       "w": 0.13056640625,
+       "h": 0.065
+      }
+     }
+    ],
+    "notes": [],
     "summary": {
      "rows": [
       {

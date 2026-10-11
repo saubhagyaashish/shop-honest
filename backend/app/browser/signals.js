@@ -54,6 +54,59 @@
     return out
   }
 
+  // Rough colour names, so a model can read "grey text link" without parsing rgb().
+  // Any CSS colour (rgb, hex, oklch…) to RGBA, by painting one pixel.
+  const pixel = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+  const toRgba = (css) => {
+    pixel.clearRect(0, 0, 1, 1)
+    pixel.fillStyle = 'rgba(0, 0, 0, 0)'
+    pixel.fillStyle = css || 'rgba(0, 0, 0, 0)'
+    pixel.fillRect(0, 0, 1, 1)
+    return pixel.getImageData(0, 0, 1, 1).data
+  }
+  const colourName = (css) => {
+    const [r255, g255, b255, a255] = toRgba(css)
+    if (a255 < 26) return 'transparent'
+    const [r, g, b] = [r255, g255, b255].map((v) => v / 255)
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    const l = (max + min) / 2
+    const sat = max === min ? 0 : (max - min) / (1 - Math.abs(2 * l - 1))
+    if (sat < 0.2) return l > 0.92 ? 'white' : l < 0.18 ? 'black' : l > 0.6 ? 'light grey' : 'grey'
+    let h = 0
+    if (max === r) h = ((g - b) / (max - min)) % 6
+    else if (max === g) h = (b - r) / (max - min) + 2
+    else h = (r - g) / (max - min) + 4
+    h = (h * 60 + 360) % 360
+    const hue = h < 15 ? 'red' : h < 45 ? 'orange' : h < 70 ? 'yellow' : h < 160 ? 'green' : h < 195 ? 'teal' : h < 255 ? 'blue' : h < 290 ? 'purple' : h < 335 ? 'pink' : 'red'
+    return (l > 0.8 ? 'pale ' : l < 0.3 ? 'dark ' : '') + hue
+  }
+  // How loud a control is: filled button, outlined button or plain text link, with size and colours.
+  const prominence = (el) => {
+    const cs = getComputedStyle(el)
+    const r = el.getBoundingClientRect()
+    const background = colourName(cs.backgroundColor)
+    const bordered = parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== 'none' && colourName(cs.borderTopColor) !== 'transparent'
+    return {
+      look: background !== 'transparent' ? 'filled button' : bordered ? 'outlined button' : 'text link',
+      fontPx: Math.round(parseFloat(cs.fontSize)),
+      bold: Number(cs.fontWeight) >= 600,
+      width: Math.round(r.width),
+      height: Math.round(r.height),
+      textColour: colourName(cs.color),
+      background,
+    }
+  }
+  const chrome = (el) => el.closest('header, nav, footer, [role=banner], [role=navigation], [role=contentinfo]')
+  // The nearest heading above an element, for context ("Delivery speed", "Membership").
+  const sectionOf = (el) => {
+    for (let n = el.parentElement, depth = 0; n && n !== document.body && depth < 8; n = n.parentElement, depth++) {
+      const h = n.querySelector('h1, h2, h3, h4, [role=heading], legend')
+      if (h && h !== el && !h.contains(el) && text(h)) return text(h).slice(0, 60)
+    }
+    return ''
+  }
+
   // Countdown timers ("Deal ends in 09:51"). Clock times ("11:59 PM") are deadlines, not countdowns.
   const timers = []
   const deadlines = []
@@ -95,7 +148,7 @@
   // Dialogs (offers, newsletters, consent) and their buttons.
   const dialogs = [...document.querySelectorAll('[role=dialog], [aria-modal=true], dialog[open]')].filter(visible).map((el) => ({
     text: text(el),
-    buttons: [...el.querySelectorAll('button, a, [role=button]')].filter(visible).map((b) => ({ text: text(b), bbox: box(b) })),
+    buttons: [...el.querySelectorAll('button, a, [role=button]')].filter(visible).map((b) => ({ text: text(b), ...prominence(b), bbox: box(b) })),
     bbox: box(el),
   }))
 
@@ -150,6 +203,36 @@
     }
   }
 
+  // Buttons, links and radio options in the page body (site chrome and dialogs are skipped).
+  const controls = []
+  const seenControls = new Set()
+  for (const el of document.querySelectorAll('button, a[href], [role=button], input[type=submit], input[type=radio]')) {
+    const target = el.type === 'radio' ? el.closest('label') || el : el
+    if (!visible(target) || chrome(target) || target.closest('[role=dialog], [aria-modal=true], dialog')) continue
+    const t = (text(target) || el.getAttribute('aria-label') || el.value || '').slice(0, 100)
+    if (!t || seenControls.has(t)) continue
+    seenControls.add(t)
+    controls.push({
+      text: t,
+      kind: el.type === 'radio' ? 'radio option' : el.tagName === 'A' ? 'link' : 'button',
+      checked: el.type === 'radio' ? el.checked : undefined,
+      section: sectionOf(target),
+      ...prominence(el.type === 'radio' ? target : el),
+      bbox: box(target),
+    })
+    if (controls.length >= 30) break
+  }
+
+  // Persuasive or claim-like lines ("Most customers choose Express delivery"), beyond the timers and stock above.
+  const claimed = new Set([...timers, ...stock, ...salesClaims].map((c) => c.text))
+  const notes = smallest(
+    /\b(most (customers|people|shoppers)|popular|recommended|best ?seller|selling fast|in (high )?demand|(people|others) (are )?(viewing|looking)|limited (time|stock|offer)|don'?t miss|last chance|exclusive|one-time|guaranteed?)\b/i,
+    120,
+  )
+    .filter((el) => !chrome(el) && !claimed.has(text(el)) && !el.closest('[role=dialog], [aria-modal=true], dialog'))
+    .slice(0, 12)
+    .map((el) => ({ text: text(el), section: sectionOf(el), bbox: textBox(el) }))
+
   // Fees disclosed in page text ("+ ₹9 platform fee per order").
   const body = text(document.body)
   const feeDisclosures = [...body.matchAll(/\+\s?₹\s?([\d,]+)\s+([a-z ]{0,30}?(?:fee|charge))/gi)].map((m) => ({
@@ -179,6 +262,8 @@
     dialogs,
     checkboxes,
     cartLines,
+    controls,
+    notes,
     summary,
     feeDisclosures,
     signInWall,

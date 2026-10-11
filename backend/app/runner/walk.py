@@ -1,11 +1,15 @@
 """What a journey drives during a live audit: captures, prices, steps and narration.
 
-After every capture the rule-based checks run over everything seen so far,
-so findings stream out as soon as their evidence exists.
+After every capture the measured checks run over everything seen so far, so
+findings stream out as soon as their evidence exists. Screens the journey
+hands to analyse() are also reviewed by the model (Pattern Analyst →
+Adjudicator) in the background, so navigation doesn't wait for it.
 """
 
+import asyncio
+import logging
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from playwright.async_api import Page
 
@@ -16,6 +20,11 @@ from app.config import Settings
 from app.contract.models import JourneyStep
 from app.knowledge import Knowledge
 from app.stores.frames import FrameStore
+
+if TYPE_CHECKING:
+    from app.agents.judge import Judge
+
+log = logging.getLogger(__name__)
 
 Emit = Callable[[dict[str, Any]], Awaitable[None]]
 
@@ -36,6 +45,7 @@ class Walk:
         knowledge: Knowledge,
         settings: Settings,
         emit: Emit,
+        judge: "Judge | None" = None,
     ) -> None:
         self.audit_id = audit_id
         self.target_url = target_url
@@ -50,6 +60,8 @@ class Walk:
         self._knowledge = knowledge
         self._emit = emit
         self._n = 0
+        self.judge = judge
+        self._reviews: set[asyncio.Task[None]] = set()
 
     async def log(self, agent: str, message: str) -> None:
         await self._emit({"type": "agent.log", "agent": agent, "message": message})
@@ -110,12 +122,49 @@ class Walk:
 
     async def check(self) -> None:
         """Run every check over what's been seen so far and stream any new findings."""
-        seen = {f["id"] for f in self.findings}
         for check in ALL_CHECKS:
             for finding in check(self.evidence, self._knowledge):
-                if finding["id"] in seen:
+                if any(f["id"] == finding["id"] for f in self.findings):
                     continue
-                seen.add(finding["id"])
-                self.findings.append(finding)
                 await self.log(finding["detectedBy"], f"{finding['title']}.")
-                await self._emit({"type": "finding", "finding": finding})
+                await self.add_finding(finding)
+
+    async def add_finding(self, finding: dict[str, Any]) -> None:
+        self.findings.append(finding)
+        await self._emit({"type": "finding", "finding": finding})
+
+    async def screenshot(self, capture: Capture) -> bytes:
+        path = self._frames.path(self.audit_id, capture.n)
+        if path is None:
+            raise FileNotFoundError(f"frame {capture.n} of {self.audit_id}")
+        return await asyncio.to_thread(path.read_bytes)
+
+    def analyse(self, capture: Capture) -> None:
+        """Have the model review this screen in the background (no-op without a model)."""
+        if self.judge is None:
+            return
+        task = asyncio.create_task(self._review(capture), name=f"review-{self.audit_id}-{capture.label}")
+        self._reviews.add(task)
+        task.add_done_callback(self._reviews.discard)
+
+    async def drain(self) -> None:
+        """Wait for every model review still running."""
+        while self._reviews:
+            await asyncio.gather(*list(self._reviews), return_exceptions=True)
+
+    async def cancel_reviews(self) -> None:
+        for task in list(self._reviews):
+            task.cancel()
+        await asyncio.gather(*list(self._reviews), return_exceptions=True)
+
+    async def _review(self, capture: Capture) -> None:
+        assert self.judge is not None
+        try:
+            await self.judge.review(self, capture)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # A model problem must never sink the audit: the measured checks still stand.
+            log.exception("review of %s failed", capture.label)
+            self.judge.failed += 1
+            await self.log("pattern_analyst", "Something went wrong reading this screen. The measured checks still apply.")

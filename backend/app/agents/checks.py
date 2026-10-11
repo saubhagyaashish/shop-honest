@@ -7,71 +7,16 @@ patterns that can be *measured*; Gemini adds the ones that need judgement
 """
 
 import re
-from dataclasses import dataclass, field
 from typing import Any
 
-from app.browser.capture import Capture
+from app.agents.findings import Evidence, Finding
+from app.agents.findings import frame as _frame
+from app.agents.findings import make_finding as _finding
+from app.agents.findings import money as _money
+from app.agents.findings import union as _union
 from app.knowledge import Knowledge
 
-Finding = dict[str, Any]
-
-
-@dataclass
-class Evidence:
-    """Everything the checks can look at, gathered by the journey."""
-
-    captures: dict[str, Capture]
-    added_items: list[str] = field(default_factory=list)
-
-    def get(self, *labels: str) -> list[Capture]:
-        return [self.captures[label] for label in labels if label in self.captures]
-
-
-def _money(amount: float) -> str:
-    return f"₹{amount:,.0f}"
-
-
-def _frame(capture: Capture, bbox: dict[str, float] | None, caption: str) -> dict[str, Any]:
-    frame: dict[str, Any] = {"screenshotUrl": capture.screenshot_url, "caption": caption}
-    if bbox:
-        frame["bbox"] = bbox
-    return frame
-
-
-def _finding(
-    knowledge: Knowledge,
-    *,
-    id: str,
-    pattern_id: str,
-    title: str,
-    explanation: str,
-    confidence: float,
-    capture: Capture,
-    frames: list[dict[str, Any]],
-    observations: list[str],
-    detected_by: str,
-    element_text: str | None = None,
-    severity: str | None = None,
-) -> Finding:
-    pattern = knowledge.pattern(pattern_id)
-    finding: Finding = {
-        "id": id,
-        "patternId": pattern_id,
-        "title": title,
-        "explanation": explanation,
-        "severity": severity or pattern["defaultSeverity"],
-        "confidence": confidence,
-        "status": "confirmed",
-        "step": capture.step,
-        "pageUrl": capture.url,
-        "rule": pattern["rule"],
-        "detectedBy": detected_by,
-        "evidence": {"frames": frames, "observations": observations},
-        "remediation": pattern["fix"],
-    }
-    if element_text:
-        finding["evidence"]["elementText"] = element_text
-    return finding
+__all__ = ["ALL_CHECKS", "Evidence", "Finding", "price_facts"]
 
 
 def restarting_timer(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
@@ -354,11 +299,3 @@ def _clock(text: str) -> str:
 def _same_item(line_name: str, added: str) -> bool:
     a, b = line_name.lower(), added.lower()
     return a in b or b in a
-
-
-def _union(boxes: list[dict[str, float]]) -> dict[str, float]:
-    x0 = min(b["x"] for b in boxes)
-    y0 = min(b["y"] for b in boxes)
-    x1 = max(b["x"] + b["w"] for b in boxes)
-    y1 = max(b["y"] + b["h"] for b in boxes)
-    return {"x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0}

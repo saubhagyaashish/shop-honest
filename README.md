@@ -20,7 +20,7 @@ Live at **<https://shop-honest.web.app>**.
 
 ## Architecture
 
-The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Firestore, Cloud Storage, BigQuery) is designed and documented. **Phases 1–2 are built** and run locally: a FastAPI backend with the full API, a resumable event stream and replay mode, plus live audits where a headless Chromium walks the store and measured checks report what it finds. Gemini judgement comes next.
+The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Firestore, Cloud Storage, BigQuery) is designed and documented. **Phases 1–3 are built** and run locally: a FastAPI backend with the full API, a resumable event stream and replay mode; live audits where a headless Chromium walks the store and measured checks report what they find; and ADK agents (Pattern Analyst, Adjudicator) that judge wording and design, with every model claim grounded on measured elements and verified before it's reported. It runs on Gemma 3 4B locally; Gemini is wired in and needs an API key.
 
 - [**Architecture**](docs/ARCHITECTURE.md): system context, agents, audit flow, data model, model providers, security, costs, evaluation, roadmap
 - [**API reference**](docs/API.md): endpoints, the event stream, the event catalogue with examples
@@ -29,7 +29,7 @@ The backend (Python + Google ADK agents on Cloud Run, Gemini on Vertex AI, Fires
 ```
 shophonest/
 ├── web/        React app: dashboard, report, PDF, demo store (built)
-├── backend/    Python FastAPI API, audit runner, Playwright navigator and measured checks; Gemini agents next
+├── backend/    Python FastAPI API, audit runner, Playwright navigator, measured checks and ADK judging agents
 ├── shared/     contract.schema.json (generated from contract.ts) + reference data for the backend (`npm run knowledge`)
 └── docs/       architecture, API, decision records
 ```
@@ -71,4 +71,6 @@ Then, in another terminal, `cd web && npm run dev:live` and open <http://localho
 - **Scan it** replays a recorded run (instant, and it can skip to the report).
 - **Run live** sends a real headless Chromium through the store: real screenshots, real prices and measured findings, in about 15 seconds. It never pays, signs in or creates an account. On Store C it stops at the sign-in wall and reports what it reached.
 
-How well live audits do against the answer key: `uv run python -m evals.answer_key` (today A 6/9, B no false alarms, C 4/6 before the wall; the misses need the Gemini judgement coming in Phase 3). Settings are environment variables (or `backend/.env`); see [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).
+**With a model judging.** Start the backend with `MODEL_PROVIDER=ollama` (needs [Ollama](https://ollama.com) and `ollama pull gemma3:4b`). Live audits then also get wording and design findings: the Pattern Analyst reads each screen, and the Adjudicator double-checks every claim. Unverifiable claims land in the report's human review queue. Expect about 30–50 s per audit locally. For Gemini, put a free [Google AI Studio](https://aistudio.google.com) key in `backend/.env` as `GOOGLE_API_KEY` and set `MODEL_PROVIDER=gemini` (see `backend/.env.example`).
+
+How well live audits do against the answer key: `uv run python -m evals.answer_key --provider ollama --runs 3`. With Gemma 3 4B: A 8/9, B no false alarms, C 5/6 before the wall; measured checks alone get A 6/9. Accuracy claims wait for Gemini. Settings are environment variables (or `backend/.env`); see [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).

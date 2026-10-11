@@ -1,6 +1,6 @@
 # Shop Honest: Architecture
 
-> Status: **Phase 2 built** (running locally): the API, event log, resumable SSE and replay mode from Phase 1, plus live audits. A headless Chromium walks the demo stores, real screenshots and prices stream to the UI, and measured checks produce real findings ([ADR-0008](decisions/0008-measured-checks-before-judgement.md)). Gemini judgement comes next. The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
+> Status: **Phase 3 built** (running locally). On top of the Phase 1 API and the Phase 2 live audits (a headless Chromium walks the store, real screenshots and prices stream to the UI, measured checks find what can be measured; [ADR-0008](decisions/0008-measured-checks-before-judgement.md)), ADK agents now judge each screen: the Pattern Analyst proposes, measurement-based rules and the Adjudicator check, and only grounded claims are reported ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)). It runs on Gemma 3 4B locally; Gemini is wired in and waits for an API key. The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
 >
 > Related: [API reference](API.md) · [Decision records](decisions/README.md)
 
@@ -130,7 +130,14 @@ Two observations need more than one screen: a timer that restarts, or stock that
 | A paid, recurring option is ticked on arrival | `subscription_trap` | checkout |
 | Fees first appear at payment and weren't disclosed upfront | `drip_pricing` | product page and payment |
 
-The deterministic Reporter (`backend/app/agents/reporter.py`) builds the report: trust score, summary, coverage, `priceDrift` from the order-summary rows each step showed, and `exposure` from `shared/legal.json`. Patterns that need judgement (wording, button prominence, unverifiable claims) wait for the Pattern Analyst in Phase 3.
+The deterministic Reporter (`backend/app/agents/reporter.py`) builds the report: trust score, summary, coverage, `priceDrift` from the order-summary rows each step showed, and `exposure` from `shared/legal.json`. **Model judgement (Phase 3).** Patterns that need judgement (wording, button prominence, unverifiable claims) go through three agents, in the background so navigation never waits for a model ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)):
+
+1. **Element list** (`agents/elements.py`): each screen becomes a numbered list (`e1, e2…`) of dialogs and their buttons, controls, claims, persuasive notes and checkboxes, each with measured facts ("text link, grey text, 12 px, 198×16 px"). Anything a measured finding already covers is left out.
+2. **Pattern Analyst** (`agents/pattern_analyst.py`, *smart* tier, ADK `LlmAgent`): sees the screenshot and the list, and returns candidates that cite element refs, never coordinates. Claims nobody can check from the page are marked `verifiable: false`.
+3. **Evidence** (`agents/evidence.py`, no model): grounds each candidate on the cited elements (box, element text and observations all come from measurement) and drops claims the measurements contradict. For example, interface interference needs two options whose measured sizes differ at least 3×, and false urgency must rest on a claim, not a button.
+4. **Adjudicator** (`agents/adjudicator.py`, *fast* tier): scores agreement from a crop of the evidence. Below 0.35 the claim is dropped. Unverifiable claims go to human review without a verifier, since a second model can't settle them either. Otherwise the lower of the two scores decides: ≥ 0.75 confirmed, below that human review.
+
+Every decision is narrated in the audit trail, including the claims that were dropped and why. A model that times out or answers nonsense costs that screen its review, never the audit (`models/call.py`).
 
 ## 5. One audit, end to end
 
@@ -227,9 +234,11 @@ One setting switches every agent ([ADR-0003](decisions/0003-model-providers.md))
 | `ollama` | Gemma 3 (4B by default) on the developer's machine, through ADK's LiteLLM connector | Building agents, prompts and schemas offline | ₹0 |
 | `gemini` | Gemini through the Google AI Studio free tier in development; **Vertex AI** in production | Accuracy evals, "Run live", the deployed backend | ~₹15–40 per audit |
 
-- **Tiers:** a *fast* model (Flash class) for navigation, adjudication and reporting, and a *smart* model (Pro class) for the Pattern Analyst. Model IDs are configuration, not code (`GEMINI_MODEL_FAST`, `GEMINI_MODEL_SMART`).
-- **Structured output:** every model call returns JSON validated against a Pydantic schema. Invalid output is retried once, then the candidate is dropped and logged.
-- **Prompt caching:** stable system prompts and pattern definitions are cached to cut input cost.
+- **Tiers:** a *fast* model (Flash class) for adjudication, and a *smart* model (Pro class) for the Pattern Analyst. Ollama serves both tiers with one model. Model IDs are configuration, not code (`GEMINI_MODEL_FAST`, `GEMINI_MODEL_SMART`).
+- **`replay` in a live audit** means no model: the audit is measured-only, exactly as in Phase 2.
+- **Structured output:** every model call returns JSON validated against a Pydantic schema (`backend/app/models/call.py`). Invalid output is retried once; after that the screen goes without a model review, and the audit trail says so.
+- **Prompt caching:** the system prompts and pattern guidance are passed as ADK `static_instruction` (no templating), which Gemini can cache.
+- **Tests** use `ScriptedLlm`, an ADK model that answers from a Python function, so no test needs a network or a model.
 
 ## 9. Demo strategy
 
@@ -272,7 +281,7 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 
 | Check | What it proves | Target |
 |---|---|---|
-| **Answer-key eval** (`backend/evals/answer_key.py`) | Run live audits on stores A, B and C; compare with `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`) | Phase 2 (today): A 6/9, B 0 false alarms, C 4/6 before the wall. Phase 3: A ≥ 8/9 with the borderline claim → `needs_review`. |
+| **Answer-key eval** (`backend/evals/answer_key.py --provider … --runs N`) | Live audits of stores A, B and C against `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`); recall spread over runs, false alarms, and whether claims meant for review went there | Target with Gemini: A ≥ 8/9 with the borderline claim → `needs_review`, B 0 false alarms. Today: measured only A 6/9 · B 0 · C 4/6; **Gemma 3 4B (local, 3 runs, identical): A 8/9 · B 0 · C 5/6, review 3/3**, missing only the shaming opt-out. Local-model numbers are for development, not the accuracy claim (ADR-0003). |
 | **Dataset eval** (`backend/evals/dataset.py`) | Pattern Analyst on the public ec-darkpattern text set (2,356 labelled texts) | Report F1 honestly; compare with the published baselines |
 | **Contract tests** | Every event the backend emits validates against `shared/contract.schema.json` | 100% |
 | **Unit tests** | URL guard, request guard, every check (positive, and honest variants that must not trigger), price drift, report, exposure | — |
@@ -308,7 +317,9 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `NAV_LINGER_S` / `NAV_STEP_TIMEOUT_S` | `8` / `15` | Time on the product page before the second look; per-action timeout |
 | `FRAMES_DIR` | `backend/var/frames` | Where live screenshots go until Cloud Storage |
 | `AUDIT_MAX_STEPS` / `AUDIT_MAX_MODEL_CALLS` / `AUDIT_MAX_TOKENS` / `AUDIT_TIMEOUT_S` | `8` / `40` / `400000` / `360` | Budgets |
-| `REVIEW_THRESHOLD` | `0.75` | Adjudicator cut-off |
+| `REVIEW_THRESHOLD` / `REJECT_BELOW` | `0.75` / `0.35` | Confirm at or above; drop a claim the verifier agrees with less than this |
+| `ADJUDICATOR_VERIFY` | `true` | Second model call per claim, on a crop of its evidence |
+| `MODEL_TIMEOUT_S` / `MODEL_CONCURRENCY` | `90` / `2` | Per-call limit; model calls in flight per audit |
 | `CORS_ORIGINS` | `http://localhost:5173` | Development only |
 
 **Web app:** `VITE_AUDIT_SOURCE=live` switches to the backend. `VITE_API_BASE` (optional) points the event stream straight at Cloud Run if the Hosting timeout bites.
@@ -329,10 +340,10 @@ shophonest/
 │   │   ├── contract/            # ✓ Pydantic models mirroring contract.ts
 │   │   ├── runner/              # ✓ runner.py (replay + live), walk.py (what a journey drives)
 │   │   ├── journeys/            # ✓ scripted journeys for known stores (bazaarnest.py)
-│   │   ├── agents/              # ✓ checks.py, reporter.py; next: pattern_analyst, adjudicator,
-│   │   │   └── prompts/         #   prompt templates (Phase 3)
+│   │   ├── agents/              # ✓ checks.py, elements.py, pattern_analyst.py, evidence.py,
+│   │   │   └── prompts/         # ✓   adjudicator.py, judge.py, reporter.py; prompt templates
 │   │   ├── browser/             # ✓ session.py (request guard), capture.py, signals.js, url_guard.py
-│   │   ├── models/              # provider factory: replay | ollama | gemini (Phase 3)
+│   │   ├── models/              # ✓ provider factory (replay | ollama | gemini), call helper, ScriptedLlm
 │   │   ├── stores/              # ✓ in-memory event log, local frames; firestore, gcs, bigquery later
 │   │   └── replay/              # ✓ recordings/*.json and the replay player
 │   ├── scripts/                 # ✓ record.py, capture_signals.py; seed_bigquery.py later
@@ -351,7 +362,7 @@ shophonest/
 | **0. Setup** | Python 3.12 (uv), gcloud CLI, billing on `shop-honest` (Blaze), enable Run, Vertex AI, Firestore, Storage, BigQuery, Secret Manager, Artifact Registry; Ollama + `gemma3:4b` | `uv run pytest` passes; `gcloud` authenticated |
 | **1. Skeleton** | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest.web.app runs with `VITE_AUDIT_SOURCE=live` end to end |
 | **2. Navigator** ✓ | Playwright journeys for stores A, B and C (ported from `web/scripts/capture-screens.ts`), real screenshots (local disk; GCS at deploy), real `step.*` and `price.observed` events, measured checks and a deterministic report, store C's sign-in wall, "Run live" in the UI | A live run streams real screenshots and prices. **Done:** A 6/9, B 0 false alarms, C partial at the wall |
-| **3. Pattern Analyst** | Prompts and schemas with `ollama`, then `gemini`; Evidence + Adjudicator; answer-key eval | Store A ≥ 7/8, store B 0 false positives |
+| **3. Pattern Analyst** ✓ (Ollama) | ADK Pattern Analyst + Evidence rules + Adjudicator, prompts and schemas, scripted model for tests, answer-key eval with runs | Store A ≥ 8/9, store B 0 false positives, **measured with Gemini** (pending an API key). With Gemma 3 4B: A 8/9, B 0 |
 | **4. Price & report** | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data |
 | **5. Hardening** | One allowlisted real site logged-out (partial coverage path), dataset eval, billing alerts, judging-day settings | Eval numbers in the README; demo rehearsed |
 

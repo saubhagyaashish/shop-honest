@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import field_validator
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
 
     version: str = "dev"
-    # Only "replay" is implemented in Phase 1; agents arrive in Phases 2-3.
+    # Which model judges live audits (ADR-0003). "replay": no model, live audits are measured-only.
     model_provider: Literal["replay", "ollama", "gemini"] = "replay"
     store_backend: Literal["memory"] = "memory"
 
@@ -41,6 +41,23 @@ class Settings(BaseSettings):
     headless: bool = True
     frames_dir: Path = BACKEND_DIR / "var" / "frames"
     shared_dir: Path = REPO_DIR / "shared"
+
+    # Models (Phase 3). Ollama serves both tiers locally.
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "gemma3:4b"
+    # Provisional: confirm against the key's model list before relying on them.
+    gemini_model_fast: str = "gemini-2.5-flash"
+    gemini_model_smart: str = "gemini-2.5-pro"
+    google_api_key: SecretStr | None = None
+    model_timeout_s: float = 90.0
+    audit_max_model_calls: int = 40
+    model_concurrency: int = 2
+    # Model findings at or above this confidence are confirmed; below it they go to human review.
+    review_threshold: float = 0.75
+    # A second model call checks each claim against a crop of its evidence before it's reported.
+    adjudicator_verify: bool = True
+    # Claims the verifier agrees with less than this are dropped.
+    reject_below: float = 0.35
 
     @field_validator("allowed_hosts", "cors_origins", mode="before")
     @classmethod

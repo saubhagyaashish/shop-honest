@@ -5,12 +5,15 @@ description = "Shop Honest backend: audit API, runner and (later) ADK agents"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "fastapi>=0.143,<0.144",
+    "fastapi>=0.141,<0.142",
     "uvicorn[standard]>=0.54,<0.55",
     "sse-starlette>=3.5,<4",
     "pydantic>=2.14,<3",
     "pydantic-settings>=2.15,<3",
     "playwright>=1.63,<1.64",
+    "google-adk>=2.11,<2.12",
+    "litellm>=1.104,<1.105",
+    "pillow>=11",
 ]
 
 [dependency-groups]
@@ -35,4 +38,4 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
 # Typographic dashes and arrows are intentional in user-facing text.
-ignore = ["RUF001"]
+ignore = ["RUF001", "RUF002"]

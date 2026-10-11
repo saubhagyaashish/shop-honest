@@ -33,7 +33,7 @@ class BazaarNestJourney:
         await page.goto(walk.target_url, wait_until="load")
         if await _popup(page):
             await walk.log("navigator", "Opened the product page. A popup appeared without any action from me.")
-            await walk.capture("product-popup", primary=False)
+            walk.analyse(await walk.capture("product-popup", primary=False))
             await _decline_popup(walk)
         else:
             await walk.log("navigator", "Opened the product page.")
@@ -42,6 +42,7 @@ class BazaarNestJourney:
         )
         await page.wait_for_timeout(walk.settings.nav_linger_s * 1000)
         first = await walk.capture("product-first")
+        walk.analyse(first)
         product_name = first.signals.get("heading") or "the product"
         await walk.price_on_product_page(first)
 
@@ -68,6 +69,7 @@ class BazaarNestJourney:
         await walk.start_step("cart")
         await walk.log("navigator", f"Added 1 × {product_name} to the cart. Opening the cart.")
         cart = await walk.capture("cart")
+        walk.analyse(cart)
         await walk.price_from_summary(cart, "Cart")
 
         # Checkout, or a sign-in wall.
@@ -88,6 +90,7 @@ class BazaarNestJourney:
             "navigator", "Reached checkout. Leaving every pre-set option as it was, to see what a hurried shopper would pay."
         )
         await walk.check()
+        walk.analyse(checkout)
         await walk.price_from_summary(checkout, "Checkout")
 
         # Payment: the cheapest delivery, then stop before paying.
@@ -103,6 +106,7 @@ class BazaarNestJourney:
         await page.locator("#order-summary").wait_for()
         await walk.start_step("payment")
         payment = await walk.capture("payment")
+        walk.analyse(payment)
         await walk.price_from_summary(payment, "Payment")
         await walk.log("navigator", "Reached the payment page. Stopping here: the agent never pays.")
 

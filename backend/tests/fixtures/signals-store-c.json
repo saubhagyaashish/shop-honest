@@ -66,6 +66,13 @@
       "buttons": [
        {
         "text": "Unlock my 10% off",
+        "look": "filled button",
+        "fontPx": 14,
+        "bold": true,
+        "width": 336,
+        "height": 40,
+        "textColour": "white",
+        "background": "dark teal",
         "bbox": {
          "x": 0.365625,
          "y": 0.4822791712104689,
@@ -75,6 +82,13 @@
        },
        {
         "text": "No thanks, I prefer paying full price",
+        "look": "text link",
+        "fontPx": 12,
+        "bold": false,
+        "width": 198,
+        "height": 16,
+        "textColour": "grey",
+        "background": "transparent",
         "bbox": {
          "x": 0.4195068359375,
          "y": 0.5389858233369684,
@@ -93,6 +107,104 @@
     ],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [],
     "signInWall": null
@@ -158,6 +270,104 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [],
     "signInWall": null
@@ -223,6 +433,104 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [],
     "signInWall": null
@@ -288,6 +596,104 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "ADD TO CART",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.078125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "BUY NOW",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 216,
+      "height": 48,
+      "textColour": "white",
+      "background": "dark teal",
+      "bbox": {
+       "x": 0.253125,
+       "y": 0.6624863685932388,
+       "w": 0.175,
+       "h": 0.061068702290076333
+      }
+     },
+     {
+      "text": "Midnight Black",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.434375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Pearl White",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.484375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     },
+     {
+      "text": "Ocean Blue",
+      "kind": "button",
+      "checked": null,
+      "section": "SonicBuds Pro ANC Wireless Earbuds",
+      "look": "outlined button",
+      "fontPx": 15,
+      "bold": false,
+      "width": 56,
+      "height": 56,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.534375,
+       "y": 0.5419847328244275,
+       "w": 0.05,
+       "h": 0.0697928026172301
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [],
     "signInWall": null
@@ -344,6 +750,47 @@
       }
      }
     ],
+    "controls": [
+     {
+      "text": "REMOVE",
+      "kind": "button",
+      "checked": null,
+      "section": "My Cart (2)",
+      "look": "text link",
+      "fontPx": 12,
+      "bold": true,
+      "width": 51,
+      "height": 16,
+      "textColour": "dark blue",
+      "background": "transparent",
+      "bbox": {
+       "x": 0.15,
+       "y": 0.361875,
+       "w": 0.04625244140625,
+       "h": 0.03
+      }
+     },
+     {
+      "text": "PLACE ORDER",
+      "kind": "button",
+      "checked": null,
+      "section": "My Cart (2)",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 178,
+      "height": 48,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.5013671875,
+       "y": 0.573125,
+       "w": 0.1455078125,
+       "h": 0.07
+      }
+     }
+    ],
+    "notes": [],
     "summary": {
      "rows": [
       {
@@ -420,6 +867,28 @@
     "dialogs": [],
     "checkboxes": [],
     "cartLines": [],
+    "controls": [
+     {
+      "text": "SIGN IN",
+      "kind": "button",
+      "checked": null,
+      "section": "Sign in to continue",
+      "look": "filled button",
+      "fontPx": 14,
+      "bold": true,
+      "width": 397,
+      "height": 44,
+      "textColour": "white",
+      "background": "orange",
+      "bbox": {
+       "x": 0.461865234375,
+       "y": 0.416875,
+       "w": 0.316259765625,
+       "h": 0.065
+      }
+     }
+    ],
+    "notes": [],
     "summary": null,
     "feeDisclosures": [],
     "signInWall": {
