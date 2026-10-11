@@ -1,6 +1,6 @@
 # Shop Honest: Architecture
 
-> Status: **Phase 3 built** (running locally). On top of the Phase 1 API and the Phase 2 live audits (a headless Chromium walks the store, real screenshots and prices stream to the UI, measured checks find what can be measured; [ADR-0008](decisions/0008-measured-checks-before-judgement.md)), ADK agents now judge each screen: the Pattern Analyst proposes, measurement-based rules and the Adjudicator check, and only grounded claims are reported ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)). **Deployed:** <https://shop-honest-ai.web.app> runs on the real backend: Cloud Run in Mumbai, Firestore and Cloud Storage, with Gemini on Vertex AI judging live audits (§13). "Scan it" replays recorded runs; "Run live" audits the store for real, rate-limited. This document describes the system and how the parts fit together.
+> Status: **Phases 1–4 built and deployed.** The API with a resumable stream and replay mode; live audits where a headless Chromium walks the store and measured checks find what can be measured ([ADR-0008](decisions/0008-measured-checks-before-judgement.md)); ADK agents on Gemini that judge each screen, with every claim grounded and verified ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)); and a Price Historian on BigQuery that grows with every audit ([ADR-0012](decisions/0012-price-history-in-bigquery.md)). **Deployed:** <https://shop-honest-ai.web.app> runs on the real backend: Cloud Run in Mumbai, Firestore and Cloud Storage, with Gemini on Vertex AI judging live audits (§13). "Scan it" replays recorded runs; "Run live" audits the store for real, rate-limited. This document describes the system and how the parts fit together.
 >
 > Related: [API reference](API.md) · [Decision records](decisions/README.md)
 
@@ -92,7 +92,7 @@ Each agent has one job and a typed output. Agents never call each other directly
 |---|---|---|---|---|
 | **Navigator** | Target URL, the journey so far | Next action; per-screen `Capture` (screenshot, text snapshot, element boxes, URL); `step.*` events; `price.observed` | Playwright: open, click, select, reload, read text, screenshot, measure element | **None** for scripted demo stores; **Flash** for unknown sites |
 | **Pattern Analyst** | One or two captures (e.g. before and after a reload), price facts | Candidate findings: pattern, the cited element, observations, explanation, raw confidence | None (multimodal prompt, JSON-schema output) | **Pro** (accuracy matters most here) |
-| **Price Historian** | Product identifier, advertised MRP and price | Price facts: past selling prices, MRP changes, genuine discount | BigQuery query tool | Flash (or no model, if the query alone answers it) |
+| **Price Historian** | Product key, advertised MRP and price | Price facts: what it really sold at, MRP changes, genuine discount; records today's price | BigQuery (`app/prices/`) | None: the query answers it |
 | **Evidence** | Candidate finding and captures | Evidence frames: uploaded screenshot URLs, normalised bboxes, captions; rejects candidates it can't ground | Cloud Storage upload, bbox lookup | No model (deterministic) |
 | **Adjudicator** | Grounded candidates | `Finding`s with final confidence and status: **confirmed** when ≥ 0.75, otherwise **needs_review**; duplicates merged | None | Flash |
 | **Reporter** | All findings, price trail, coverage | `AuditReport`: summary, remediation per finding, `priceDrift`, `exposure` (from `shared/legal.json`) | Legal reference lookup | Flash |
@@ -125,7 +125,7 @@ Two observations need more than one screen: a timer that restarts, or stock that
 |---|---|---|
 | The countdown reads *later* after a reload | `false_urgency` | before and after frames |
 | The same "only N left" on every look and variant | `false_urgency` | first look and another variant |
-| The MRP was never a selling price and was raised recently | `misleading_price` (Price Historian) | price block |
+| Never sold at the advertised MRP across ≥ 8 weeks of history (BigQuery), and the discount is ≥ 10 points bigger than against the highest real price | `misleading_price` (Price Historian) | price block |
 | The cart holds lines the agent never added | `basket_sneaking` | cart |
 | A paid, recurring option is ticked on arrival | `subscription_trap` | checkout |
 | Fees first appear at payment and weren't disclosed upfront | `drip_pricing` | product page and payment |
@@ -214,13 +214,13 @@ The client is `web/src/auditor/source/sseSource.ts`. Production builds use it (`
 
 **Firestore** (built, Native mode, `asia-south1`): audits, their events and the live-audit counters (`limits/…`) carry an `expireAt` with a TTL policy, so they delete themselves after 30 days (counters after 2).
 
-**BigQuery** dataset `shop_honest`:
+**BigQuery** (built) dataset `shop_honest`, `asia-south1` ([ADR-0012](decisions/0012-price-history-in-bigquery.md)):
 
 | Table | Columns |
 |---|---|
-| `price_history` | `product_url STRING`, `observed_at TIMESTAMP`, `price NUMERIC`, `mrp NUMERIC`, `currency STRING`, `source STRING` |
+| `price_history` | `product_key STRING`, `observed_at TIMESTAMP`, `price NUMERIC`, `mrp NUMERIC`, `currency STRING`, `source STRING` (`catalog` · `audit`), `audit_id STRING`; partitioned by day, clustered by `product_key` |
 
-Seeded from `web/src/store/catalog.ts` for the demo stores. Real sites only have history if we have observed them before, or have a data source (see [§16](#16-risks-and-open-questions)).
+The demo catalog is seeded by `backend/scripts/seed_price_history.py` (from `shared/price_history.json`, dated relative to now). Every live audit adds the price and MRP it saw, so history grows for any product we audit. Real sites have no history until then; their MRP claims aren't judged without at least 8 weeks of it.
 
 **Recordings** (`backend/app/replay/recordings/*.json`) are complete event logs of real runs, used by the replay mode ([§9](#9-demo-strategy)).
 
@@ -326,6 +326,8 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `GEMINI_MODEL_FAST` / `GEMINI_MODEL_SMART` | `gemini-3.8-flash` / `gemini-3.8-flash` | Model tiers (chosen by the eval) |
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | `http://localhost:11434` / `gemma3:4b` | Local models |
 | `STORE_BACKEND` | `memory` · `gcp` | In-process log + local frames, or Firestore + Cloud Storage |
+| `PRICE_HISTORY_BACKEND` / `BQ_DATASET` | `json` · `bigquery` / `shop_honest` | Price history from the demo catalog file, or BigQuery (deployed) |
+| `AUDIT_MAX_TOKENS` | `400000` | Model tokens (input + output) one audit may spend |
 | `FRAMES_BUCKET` / `BQ_DATASET` | `shop-honest-72fd8-audits` / `shop_honest` | Storage names |
 | `LIVE_PER_IP_PER_HOUR` / `LIVE_PER_DAY` | `3` / `100` (deployed; `0` = no limit) | Live-audit limits per visitor and for the whole site |
 | `ALLOWED_HOSTS` | `shop-honest-ai.web.app,localhost` | URL allowlist |
@@ -379,7 +381,7 @@ shophonest/
 | **1. Skeleton** ✓ | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest-ai.web.app runs with `VITE_AUDIT_SOURCE=live` end to end. **Done** 2026-10-11 |
 | **2. Navigator** ✓ | Playwright journeys for stores A, B and C (ported from `web/scripts/capture-screens.ts`), real screenshots (local disk; GCS at deploy), real `step.*` and `price.observed` events, measured checks and a deterministic report, store C's sign-in wall, "Run live" in the UI | A live run streams real screenshots and prices. **Done:** A 6/9, B 0 false alarms, C partial at the wall |
 | **3. Pattern Analyst** ✓ | ADK Pattern Analyst + Evidence rules + Adjudicator, prompts and schemas, scripted model for tests, answer-key eval with runs | Store A ≥ 8/9, store B 0 false positives, measured with Gemini. **Done:** A 9/9, B 0, C 6/6 (`gemini-3.8-flash`) |
-| **4. Price & report** (part done) | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data. **Done:** the report and PDF on live data, Firestore and Storage, live-audit limits, model-call budget, real recordings. **Left:** BigQuery Price Historian |
+| **4. Price & report** ✓ | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data. **Done:** the report and PDF on live data, specific fixes per finding, Firestore and Storage, the BigQuery Price Historian (recording every audit's prices), live-audit limits, model-call and token budgets, real recordings |
 | **5. Hardening** | One allowlisted real site logged-out (partial coverage path), dataset eval, billing alerts, judging-day settings | Eval numbers in the README; demo rehearsed |
 
 ## 16. Risks and open questions

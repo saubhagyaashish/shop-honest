@@ -15,7 +15,7 @@ from app.knowledge import load_knowledge
 from app.models.call import ModelCaller, ModelError
 from app.models.scripted import ScriptedLlm
 from tests.conftest import load_walk, make_settings
-from tests.judging import blank_jpeg, candidate, scripted_models
+from tests.judging import blank_jpeg, candidate, demo_store_analyst, scripted_models
 
 KNOWLEDGE = load_knowledge(REPO_DIR / "shared")
 
@@ -240,3 +240,29 @@ async def test_the_prompt_reaches_the_model_untemplated():
     parts = [types.Part(text="hi"), types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=blank_jpeg(10, 10)))]
     await caller.ask(name="t", model=ScriptedLlm(responder=respond), instruction='Reply {"ok": true}', schema=Answer, parts=parts)
     assert 'Reply {"ok": true}' in seen["system"] and seen["images"] == 1
+
+
+async def test_the_analysts_specific_fix_becomes_the_remediation_with_the_generic_one_as_fallback():
+    def analyst(user: str) -> list[dict]:
+        out = demo_store_analyst(user)
+        for c in out:
+            c["fix"] = "Replace the decline text with a neutral 'No thanks'." if c["patternId"] == "confirm_shaming" else ""
+        return out
+
+    walk, _ = await review("store-a", ["product-popup", "checkout"], analyst=analyst)
+    by_pattern = {f["patternId"]: f["remediation"] for f in walk.model_findings()}
+    assert by_pattern["confirm_shaming"] == "Replace the decline text with a neutral 'No thanks'."
+    assert by_pattern["interface_interference"] == KNOWLEDGE.pattern("interface_interference")["fix"]
+
+
+async def test_the_token_budget_stops_further_calls():
+    caller = ModelCaller(make_settings(audit_max_tokens=100))
+    caller.tokens_in, caller.tokens_out = 80, 30
+    with pytest.raises(ModelError, match="token budget"):
+        await caller.ask(
+            name="t",
+            model=ScriptedLlm(responder=lambda s, u, i: '{"ok": true}'),
+            instruction="x",
+            schema=Answer,
+            parts=[types.Part(text="hi")],
+        )

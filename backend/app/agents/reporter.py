@@ -7,9 +7,10 @@ Phase 4 adds Gemini-written summaries on top of the same structure.
 import re
 from typing import Any
 
-from app.agents.checks import Evidence, price_facts
+from app.agents.checks import Evidence
 from app.contract.models import JOURNEY_STEPS
 from app.knowledge import Knowledge
+from app.prices.facts import price_facts
 
 STEP_LABEL = {
     "product": "Product page",
@@ -99,13 +100,11 @@ def price_drift(ev: Evidence, findings: list[dict[str, Any]], knowledge: Knowled
     drift: dict[str, Any] = {"advertised": inr(advertised), "payable": inr(payable), "lines": lines}
     if block.get("mrp"):
         drift["claimedSaving"] = inr(block["mrp"] - block["price"])
-        history = knowledge.history_for(product.url)
-        genuine = (
-            price_facts(block["price"], block["mrp"], history)["prior_mrp"] - block["price"]
-            if history
-            else block["mrp"] - block["price"]
-        )
-        drift["genuineSaving"] = inr(genuine)
+        # The genuine saving needs real history; without it, say nothing rather than guess.
+        if ev.price_history is not None:
+            facts = price_facts(block["price"], block["mrp"], ev.price_history)
+            if facts.enough_history:
+                drift["genuineSaving"] = inr(max(0.0, facts.highest_sold - block["price"]))
         if "f-inflated-mrp" in ids:
             drift["savingFindingId"] = "f-inflated-mrp"
     return drift

@@ -3,7 +3,7 @@
   "store": "store-b",
   "pathPrefix": "/demo/store-b/",
   "source": "live",
-  "recordedAt": "2026-10-11T12:02:57.438993Z",
+  "recordedAt": "2026-10-11T12:40:10.401527Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "startedAt": "2026-10-11T12:02:23.798Z"
+        "startedAt": "2026-10-11T12:39:12.187Z"
       }
     },
     {
-      "delayMs": 223,
+      "delayMs": 270,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -35,7 +35,7 @@
       }
     },
     {
-      "delayMs": 2534,
+      "delayMs": 2536,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -51,7 +51,7 @@
       }
     },
     {
-      "delayMs": 8329,
+      "delayMs": 8317,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -75,8 +75,8 @@
       "delayMs": 0,
       "event": {
         "type": "agent.log",
-        "agent": "navigator",
-        "message": "Reloading the page for a second look."
+        "agent": "price_historian",
+        "message": "Looking up this product's price history in BigQuery…"
       }
     },
     {
@@ -88,7 +88,31 @@
       }
     },
     {
-      "delayMs": 2845,
+      "delayMs": 2128,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "13 weeks of prices: sold at ₹1,499–₹1,999; it has sold at the ₹1,999 MRP."
+      }
+    },
+    {
+      "delayMs": 150,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Reloading the page for a second look."
+      }
+    },
+    {
+      "delayMs": 2158,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the product page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 686,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -97,7 +121,7 @@
       }
     },
     {
-      "delayMs": 38,
+      "delayMs": 36,
       "event": {
         "type": "step.started",
         "step": "variant",
@@ -113,7 +137,7 @@
       }
     },
     {
-      "delayMs": 338,
+      "delayMs": 337,
       "event": {
         "type": "step.captured",
         "step": "variant",
@@ -122,7 +146,7 @@
       }
     },
     {
-      "delayMs": 38,
+      "delayMs": 40,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -159,7 +183,7 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 1,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -167,7 +191,7 @@
       }
     },
     {
-      "delayMs": 57,
+      "delayMs": 59,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -175,7 +199,7 @@
       }
     },
     {
-      "delayMs": 310,
+      "delayMs": 288,
       "event": {
         "type": "step.captured",
         "step": "checkout",
@@ -212,7 +236,7 @@
       }
     },
     {
-      "delayMs": 33,
+      "delayMs": 35,
       "event": {
         "type": "step.started",
         "step": "payment",
@@ -220,7 +244,7 @@
       }
     },
     {
-      "delayMs": 284,
+      "delayMs": 280,
       "event": {
         "type": "step.captured",
         "step": "payment",
@@ -257,7 +281,7 @@
       }
     },
     {
-      "delayMs": 3410,
+      "delayMs": 3026,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -265,7 +289,7 @@
       }
     },
     {
-      "delayMs": 6901,
+      "delayMs": 2045,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -273,15 +297,7 @@
       }
     },
     {
-      "delayMs": 6574,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Nothing on the product page needs flagging beyond what was measured."
-      }
-    },
-    {
-      "delayMs": 1433,
+      "delayMs": 35530,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -311,8 +327,8 @@
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-          "startedAt": "2026-10-11T12:02:23.798Z",
-          "completedAt": "2026-10-11T12:02:57.430Z",
+          "startedAt": "2026-10-11T12:39:12.187Z",
+          "completedAt": "2026-10-11T12:40:10.394Z",
           "trustScore": 100.0,
           "steps": [
             {

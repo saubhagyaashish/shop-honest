@@ -74,6 +74,7 @@ def ground(
         element_text=" · ".join(_short(e.text) for e in usable),
         severity=None if candidate.verifiable else "low",
         status="needs_review",
+        remediation=candidate.fix.strip() or None,
     )
 
 

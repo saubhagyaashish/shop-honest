@@ -15,5 +15,6 @@ Short notes on the decisions that shape Shop Honest: what we chose, why, and wha
 | [0009](0009-grounded-and-verified-model-claims.md) | Model claims are grounded on measured elements and verified before they're reported | Accepted |
 | [0010](0010-event-stream-straight-to-cloud-run.md) | The event stream goes straight to Cloud Run, not through Firebase Hosting | Accepted |
 | [0011](0011-audit-ownership-and-takeover.md) | Audits have an owner with a heartbeat; other instances can take over | Accepted |
+| [0012](0012-price-history-in-bigquery.md) | Price history lives in BigQuery, grows with every audit, and the MRP rule doesn't depend on recency | Accepted |
 
 Back to [Architecture](../ARCHITECTURE.md).

@@ -48,9 +48,10 @@ def test_store_a_price_drift_adds_up():
     ]
     assert drift["advertised"]["amount"] + sum(line["amount"]["amount"] for line in drift["lines"]) == drift["payable"]["amount"]
     assert drift["lines"][1]["recurring"] == "monthly"
+    # The genuine saving is against the highest price it really sold at (₹1,599), not another unreal MRP.
     assert (drift["claimedSaving"]["amount"], drift["genuineSaving"]["amount"], drift["savingFindingId"]) == (
         2500,
-        500,
+        100,
         "f-inflated-mrp",
     )
 
@@ -95,3 +96,21 @@ def test_exposure_cites_a_rule_per_finding_in_every_region():
     assert {r["code"] for r in regions} == {"IN", "SG", "GB", "EU", "US", "KR", "AU"}
     for region in regions:
         assert set(region["citations"]) == ids
+
+
+def test_without_price_history_the_genuine_saving_is_left_out():
+    ev, steps = load_walk("store-a")
+    ev.price_history = None
+    findings = [f for check in ALL_CHECKS for f in check(ev, KNOWLEDGE)]
+    report = build_report(
+        audit_id="aud_test",
+        target_url="http://localhost:5173/demo/store-a/p/sonicbuds-pro",
+        started_at="2026-10-10T10:00:00Z",
+        completed_at="2026-10-10T10:00:30Z",
+        steps=steps,
+        findings=findings,
+        ev=ev,
+        knowledge=KNOWLEDGE,
+    )
+    drift = report["exposure"]["priceDrift"]
+    assert "claimedSaving" in drift and "genuineSaving" not in drift and "savingFindingId" not in drift

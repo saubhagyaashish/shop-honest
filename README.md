@@ -24,7 +24,8 @@ If the backend can't be reached, sample-store scans fall back to the built-in de
 ### Deploying
 
 ```sh
-deploy/setup.sh                              # once: APIs, Firestore, bucket, registry, service account
+deploy/setup.sh                              # once: APIs, Firestore, bucket, BigQuery, registry, service account
+(cd backend && uv run python -m scripts.seed_price_history)   # load the demo catalog's price history (re-run before judging)
 deploy/backend.sh                            # build with Cloud Build, deploy to Cloud Run (image tagged with the commit)
 npx firebase-tools deploy --only hosting     # the site (production build talks to the backend)
 uv run --project backend python deploy/monitoring.py setup   # once: email alerts on errors and 5xx

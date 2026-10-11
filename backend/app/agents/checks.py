@@ -7,7 +7,6 @@ patterns that can be *measured*; Gemini adds the ones that need judgement
 """
 
 import re
-from typing import Any
 
 from app.agents.findings import Evidence, Finding
 from app.agents.findings import frame as _frame
@@ -15,6 +14,7 @@ from app.agents.findings import make_finding as _finding
 from app.agents.findings import money as _money
 from app.agents.findings import union as _union
 from app.knowledge import Knowledge
+from app.prices.facts import price_facts
 
 __all__ = ["ALL_CHECKS", "Evidence", "Finding", "price_facts"]
 
@@ -53,6 +53,7 @@ def restarting_timer(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
                 ],
                 detected_by="pattern_analyst",
                 element_text=before["text"],
+                remediation="Give the offer a fixed end date and time, or drop the countdown; it must not restart on a reload.",
             )
         )
         break
@@ -92,34 +93,41 @@ def frozen_stock(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
             ],
             detected_by="pattern_analyst",
             element_text=claim["text"],
+            remediation="Show the real stock count for each variant, updated as it changes, or remove the scarcity message.",
         )
     ]
 
 
 def inflated_mrp(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
-    """The struck-through MRP was never a real selling price (Price Historian)."""
+    """The struck-through MRP was never a price the product actually sold at (Price Historian)."""
     (capture,) = ev.get("product-first") or (None,)
     block = capture.signals.get("priceBlock") if capture else None
-    history = knowledge.history_for(capture.url) if capture else None
-    if not block or not block.get("mrp") or not history:
+    if not block or not block.get("mrp") or ev.price_history is None:
         return []
-    facts = price_facts(block["price"], block["mrp"], history)
-    if facts["ever_sold_at_mrp"] or not facts["mrp_raised_recently"]:
+    facts = price_facts(block["price"], block["mrp"], ev.price_history)
+    if not facts.misleading:
         return []
-    price, mrp, prior = _money(block["price"]), _money(block["mrp"]), _money(facts["prior_mrp"])
-    sold = f"{_money(facts['min_sold'])}–{_money(facts['max_sold'])}"
-    weeks, days, off, real = facts["weeks"], facts["mrp_changed_days_ago"], facts["advertised_discount"], facts["real_discount"]
+    price, mrp = _money(block["price"]), _money(block["mrp"])
+    sold, highest = f"{_money(facts.lowest_sold)}–{_money(facts.highest_sold)}", _money(facts.highest_sold)
+    weeks, off, real = facts.weeks, facts.advertised_discount, facts.real_discount
+    raised = facts.prior_mrp is not None and facts.mrp_changed_days_ago is not None
+    if raised:
+        days, prior = facts.mrp_changed_days_ago, _money(facts.prior_mrp or 0)
+        title = f"{off}% discount is calculated off an MRP raised {days} days ago"
+        history = f"; the MRP was raised from {prior} to {mrp} {days} days ago"
+    else:
+        title = f"{off}% discount is calculated off an MRP it never sold at"
+        history = ""
     return [
         _finding(
             knowledge,
             id="f-inflated-mrp",
             pattern_id="misleading_price",
-            title=f"{off}% discount is calculated off an MRP raised {days} days ago",
+            title=title,
             explanation=(
-                f"The page advertises {price} as {off}% off an MRP of {mrp}. "
-                f"Over the last {weeks} weeks the product sold at {sold} against an MRP of {prior}; the MRP was raised to {mrp} "
-                f"{days} days ago and the product has never sold at that price. "
-                f"Against the genuine reference price, the discount is {real}%."
+                f"The page advertises {price} as {off}% off an MRP of {mrp}. Over the last {weeks} weeks the product "
+                f"sold at {sold} and never at {mrp}{history}. Against the highest price it really sold at ({highest}), "
+                f"the discount is {real}%."
             ),
             confidence=0.93,
             capture=capture,
@@ -127,11 +135,12 @@ def inflated_mrp(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
             observations=[
                 f"Advertised: {price}, MRP {mrp} ({off}% off)",
                 f"Last {weeks} weeks: sold at {sold}, never at {mrp}",
-                f"MRP changed {prior} → {mrp}, {days} days ago",
-                f"Discount against the prior MRP: {real}%",
+                *([f"MRP changed {prior} → {mrp}, {days} days ago"] if raised else []),
+                f"Discount against the highest real price ({highest}): {real}%",
             ],
             detected_by="price_historian",
             element_text=block["text"],
+            remediation=f"Quote discounts against a price the product actually sold at (such as {highest}), not the {mrp} MRP.",
         )
     ]
 
@@ -173,6 +182,7 @@ def sneaked_items(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
             observations=observations,
             detected_by="evidence",
             element_text=line["text"],
+            remediation=f'Don\'t put "{line["name"]}" in the cart for the shopper; offer it as an unticked option.',
         )
     ]
 
@@ -206,6 +216,10 @@ def pre_ticked_subscription(ev: Evidence, knowledge: Knowledge) -> list[Finding]
                 ],
                 detected_by="pattern_analyst",
                 element_text=box["label"],
+                remediation=(
+                    f"Leave {name} unticked by default, and state the {_money(box['amount'])}/month charge "
+                    "before the shopper opts in."
+                ),
             )
         ]
     return []
@@ -265,30 +279,12 @@ def late_fees(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
                 "New at payment: " + ", ".join(f"{r['label'].lower()} {_money(r['amount'])}" for r in late),
             ],
             detected_by="evidence",
+            remediation=f"Show the {fee_names} in the first price the shopper sees on the product page, not at payment.",
         )
     ]
 
 
 ALL_CHECKS = [restarting_timer, frozen_stock, inflated_mrp, sneaked_items, pre_ticked_subscription, late_fees]
-
-
-def price_facts(price: float, mrp: float, history: dict[str, Any]) -> dict[str, Any]:
-    """What the price history says about an advertised MRP."""
-    points = history["points"]
-    sold = [p["price"] for p in points]
-    current_mrp_since = next((p for p in points if p["mrp"] == mrp), None)
-    prior_mrp = points[0]["mrp"]
-    return {
-        "weeks": len(points) - 1,
-        "min_sold": min(sold),
-        "max_sold": max(sold),
-        "ever_sold_at_mrp": mrp in sold,
-        "prior_mrp": prior_mrp,
-        "mrp_changed_days_ago": current_mrp_since["daysAgo"] if current_mrp_since else None,
-        "mrp_raised_recently": bool(current_mrp_since) and current_mrp_since["daysAgo"] <= 30 and mrp > prior_mrp,
-        "advertised_discount": int((1 - price / mrp) * 100),
-        "real_discount": int((1 - price / prior_mrp) * 100),
-    }
 
 
 def _clock(text: str) -> str:

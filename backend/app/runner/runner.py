@@ -27,6 +27,7 @@ from app.config import Settings
 from app.contract.models import AUDIT_EVENT, TERMINAL_EVENTS, AuditReport, dump
 from app.knowledge import load_knowledge
 from app.models import ModelSet, model_set
+from app.prices.history import PriceHistory, price_history_for
 from app.replay.player import Recording
 from app.runner.walk import Walk
 from app.stores.events import AuditRecord, EventLog, now_iso
@@ -49,8 +50,10 @@ class AuditRunner:
         frames: FrameStore | None = None,
         resolver: Resolver = system_resolver,
         models: ModelSet | None = None,
+        prices: PriceHistory | None = None,
     ) -> None:
         self._events = events
+        self._prices = prices if prices is not None else price_history_for(settings)
         # Tests inject scripted models; otherwise MODEL_PROVIDER decides (None = measured-only audits).
         self._models = models if models is not None else model_set(settings)
         self._settings = settings
@@ -201,6 +204,7 @@ class AuditRunner:
                         settings=settings,
                         emit=emit,
                         judge=judge,
+                        prices=self._prices,
                     )
                     await walk.log("navigator", "Launching a fresh browser: 1280×800, no cookies, not signed in.")
                     try:

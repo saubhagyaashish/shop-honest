@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     abandoned_after_s: float = 45.0
     frames_dir: Path = BACKEND_DIR / "var" / "frames"
     shared_dir: Path = REPO_DIR / "shared"
+    # Price history: the demo catalog file (local, tests) or BigQuery (deployed).
+    price_history_backend: Literal["json", "bigquery"] = "json"
+    bq_dataset: str = "shop_honest"
+    bq_table: str = "price_history"
+    # Model tokens (input + output) one audit may spend.
+    audit_max_tokens: int = 400_000
 
     # Models (Phase 3). Ollama serves both tiers locally.
     ollama_base_url: str = "http://127.0.0.1:11434"

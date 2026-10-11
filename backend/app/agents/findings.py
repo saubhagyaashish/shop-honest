@@ -5,6 +5,7 @@ from typing import Any
 
 from app.browser.capture import Capture
 from app.knowledge import Knowledge
+from app.prices.facts import History
 
 Finding = dict[str, Any]
 BBox = dict[str, float]
@@ -16,6 +17,8 @@ class Evidence:
 
     captures: dict[str, Capture]
     added_items: list[str] = field(default_factory=list)
+    # The product's price history, once the Price Historian has looked it up (None: there is none).
+    price_history: History | None = None
 
     def get(self, *labels: str) -> list[Capture]:
         return [self.captures[label] for label in labels if label in self.captures]
@@ -47,6 +50,7 @@ def make_finding(
     element_text: str | None = None,
     severity: str | None = None,
     status: str = "confirmed",
+    remediation: str | None = None,
 ) -> Finding:
     pattern = knowledge.pattern(pattern_id)
     finding: Finding = {
@@ -62,7 +66,7 @@ def make_finding(
         "rule": pattern["rule"],
         "detectedBy": detected_by,
         "evidence": {"frames": frames, "observations": observations},
-        "remediation": pattern["fix"],
+        "remediation": remediation or pattern["fix"],
     }
     if element_text:
         finding["evidence"]["elementText"] = element_text

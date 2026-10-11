@@ -58,4 +58,32 @@ for role in roles/artifactregistry.writer roles/logging.logWriter roles/storage.
     --role="$role" --condition=None >/dev/null
 done
 
+echo "› BigQuery $BQ_DATASET.price_history (the Price Historian's data)"
+bq() { "$BQ" --project_id="$PROJECT" --quiet "$@"; }
+if ! bq show "$PROJECT:$BQ_DATASET" >/dev/null 2>&1; then
+  bq --location="$REGION" mk --dataset --description="Shop Honest: price history" "$PROJECT:$BQ_DATASET"
+fi
+if ! bq show "$PROJECT:$BQ_DATASET.price_history" >/dev/null 2>&1; then
+  bq mk --table --time_partitioning_field=observed_at --time_partitioning_type=DAY --clustering_fields=product_key \
+    --description="Observed prices per product: the demo catalog seed and every live audit" \
+    "$PROJECT:$BQ_DATASET.price_history" \
+    product_key:STRING,observed_at:TIMESTAMP,price:NUMERIC,mrp:NUMERIC,currency:STRING,source:STRING,audit_id:STRING
+fi
+# The API may read and add rows in this dataset only, and run queries.
+# (Dataset IAM bindings need allowlisting, so this uses the dataset's access list: WRITER = Data Editor.)
+uv run --project ../backend python - "$PROJECT" "$BQ_DATASET" "$SERVICE_ACCOUNT" <<'PY'
+import sys
+from google.cloud import bigquery
+project, dataset_id, account = sys.argv[1:]
+client = bigquery.Client(project=project)
+dataset = client.get_dataset(f"{project}.{dataset_id}")
+entries = list(dataset.access_entries)
+if not any(e.role == "WRITER" and e.entity_id == account for e in entries):
+    entries.append(bigquery.AccessEntry(role="WRITER", entity_type="userByEmail", entity_id=account))
+    dataset.access_entries = entries
+    client.update_dataset(dataset, ["access_entries"])
+PY
+g projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SERVICE_ACCOUNT" --role=roles/bigquery.jobUser \
+  --condition=None >/dev/null
+
 echo "✓ Setup done for $PROJECT"

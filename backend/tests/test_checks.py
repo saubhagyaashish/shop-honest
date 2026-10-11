@@ -1,16 +1,20 @@
 """Rule-based checks on real signals from the demo stores, plus honest variants of each trick."""
 
 import copy
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.agents.checks import ALL_CHECKS, Evidence, price_facts
+from app.agents.checks import ALL_CHECKS, Evidence
 from app.config import REPO_DIR
 from app.contract.models import Finding
 from app.knowledge import load_knowledge
+from app.prices.facts import History, PricePoint, price_facts
+from app.prices.history import JsonPriceHistory
 from tests.conftest import load_walk
 
 KNOWLEDGE = load_knowledge(REPO_DIR / "shared")
+CATALOG = JsonPriceHistory(REPO_DIR / "shared" / "price_history.json")
 
 
 def run_checks(ev: Evidence) -> dict[str, dict]:
@@ -86,11 +90,41 @@ def test_large_stock_counts_are_not_scarcity():
 
 def test_an_mrp_the_product_really_sold_at_is_not_flagged():
     ev = store_a()
-    # Store B's history: MRP ₹1,999 all quarter and sold at it.
+    # Store B's history: sold at its ₹1,999 MRP for weeks before the sale.
+    ev.price_history = CATALOG.get("bazaarnest/demo/store-b/p/sonicbuds-pro")
     for c in ev.captures.values():
-        c.url = c.url.replace("/store-a/", "/store-b/")
         if block := c.signals.get("priceBlock"):
             block["mrp"] = 1999
+    assert "f-inflated-mrp" not in run_checks(ev)
+
+
+def history(*points: tuple[int, float, float]) -> History:
+    """(days ago, selling price, MRP) points, oldest first."""
+    today = datetime.now(UTC).date()
+    return History(
+        key="k", currency="INR", points=[PricePoint(day=today - timedelta(days=d), low=p, high=p, mrp=m) for d, p, m in points]
+    )
+
+
+def test_an_mrp_raised_long_ago_is_still_flagged():
+    # The demo must not age out: never selling at the MRP is what matters, not how recently it was set.
+    ev = store_a()
+    ev.price_history = history((150, 1499, 1999), (90, 1599, 1999), (60, 1499, 3999), (0, 1499, 3999))
+    found = run_checks(ev)["f-inflated-mrp"]
+    assert found["title"] == "62% discount is calculated off an MRP raised 60 days ago"
+    assert "₹1,599" in found["remediation"] and "₹3,999" in found["remediation"]
+
+
+def test_a_fake_mrp_with_no_known_raise_is_still_flagged():
+    ev = store_a()
+    ev.price_history = history((120, 1499, 3999), (60, 1599, 3999), (0, 1499, 3999))
+    assert run_checks(ev)["f-inflated-mrp"]["title"] == "62% discount is calculated off an MRP it never sold at"
+
+
+@pytest.mark.parametrize("known", ["none", "too_short"])
+def test_without_enough_history_the_mrp_claim_is_not_judged(known: str):
+    ev = store_a()
+    ev.price_history = None if known == "none" else history((40, 1499, 1999), (0, 1499, 3999))
     assert "f-inflated-mrp" not in run_checks(ev)
 
 
@@ -129,16 +163,21 @@ def test_fees_already_shown_in_the_cart_are_not_drip_pricing():
     assert "f-late-fees" not in run_checks(ev)
 
 
-def test_price_facts_arithmetic():
-    facts = price_facts(1499, 3999, KNOWLEDGE.history_for("http://localhost:5173/demo/store-a/p/sonicbuds-pro"))
-    assert facts == {
-        "weeks": 13,
-        "min_sold": 1499,
-        "max_sold": 1599,
-        "ever_sold_at_mrp": False,
-        "prior_mrp": 1999,
-        "mrp_changed_days_ago": 7,
-        "mrp_raised_recently": True,
-        "advertised_discount": 62,
-        "real_discount": 25,
-    }
+def test_price_facts_come_from_dates_not_point_counts():
+    facts = price_facts(1499, 3999, CATALOG.get("bazaarnest/demo/store-a/p/sonicbuds-pro"))
+    assert (facts.weeks, facts.lowest_sold, facts.highest_sold, facts.ever_sold_at_mrp) == (13, 1499, 1599, False)
+    assert (facts.prior_mrp, facts.mrp_changed_days_ago) == (1999, 7)
+    assert (facts.advertised_discount, facts.real_discount, facts.misleading) == (62, 6, True)
+    # Many observations on one day (audits) don't stretch the history.
+    busy = history(*[(0, 1499, 3999)] * 40)
+    assert price_facts(1499, 3999, busy).weeks == 0
+
+
+def test_measured_findings_say_specifically_what_to_fix():
+    found = run_checks(store_a())
+    assert "Platform fee" in found["f-late-fees"]["remediation"]
+    assert "1-Year Accidental Damage Protection" in found["f-sneaked-item"]["remediation"]
+    assert "₹99/month" in found["f-pre-ticked-subscription"]["remediation"]
+    assert "₹1,599" in found["f-inflated-mrp"]["remediation"]
+    generic = {KNOWLEDGE.pattern(f["patternId"])["fix"] for f in found.values()}
+    assert not generic & {f["remediation"] for f in found.values()}

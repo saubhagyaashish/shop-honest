@@ -50,6 +50,8 @@ class ModelCaller:
         for _ in range(2):
             if self.budget_left <= 0:
                 raise ModelError("the audit's model-call budget is used up")
+            if self.tokens_in + self.tokens_out >= self._settings.audit_max_tokens:
+                raise ModelError("the audit's token budget is used up")
             self.calls += 1
             try:
                 async with self._slots:

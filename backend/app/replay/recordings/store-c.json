@@ -3,7 +3,7 @@
   "store": "store-c",
   "pathPrefix": "/demo/store-c/",
   "source": "live",
-  "recordedAt": "2026-10-11T12:03:24.371454Z",
+  "recordedAt": "2026-10-11T12:40:45.886109Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
-        "startedAt": "2026-10-11T12:02:57.448Z"
+        "startedAt": "2026-10-11T12:40:10.421Z"
       }
     },
     {
-      "delayMs": 230,
+      "delayMs": 389,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -35,7 +35,7 @@
       }
     },
     {
-      "delayMs": 1348,
+      "delayMs": 1413,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -43,7 +43,7 @@
       }
     },
     {
-      "delayMs": 335,
+      "delayMs": 339,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -52,7 +52,7 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 1,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -60,7 +60,7 @@
       }
     },
     {
-      "delayMs": 34,
+      "delayMs": 47,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -76,12 +76,48 @@
       }
     },
     {
-      "delayMs": 8316,
+      "delayMs": 8326,
       "event": {
         "type": "step.captured",
         "step": "product",
         "url": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
         "screenshotUrl": "/recordings/store-c/2.jpg"
+      }
+    },
+    {
+      "delayMs": 0,
+      "event": {
+        "type": "price.observed",
+        "step": "product",
+        "label": "Product page",
+        "total": {
+          "amount": 1499.0,
+          "currency": "INR"
+        }
+      }
+    },
+    {
+      "delayMs": 0,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "Looking up this product's price history in BigQuery…"
+      }
+    },
+    {
+      "delayMs": 1,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Reading the product page with Gemini (gemini-3.8-flash)…"
+      }
+    },
+    {
+      "delayMs": 2062,
+      "event": {
+        "type": "agent.log",
+        "agent": "price_historian",
+        "message": "13 weeks of prices: sold at ₹1,499–₹1,599; MRP ₹1,999 until 7 days ago, ₹3,999 since."
       }
     },
     {
@@ -100,7 +136,7 @@
           "id": "f-inflated-mrp",
           "patternId": "misleading_price",
           "title": "62% discount is calculated off an MRP raised 7 days ago",
-          "explanation": "The page advertises ₹1,499 as 62% off an MRP of ₹3,999. Over the last 13 weeks the product sold at ₹1,499–₹1,599 against an MRP of ₹1,999; the MRP was raised to ₹3,999 7 days ago and the product has never sold at that price. Against the genuine reference price, the discount is 25%.",
+          "explanation": "The page advertises ₹1,499 as 62% off an MRP of ₹3,999. Over the last 13 weeks the product sold at ₹1,499–₹1,599 and never at ₹3,999; the MRP was raised from ₹1,999 to ₹3,999 7 days ago. Against the highest price it really sold at (₹1,599), the discount is 6%.",
           "severity": "high",
           "confidence": 0.93,
           "status": "confirmed",
@@ -130,27 +166,15 @@
               "Advertised: ₹1,499, MRP ₹3,999 (62% off)",
               "Last 13 weeks: sold at ₹1,499–₹1,599, never at ₹3,999",
               "MRP changed ₹1,999 → ₹3,999, 7 days ago",
-              "Discount against the prior MRP: 25%"
+              "Discount against the highest real price (₹1,599): 6%"
             ]
           },
-          "remediation": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP."
+          "remediation": "Quote discounts against a price the product actually sold at (such as ₹1,599), not the ₹3,999 MRP."
         }
       }
     },
     {
-      "delayMs": 0,
-      "event": {
-        "type": "price.observed",
-        "step": "product",
-        "label": "Product page",
-        "total": {
-          "amount": 1499.0,
-          "currency": "INR"
-        }
-      }
-    },
-    {
-      "delayMs": 0,
+      "delayMs": 164,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -158,15 +182,7 @@
       }
     },
     {
-      "delayMs": 0,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Reading the product page with Gemini (gemini-3.8-flash)…"
-      }
-    },
-    {
-      "delayMs": 1667,
+      "delayMs": 1695,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -190,7 +206,7 @@
           "id": "f-restarting-timer",
           "patternId": "false_urgency",
           "title": "Countdown timer restarts on every page load",
-          "explanation": "The countdown read 09:51 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
+          "explanation": "The countdown read 09:50 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
           "severity": "high",
           "confidence": 0.97,
           "status": "confirmed",
@@ -225,19 +241,19 @@
                 }
               }
             ],
-            "elementText": "Deal ends in 09:51",
+            "elementText": "Deal ends in 09:50",
             "observations": [
-              "Before reload: 09:51",
+              "Before reload: 09:50",
               "After reload: 09:59",
               "The deadline moved later, which a real end time cannot do"
             ]
           },
-          "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+          "remediation": "Give the offer a fixed end date and time, or drop the countdown; it must not restart on a reload."
         }
       }
     },
     {
-      "delayMs": 32,
+      "delayMs": 31,
       "event": {
         "type": "step.started",
         "step": "variant",
@@ -253,7 +269,7 @@
       }
     },
     {
-      "delayMs": 300,
+      "delayMs": 315,
       "event": {
         "type": "step.captured",
         "step": "variant",
@@ -318,12 +334,12 @@
               "Looks taken: first load, after a reload, after a variant change"
             ]
           },
-          "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+          "remediation": "Show the real stock count for each variant, updated as it changes, or remove the scarcity message."
         }
       }
     },
     {
-      "delayMs": 34,
+      "delayMs": 33,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -339,7 +355,7 @@
       }
     },
     {
-      "delayMs": 272,
+      "delayMs": 279,
       "event": {
         "type": "step.captured",
         "step": "cart",
@@ -396,7 +412,7 @@
               "Cart total ₹1,698"
             ]
           },
-          "remediation": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it."
+          "remediation": "Don't put \"1-Year Accidental Damage Protection\" in the cart for the shopper; offer it as an unticked option."
         }
       }
     },
@@ -413,7 +429,7 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 2,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -421,7 +437,7 @@
       }
     },
     {
-      "delayMs": 50,
+      "delayMs": 43,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -429,15 +445,7 @@
       }
     },
     {
-      "delayMs": 70,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Decline option uses guilt-inducing language"
-      }
-    },
-    {
-      "delayMs": 235,
+      "delayMs": 288,
       "event": {
         "type": "step.captured",
         "step": "checkout",
@@ -464,11 +472,11 @@
       }
     },
     {
-      "delayMs": 3240,
+      "delayMs": 1035,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Unverifiable claim about recent purchases creates pressure to buy"
+        "message": "Unverified popularity claim creates false urgency"
       }
     },
     {
@@ -486,8 +494,8 @@
         "finding": {
           "id": "m-product-first-false_urgency-1",
           "patternId": "false_urgency",
-          "title": "Unverifiable claim about recent purchases creates pressure to buy",
-          "explanation": "The product claims '🔥 120+ bought in the last 24 hours' without providing any verifiable source or proof, creating false urgency through simulated popularity.",
+          "title": "Unverified popularity claim creates false urgency",
+          "explanation": "The badge claiming \"🔥 120+ bought in the last 24 hours\" pressures shoppers with popularity metrics that cannot be verified on the page.",
           "severity": "low",
           "confidence": 0.74,
           "status": "needs_review",
@@ -517,12 +525,28 @@
               "Claim: \"🔥 120+ bought in the last 24 hours\""
             ]
           },
-          "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+          "remediation": "Remove the unverified purchase counter badge unless backed by real-time, auditable sales data."
         }
       }
     },
     {
-      "delayMs": 3481,
+      "delayMs": 3653,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the cart needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 6716,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Decline option uses guilt-inducing language"
+      }
+    },
+    {
+      "delayMs": 4422,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
@@ -537,7 +561,7 @@
           "id": "m-product-popup-confirm_shaming-1",
           "patternId": "confirm_shaming",
           "title": "Decline option uses guilt-inducing language",
-          "explanation": "The opt-out choice is worded as \"No thanks, I prefer paying full price\" to make the shopper feel foolish for declining the offer.",
+          "explanation": "The opt-out link is worded as \"No thanks, I prefer paying full price\" to make shoppers feel foolish for declining the offer.",
           "severity": "medium",
           "confidence": 0.95,
           "status": "confirmed",
@@ -567,7 +591,7 @@
               "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
             ]
           },
-          "remediation": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button."
+          "remediation": "Change the decline option text to a neutral label such as \"No thanks\"."
         }
       }
     },
@@ -576,23 +600,15 @@
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Acceptance button is heavily prioritized over the decline link"
+        "message": "Discount button is made far more prominent than the opt-out link"
       }
     },
     {
-      "delayMs": 6550,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Nothing on the cart needs flagging beyond what was measured."
-      }
-    },
-    {
-      "delayMs": 720,
+      "delayMs": 4200,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "Confirmed \"Acceptance button is heavily prioritized over the decline link\" (confidence 0.90)."
+        "message": "Confirmed \"Discount button is made far more prominent than the opt-out link\" (confidence 0.90)."
       }
     },
     {
@@ -602,8 +618,8 @@
         "finding": {
           "id": "m-product-popup-interface_interference-2",
           "patternId": "interface_interference",
-          "title": "Acceptance button is heavily prioritized over the decline link",
-          "explanation": "The preferred action \"Unlock my 10% off\" is rendered as a prominent 336×40 px bold teal button, while the alternative \"No thanks, I prefer paying full price\" is diminished to a small 12 px grey text link.",
+          "title": "Discount button is made far more prominent than the opt-out link",
+          "explanation": "The preferred action \"Unlock my 10% off\" is rendered as a prominent 336×40 px teal button, while the alternative \"No thanks, I prefer paying full price\" is diminished to a small 12 px grey text link.",
           "severity": "medium",
           "confidence": 0.9,
           "status": "confirmed",
@@ -634,7 +650,7 @@
               "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
             ]
           },
-          "remediation": "Give paid and free choices equal visual weight, for example two equally styled options."
+          "remediation": "Give the opt-out option comparable visual prominence and button styling to the accept option."
         }
       }
     },
@@ -661,8 +677,8 @@
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
-          "startedAt": "2026-10-11T12:02:57.448Z",
-          "completedAt": "2026-10-11T12:03:24.363Z",
+          "startedAt": "2026-10-11T12:40:10.421Z",
+          "completedAt": "2026-10-11T12:40:45.875Z",
           "trustScore": 46.0,
           "steps": [
             {
@@ -696,7 +712,7 @@
               "id": "f-inflated-mrp",
               "patternId": "misleading_price",
               "title": "62% discount is calculated off an MRP raised 7 days ago",
-              "explanation": "The page advertises ₹1,499 as 62% off an MRP of ₹3,999. Over the last 13 weeks the product sold at ₹1,499–₹1,599 against an MRP of ₹1,999; the MRP was raised to ₹3,999 7 days ago and the product has never sold at that price. Against the genuine reference price, the discount is 25%.",
+              "explanation": "The page advertises ₹1,499 as 62% off an MRP of ₹3,999. Over the last 13 weeks the product sold at ₹1,499–₹1,599 and never at ₹3,999; the MRP was raised from ₹1,999 to ₹3,999 7 days ago. Against the highest price it really sold at (₹1,599), the discount is 6%.",
               "severity": "high",
               "confidence": 0.93,
               "status": "confirmed",
@@ -726,16 +742,16 @@
                   "Advertised: ₹1,499, MRP ₹3,999 (62% off)",
                   "Last 13 weeks: sold at ₹1,499–₹1,599, never at ₹3,999",
                   "MRP changed ₹1,999 → ₹3,999, 7 days ago",
-                  "Discount against the prior MRP: 25%"
+                  "Discount against the highest real price (₹1,599): 6%"
                 ]
               },
-              "remediation": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP."
+              "remediation": "Quote discounts against a price the product actually sold at (such as ₹1,599), not the ₹3,999 MRP."
             },
             {
               "id": "f-restarting-timer",
               "patternId": "false_urgency",
               "title": "Countdown timer restarts on every page load",
-              "explanation": "The countdown read 09:51 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
+              "explanation": "The countdown read 09:50 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
               "severity": "high",
               "confidence": 0.97,
               "status": "confirmed",
@@ -770,14 +786,14 @@
                     }
                   }
                 ],
-                "elementText": "Deal ends in 09:51",
+                "elementText": "Deal ends in 09:50",
                 "observations": [
-                  "Before reload: 09:51",
+                  "Before reload: 09:50",
                   "After reload: 09:59",
                   "The deadline moved later, which a real end time cannot do"
                 ]
               },
-              "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+              "remediation": "Give the offer a fixed end date and time, or drop the countdown; it must not restart on a reload."
             },
             {
               "id": "f-frozen-stock",
@@ -824,7 +840,7 @@
                   "Looks taken: first load, after a reload, after a variant change"
                 ]
               },
-              "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+              "remediation": "Show the real stock count for each variant, updated as it changes, or remove the scarcity message."
             },
             {
               "id": "f-sneaked-item",
@@ -863,13 +879,13 @@
                   "Cart total ₹1,698"
                 ]
               },
-              "remediation": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it."
+              "remediation": "Don't put \"1-Year Accidental Damage Protection\" in the cart for the shopper; offer it as an unticked option."
             },
             {
               "id": "m-product-first-false_urgency-1",
               "patternId": "false_urgency",
-              "title": "Unverifiable claim about recent purchases creates pressure to buy",
-              "explanation": "The product claims '🔥 120+ bought in the last 24 hours' without providing any verifiable source or proof, creating false urgency through simulated popularity.",
+              "title": "Unverified popularity claim creates false urgency",
+              "explanation": "The badge claiming \"🔥 120+ bought in the last 24 hours\" pressures shoppers with popularity metrics that cannot be verified on the page.",
               "severity": "low",
               "confidence": 0.74,
               "status": "needs_review",
@@ -899,13 +915,13 @@
                   "Claim: \"🔥 120+ bought in the last 24 hours\""
                 ]
               },
-              "remediation": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+              "remediation": "Remove the unverified purchase counter badge unless backed by real-time, auditable sales data."
             },
             {
               "id": "m-product-popup-confirm_shaming-1",
               "patternId": "confirm_shaming",
               "title": "Decline option uses guilt-inducing language",
-              "explanation": "The opt-out choice is worded as \"No thanks, I prefer paying full price\" to make the shopper feel foolish for declining the offer.",
+              "explanation": "The opt-out link is worded as \"No thanks, I prefer paying full price\" to make shoppers feel foolish for declining the offer.",
               "severity": "medium",
               "confidence": 0.95,
               "status": "confirmed",
@@ -935,13 +951,13 @@
                   "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
                 ]
               },
-              "remediation": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button."
+              "remediation": "Change the decline option text to a neutral label such as \"No thanks\"."
             },
             {
               "id": "m-product-popup-interface_interference-2",
               "patternId": "interface_interference",
-              "title": "Acceptance button is heavily prioritized over the decline link",
-              "explanation": "The preferred action \"Unlock my 10% off\" is rendered as a prominent 336×40 px bold teal button, while the alternative \"No thanks, I prefer paying full price\" is diminished to a small 12 px grey text link.",
+              "title": "Discount button is made far more prominent than the opt-out link",
+              "explanation": "The preferred action \"Unlock my 10% off\" is rendered as a prominent 336×40 px teal button, while the alternative \"No thanks, I prefer paying full price\" is diminished to a small 12 px grey text link.",
               "severity": "medium",
               "confidence": 0.9,
               "status": "confirmed",
@@ -972,7 +988,7 @@
                   "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
                 ]
               },
-              "remediation": "Give paid and free choices equal visual weight, for example two equally styled options."
+              "remediation": "Give the opt-out option comparable visual prominence and button styling to the accept option."
             }
           ],
           "summary": "6 violations confirmed across 2 of the 3 reachable journey steps, and 1 claim sent for human review. The amount payable rose from ₹1,499 on the product page to ₹1,698 (+13%). Checkout and Payment could not be audited: sign-in required.",
@@ -1003,7 +1019,7 @@
                 "currency": "INR"
               },
               "genuineSaving": {
-                "amount": 500.0,
+                "amount": 100.0,
                 "currency": "INR"
               },
               "savingFindingId": "f-inflated-mrp"

@@ -15,6 +15,6 @@ Rules:
 - confidence is how sure you are, from 0 to 1. Use 0.9 or more only when the evidence is unambiguous.
 - Most screens have no dark pattern. If nothing qualifies, return {"candidates": []}.
 
-For each candidate write a short, plain title (one sentence, no jargon) and an explanation of one or two sentences that quotes the element's text.
+For each candidate write a short, plain title (one sentence, no jargon), an explanation of one or two sentences that quotes the element's text, and a fix: one specific sentence on what the business should change on this page (for example "Make 'Skip insurance' the same size and colour as 'Add insurance'").
 
-Reply with JSON only: {"candidates": [{"patternId": "...", "elementRefs": ["e1"], "title": "...", "explanation": "...", "confidence": 0.0, "verifiable": true}]}
+Reply with JSON only: {"candidates": [{"patternId": "...", "elementRefs": ["e1"], "title": "...", "explanation": "...", "confidence": 0.0, "verifiable": true, "fix": "..."}]}

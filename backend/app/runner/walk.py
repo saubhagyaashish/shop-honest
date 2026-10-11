@@ -14,11 +14,15 @@ from typing import TYPE_CHECKING, Any
 from playwright.async_api import Page
 
 from app.agents.checks import ALL_CHECKS, Evidence
+from app.agents.findings import money
 from app.browser.capture import Capture, read_signals, screenshot
 from app.browser.session import RequestGuard
 from app.config import Settings
 from app.contract.models import JourneyStep
 from app.knowledge import Knowledge
+from app.prices.facts import MIN_WEEKS, price_facts
+from app.prices.history import Observation, PriceHistory
+from app.prices.keys import product_key
 from app.stores.frames import FrameStore
 
 if TYPE_CHECKING:
@@ -46,6 +50,7 @@ class Walk:
         settings: Settings,
         emit: Emit,
         judge: "Judge | None" = None,
+        prices: PriceHistory | None = None,
     ) -> None:
         self.audit_id = audit_id
         self.target_url = target_url
@@ -61,6 +66,7 @@ class Walk:
         self._emit = emit
         self._n = 0
         self.judge = judge
+        self.prices = prices
         self._reviews: set[asyncio.Task[None]] = set()
 
     async def log(self, agent: str, message: str) -> None:
@@ -114,6 +120,52 @@ class Walk:
         if block.get("price"):
             total = block["price"] + sum(d["amount"] for d in capture.signals.get("feeDisclosures", []))
             await self._emit({"type": "price.observed", "step": capture.step, "label": "Product page", "total": inr(total)})
+            await self._price_history(capture, block)
+
+    async def _price_history(self, capture: Capture, block: dict[str, Any]) -> None:
+        """Price Historian: what has this product really sold at? Then record today's price for future audits."""
+        if self.prices is None:
+            return
+        key = product_key(capture.url)
+        if block.get("mrp"):
+            await self.log("price_historian", f"Looking up this product's price history in {self.prices.name}…")
+            try:
+                self.evidence.price_history = await self.prices.lookup(key)
+            except Exception:
+                log.warning("price history lookup failed for %s", key, exc_info=True)
+                await self.log(
+                    "price_historian", "Couldn't reach the price history, so the MRP claim can't be checked this time."
+                )
+            else:
+                await self.log("price_historian", self._history_story(block))
+                await self.check()
+        try:
+            await self.prices.record(
+                Observation(key=key, price=block["price"], mrp=block.get("mrp"), currency="INR", audit_id=self.audit_id)
+            )
+        except Exception:
+            log.warning("couldn't record the observed price for %s", key, exc_info=True)
+
+    def _history_story(self, block: dict[str, Any]) -> str:
+        history = self.evidence.price_history
+        if history is None:
+            return (
+                "No price history for this product yet, so the MRP claim can't be checked. "
+                "Recording today's price so future audits can."
+            )
+        facts = price_facts(block["price"], block["mrp"], history)
+        if not facts.enough_history:
+            return (
+                f"Only {facts.weeks} weeks of prices so far; at least {MIN_WEEKS} are needed to judge the MRP claim. "
+                "Recording today's."
+            )
+        mrp = money(block["mrp"])
+        sold = f"{money(facts.lowest_sold)}–{money(facts.highest_sold)}"
+        if facts.prior_mrp is not None and facts.mrp_changed_days_ago is not None:
+            mrp_story = f"MRP {money(facts.prior_mrp)} until {facts.mrp_changed_days_ago} days ago, {mrp} since"
+        else:
+            mrp_story = f"MRP {mrp} throughout" if not facts.ever_sold_at_mrp else f"it has sold at the {mrp} MRP"
+        return f"{facts.weeks} weeks of prices: sold at {sold}; {mrp_story}."
 
     async def price_from_summary(self, capture: Capture, label: str) -> None:
         total = ((capture.signals.get("summary") or {}).get("total") or {}).get("amount")

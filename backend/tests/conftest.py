@@ -76,4 +76,11 @@ def load_walk(store: str) -> tuple["Evidence", list[dict]]:
         )
         for label, c in data["captures"].items()
     }
-    return Evidence(captures=captures, added_items=data["addedItems"]), data["steps"]
+    ev = Evidence(captures=captures, added_items=data["addedItems"])
+    # What the Price Historian would have found for this product (the demo catalog's history).
+    if first := captures.get("product-first"):
+        from app.prices.history import JsonPriceHistory
+        from app.prices.keys import product_key
+
+        ev.price_history = JsonPriceHistory(REPO_DIR / "shared" / "price_history.json").get(product_key(first.url))
+    return ev, data["steps"]

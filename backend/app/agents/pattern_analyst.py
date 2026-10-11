@@ -56,6 +56,8 @@ class Candidate(BaseModel):
     explanation: str = Field(min_length=3)
     confidence: float = Field(ge=0, le=1)
     verifiable: bool = True
+    # One specific sentence on what the business should change; the pattern's generic fix if empty.
+    fix: str = ""
 
 
 class Analysis(BaseModel):

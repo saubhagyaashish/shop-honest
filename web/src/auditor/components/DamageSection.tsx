@@ -126,7 +126,7 @@ export function DamageSection({
                     They said you save <s className="decoration-[3px]">{formatMoney(drift.claimedSaving)}</s>. You really save {formatMoney(drift.genuineSaving)}.
                   </p>
                   <p className="mt-2 text-[13px] font-semibold">
-                    {formatMoney({ amount: drift.claimedSaving.amount - drift.genuineSaving.amount, currency })} of the “discount” comes from an MRP raised just before the sale.{' '}
+                    {formatMoney({ amount: drift.claimedSaving.amount - drift.genuineSaving.amount, currency })} of the “discount” comes from an MRP it never actually sold at.{' '}
                     {drift.savingFindingId && (
                       <button type="button" onClick={() => onJumpToFinding(drift.savingFindingId!)} className="font-bold underline underline-offset-2 print:hidden">
                         evidence ↓
