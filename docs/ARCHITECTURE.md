@@ -1,6 +1,6 @@
 # Shop Honest: Architecture
 
-> Status: **Phase 3 built** (running locally). On top of the Phase 1 API and the Phase 2 live audits (a headless Chromium walks the store, real screenshots and prices stream to the UI, measured checks find what can be measured; [ADR-0008](decisions/0008-measured-checks-before-judgement.md)), ADK agents now judge each screen: the Pattern Analyst proposes, measurement-based rules and the Adjudicator check, and only grounded claims are reported ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)). It runs on Gemma 3 4B locally; Gemini is wired in and waits for an API key. The web app (dashboard and demo store) is live at <https://shop-honest-ai.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
+> Status: **Phase 3 built** (running locally). On top of the Phase 1 API and the Phase 2 live audits (a headless Chromium walks the store, real screenshots and prices stream to the UI, measured checks find what can be measured; [ADR-0008](decisions/0008-measured-checks-before-judgement.md)), ADK agents now judge each screen: the Pattern Analyst proposes, measurement-based rules and the Adjudicator check, and only grounded claims are reported ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)). **Deployed:** <https://shop-honest-ai.web.app> runs on the real backend: Cloud Run in Mumbai, Firestore and Cloud Storage, with Gemini on Vertex AI judging live audits (§13). "Scan it" replays recorded runs; "Run live" audits the store for real, rate-limited. This document describes the system and how the parts fit together.
 >
 > Related: [API reference](API.md) · [Decision records](decisions/README.md)
 
@@ -199,7 +199,7 @@ Endpoints (full details in [API.md](API.md)):
 | `POST` | `/api/audits/{id}/fast-forward` | Skip to the end of a replay |
 | `GET` | `/api/health` | Liveness for Cloud Run |
 
-The frontend already ships the client (`web/src/auditor/source/sseSource.ts`). Switching the deployed site to the backend is `VITE_AUDIT_SOURCE=live`.
+The client is `web/src/auditor/source/sseSource.ts`. Production builds use it (`web/.env.production`), wrapped so that a sample-store scan falls back to the built-in demo replay if the API can't be reached at all. Hosting forwards `/api/**` to Cloud Run, except the event stream, which the browser reads from Cloud Run directly because Hosting buffers streams ([ADR-0010](decisions/0010-event-stream-straight-to-cloud-run.md)).
 
 ## 7. Data model
 
@@ -210,7 +210,9 @@ The frontend already ships the client (`web/src/auditor/source/sseSource.ts`). S
 | `audits/{auditId}` | `status` (queued · running · completed · failed), `mode` (replay · live), `targetUrl`, `createdAt`, `startedAt`, `completedAt`, `report` (AuditReport, when completed), `error`, `budget` (counters used), `requester` (for rate limits) |
 | `audits/{auditId}/events/{seq}` | `seq` (int, 1…n, also the SSE `id`), `type`, `payload` (the AuditEvent), `at` |
 
-**Cloud Storage**: `gs://<bucket>/audits/{auditId}/frames/{n}.jpg`. JPEG at quality 82, served to the browser by signed URL. The bucket needs a CORS rule for the site origin, because the PDF builder crops the screenshots on a canvas.
+**Cloud Storage** (built): `gs://shop-honest-72fd8-audits/audits/{auditId}/frames/{n}.jpg`, JPEG at quality 82, deleted after 30 days by a lifecycle rule. The browser loads frames from `/api/audits/{id}/frames/{n}.jpg` through Hosting, so they stay same-origin for the PDF's canvas crops and need no signed URLs or bucket CORS. They're cached by the CDN.
+
+**Firestore** (built, Native mode, `asia-south1`): audits, their events and the live-audit counters (`limits/…`) carry an `expireAt` with a TTL policy, so they delete themselves after 30 days (counters after 2).
 
 **BigQuery** dataset `shop_honest`:
 
@@ -232,7 +234,7 @@ One setting switches every agent ([ADR-0003](decisions/0003-model-providers.md))
 |---|---|---|---|
 | `replay` | No model: plays back a recorded run | UI work, infrastructure, CI, the public demo default | ₹0 |
 | `ollama` | Gemma 3 (4B by default) on the developer's machine, through ADK's LiteLLM connector | Building agents, prompts and schemas offline | ₹0 |
-| `gemini` | Gemini through the Google AI Studio free tier in development; **Vertex AI** in production | Accuracy evals, "Run live", the deployed backend | ~₹15–40 per audit |
+| `gemini` | Gemini through **Vertex AI** on the global endpoint (`GEMINI_BACKEND=vertex`, the default; ADC locally, the service account on Cloud Run), or AI Studio with a key | Accuracy evals, "Run live", the deployed backend | about 17k input + 5k output tokens per Store A audit with `gemini-3.8-flash` |
 
 - **Tiers:** a *fast* model (Flash class) for adjudication, and a *smart* model (Pro class) for the Pattern Analyst. Ollama serves both tiers with one model. Model IDs are configuration, not code (`GEMINI_MODEL_FAST`, `GEMINI_MODEL_SMART`).
 - **`replay` in a live audit** means no model: the audit is measured-only, exactly as in Phase 2.
@@ -281,7 +283,7 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 
 | Check | What it proves | Target |
 |---|---|---|
-| **Answer-key eval** (`backend/evals/answer_key.py --provider … --runs N`) | Live audits of stores A, B and C against `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`); recall spread over runs, false alarms, and whether claims meant for review went there | Target with Gemini: A ≥ 8/9 with the borderline claim → `needs_review`, B 0 false alarms. Today: measured only A 6/9 · B 0 · C 4/6; **Gemma 3 4B (local, 3 runs, identical): A 8/9 · B 0 · C 5/6, review 3/3**, missing only the shaming opt-out. Local-model numbers are for development, not the accuracy claim (ADR-0003). |
+| **Answer-key eval** (`backend/evals/answer_key.py --provider … --runs N`) | Live audits of stores A, B and C against `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`); recall spread over runs, false alarms, and whether claims meant for review went there | Target: A ≥ 8/9 with the borderline claim → `needs_review`, B 0 false alarms. **Gemini (2 runs per store, each of `gemini-3.8-flash`, `gemini-2.5-pro`, `gemini-3.1-pro-preview` as the analyst): A 9/9 · B 0 · C 6/6, review 2/2 every time**, so the cheapest (`gemini-3.8-flash`, both tiers) is the default. Measured only: A 6/9 · B 0 · C 4/6. Gemma 3 4B (local): A 8/9 · B 0 · C 5/6. Findings that are real but not what a trick was planted for (the popup's lopsided buttons, "Most customers choose Express") are listed in the answer key's `ALSO_ACCEPTABLE` and count as neither hits nor false alarms; Store B has none. |
 | **Dataset eval** (`backend/evals/dataset.py`) | Pattern Analyst on the public ec-darkpattern text set (2,356 labelled texts) | Report F1 honestly; compare with the published baselines |
 | **Contract tests** | Every event the backend emits validates against `shared/contract.schema.json` | 100% |
 | **Unit tests** | URL guard, request guard, every check (positive, and honest variants that must not trigger), price drift, report, exposure | — |
@@ -296,22 +298,30 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 |---|---|---|---|
 | **Local** | `uv run uvicorn app.main:app` + `npm run dev` (web) | In memory + local disk (`STORE_BACKEND=memory`) | `replay` or `ollama` |
 | **Cloud dev** | Cloud Run revision with a tag | Firestore, GCS, BigQuery | `gemini` via AI Studio key or Vertex |
-| **Production** | Cloud Run `shop-honest-api` behind Hosting `/api/**` | Firestore, GCS, BigQuery | `gemini` via Vertex AI; demo default `replay` |
+| **Production** (live) | Cloud Run `shop-honest-api` in `asia-south1`, behind Hosting `/api/**`; the event stream direct | Firestore + Cloud Storage | `gemini-3.8-flash` via Vertex AI (global endpoint), `gemini-2.5-flash` as fallback |
 
-**Cloud Run settings:** 2 vCPU, 4 GiB, CPU always allocated (audits run after the POST returns), concurrency 2, request timeout 15 min, region `asia-south1`. The image is built from the official Playwright Python base and stored in Artifact Registry.
+**How it's deployed** (`deploy/`):
+- `deploy/setup.sh` (once, safe to re-run) turns on the APIs and creates the Firestore database, the frames bucket, the Artifact Registry repository and the service account `shop-honest-api@…`. That account has only `aiplatform.user`, `datastore.user` and object admin on its own bucket.
+- `deploy/backend.sh` builds `backend/Dockerfile` with Cloud Build and deploys it with `deploy/backend.env.yaml`. The image is the official Playwright Python image with uv and runs as a non-root user; Chromium matches the pinned Playwright.
+- Hosting: `npx firebase-tools deploy --only hosting` (production build, `VITE_AUDIT_SOURCE=live`).
+
+**Cloud Run settings:** 2 vCPU, 2 GiB, CPU always allocated (audits run after the POST returns), concurrency 20 (streams are mostly idle; live browsers are capped by `MAX_LIVE_AUDITS=2` per instance), max 3 instances, min 0 (set `--min-instances 1` on judging days), request timeout 15 min, gen2.
+
+**Gemini resilience:** each model retries 408/429/5xx answers with backoff (2, 4, 8 s plus jitter). If the main model is still out of capacity, `gemini-2.5-flash` answers instead (`GEMINI_MODEL_FALLBACK`). Live audits are capped at 3 per visitor per hour and 100 per day across the site.
 
 **Configuration** (environment variables):
 
 | Variable | Example | Purpose |
 |---|---|---|
 | `MODEL_PROVIDER` | `replay` · `ollama` · `gemini` | Which models the agents use |
-| `GOOGLE_GENAI_USE_VERTEXAI` | `TRUE` | Gemini through Vertex AI (otherwise AI Studio) |
-| `GOOGLE_API_KEY` | (Secret Manager) | AI Studio key for development |
-| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | `shop-honest-72fd8` / `asia-south1` | Project and region |
-| `GEMINI_MODEL_FAST` / `GEMINI_MODEL_SMART` | Flash- / Pro-class model IDs | Model tiers |
+| `GEMINI_BACKEND` | `vertex` · `ai_studio` | Gemini through Vertex AI (no key; ADC or the service account) or AI Studio |
+| `GOOGLE_API_KEY` | (only with `ai_studio`) | AI Studio key |
+| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | `shop-honest-72fd8` / `global` | Project; Gemini's endpoint (Mumbai only serves two Flash models) |
+| `GEMINI_MODEL_FAST` / `GEMINI_MODEL_SMART` | `gemini-3.8-flash` / `gemini-3.8-flash` | Model tiers (chosen by the eval) |
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | `http://localhost:11434` / `gemma3:4b` | Local models |
-| `STORE_BACKEND` | `memory` · `gcp` | Local fallbacks or Google Cloud |
-| `GCS_BUCKET` / `BQ_DATASET` | `shop-honest-audits` / `shop_honest` | Storage names |
+| `STORE_BACKEND` | `memory` · `gcp` | In-process log + local frames, or Firestore + Cloud Storage |
+| `FRAMES_BUCKET` / `BQ_DATASET` | `shop-honest-72fd8-audits` / `shop_honest` | Storage names |
+| `LIVE_PER_IP_PER_HOUR` / `LIVE_PER_DAY` | `3` / `100` (deployed; `0` = no limit) | Live-audit limits per visitor and for the whole site |
 | `ALLOWED_HOSTS` | `shop-honest-ai.web.app,localhost` | URL allowlist |
 | `ENABLE_LIVE` / `MAX_LIVE_AUDITS` | `true` / `2` | Live audits on or off; how many browsers at once |
 | `NAV_LINGER_S` / `NAV_STEP_TIMEOUT_S` | `8` / `15` | Time on the product page before the second look; per-action timeout |
@@ -322,7 +332,7 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `MODEL_TIMEOUT_S` / `MODEL_CONCURRENCY` | `90` / `2` | Per-call limit; model calls in flight per audit |
 | `CORS_ORIGINS` | `http://localhost:5173` | Development only |
 
-**Web app:** `VITE_AUDIT_SOURCE=live` switches to the backend. `VITE_API_BASE` (optional) points the event stream straight at Cloud Run if the Hosting timeout bites.
+**Web app:** `VITE_AUDIT_SOURCE=live` switches to the backend; `VITE_STREAM_BASE` is where the event stream comes from (the Cloud Run URL in production, ADR-0010).
 
 ## 14. Repository structure
 
@@ -360,10 +370,10 @@ shophonest/
 | Phase | Scope | Done when |
 |---|---|---|
 | **0. Setup** | Python 3.12 (uv), gcloud CLI, billing on `shop-honest-72fd8` (Blaze), enable Run, Vertex AI, Firestore, Storage, BigQuery, Secret Manager, Artifact Registry; Ollama + `gemma3:4b` | `uv run pytest` passes; `gcloud` authenticated |
-| **1. Skeleton** | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest-ai.web.app runs with `VITE_AUDIT_SOURCE=live` end to end |
+| **1. Skeleton** ✓ | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest-ai.web.app runs with `VITE_AUDIT_SOURCE=live` end to end. **Done** 2026-10-11 |
 | **2. Navigator** ✓ | Playwright journeys for stores A, B and C (ported from `web/scripts/capture-screens.ts`), real screenshots (local disk; GCS at deploy), real `step.*` and `price.observed` events, measured checks and a deterministic report, store C's sign-in wall, "Run live" in the UI | A live run streams real screenshots and prices. **Done:** A 6/9, B 0 false alarms, C partial at the wall |
-| **3. Pattern Analyst** ✓ (Ollama) | ADK Pattern Analyst + Evidence rules + Adjudicator, prompts and schemas, scripted model for tests, answer-key eval with runs | Store A ≥ 8/9, store B 0 false positives, **measured with Gemini** (pending an API key). With Gemma 3 4B: A 8/9, B 0 |
-| **4. Price & report** | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data |
+| **3. Pattern Analyst** ✓ | ADK Pattern Analyst + Evidence rules + Adjudicator, prompts and schemas, scripted model for tests, answer-key eval with runs | Store A ≥ 8/9, store B 0 false positives, measured with Gemini. **Done:** A 9/9, B 0, C 6/6 (`gemini-3.8-flash`) |
+| **4. Price & report** (part done) | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data. **Done:** the report and PDF on live data, Firestore and Storage, live-audit limits, model-call budget. **Left:** BigQuery Price Historian, real recordings |
 | **5. Hardening** | One allowlisted real site logged-out (partial coverage path), dataset eval, billing alerts, judging-day settings | Eval numbers in the README; demo rehearsed |
 
 ## 16. Risks and open questions

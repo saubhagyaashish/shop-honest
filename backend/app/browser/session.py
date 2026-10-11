@@ -70,7 +70,8 @@ async def browser_page(settings: Settings, resolver: Resolver) -> AsyncIterator[
     """A fresh, cookie-less page that behaves like a shopper in India."""
     guard = RequestGuard(settings, resolver)
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=settings.headless)
+        # Containers often have a tiny /dev/shm; Chromium crashes on it without this flag.
+        browser = await pw.chromium.launch(headless=settings.headless, args=["--disable-dev-shm-usage"])
         try:
             context = await browser.new_context(viewport=VIEWPORT, locale="en-IN", timezone_id="Asia/Kolkata")
             context.set_default_timeout(settings.nav_step_timeout_s * 1000)

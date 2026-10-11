@@ -1,0 +1,18 @@
+# What `gcloud builds submit` uploads: only backend/ and shared/ (see backend/Dockerfile).
+.git
+.gitignore
+.firebase/
+web/
+docs/
+deploy/
+**/node_modules/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+backend/.venv/
+backend/var/
+backend/tests/
+backend/evals/
+backend/scripts/
+backend/.env
+*.log

@@ -1,14 +1,16 @@
 """The public API (docs/API.md)."""
 
+import asyncio
 import json
 import secrets
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Header, Query, Request, Response
-from fastapi.responses import FileResponse
 from sse_starlette import EventSourceResponse
 
+from app.api.limits import LiveLimits, visitor_of
 from app.browser.url_guard import check_target
 from app.config import Settings
 from app.contract.models import TERMINAL_EVENTS, AuditStatusResponse, CreateAuditRequest, CreateAuditResponse
@@ -16,7 +18,7 @@ from app.errors import ApiError
 from app.journeys import journey_for
 from app.replay.player import RecordingLibrary, origin_of
 from app.runner.runner import AuditRunner
-from app.stores.events import AuditRecord, EventLog
+from app.stores.events import AuditRecord, EventLog, now_iso
 from app.stores.frames import FrameStore
 
 router = APIRouter(prefix="/api")
@@ -44,7 +46,22 @@ async def _record_or_404(request: Request, audit_id: str) -> AuditRecord:
     record = await _events(request).get(audit_id)
     if record is None:
         raise ApiError(404, "audit_not_found", f"No audit with id {audit_id}.")
-    return record
+    return await _settle_if_abandoned(request, record)
+
+
+async def _settle_if_abandoned(request: Request, record: AuditRecord) -> AuditRecord:
+    """An audit still "running" long after its time limit lost its server (an instance restart): close it."""
+    if record.finished or _seconds_since(record.created_at) < _settings(request).audit_timeout_s + 120:
+        return record
+    events = _events(request)
+    error = "The server running this audit restarted before it finished. Please run it again."
+    await events.append(record.audit_id, {"type": "audit.failed", "error": error})
+    await events.update(record.audit_id, status="failed", completed_at=now_iso(), error=error)
+    return await events.get(record.audit_id) or record
+
+
+def _seconds_since(iso: str) -> float:
+    return (datetime.now(UTC) - datetime.fromisoformat(iso.replace("Z", "+00:00"))).total_seconds()
 
 
 @router.get("/health")
@@ -89,6 +106,9 @@ async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAudi
         )
     if runner.active_live >= settings.max_live_audits:
         raise ApiError(503, "at_capacity", "Every live browser is busy. Try again in a minute, or replay a recorded run.")
+    limits: LiveLimits = request.app.state.limits
+    if refusal := await limits.take(visitor_of(request, settings.google_cloud_project)):
+        raise ApiError(429, "rate_limited", refusal)
 
     record = AuditRecord(audit_id=audit_id, target_url=url, mode="live")
     await _events(request).create(record)
@@ -138,14 +158,15 @@ async def stream_events(
     return EventSourceResponse(stream(), ping=HEARTBEAT_SECONDS, headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
-@router.get("/audits/{audit_id}/frames/{n}.jpg", response_class=FileResponse)
-async def get_frame(audit_id: str, n: int, request: Request) -> FileResponse:
+@router.get("/audits/{audit_id}/frames/{n}.jpg", response_class=Response)
+async def get_frame(audit_id: str, n: int, request: Request) -> Response:
     await _record_or_404(request, audit_id)
     frames: FrameStore = request.app.state.frames
-    path = frames.path(audit_id, n)
-    if path is None:
+    jpeg = await asyncio.to_thread(frames.read, audit_id, n)
+    if jpeg is None:
         raise ApiError(404, "not_found", f"Audit {audit_id} has no frame {n}.")
-    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400, immutable"})
+    # Frames never change once written, so the CDN in front (Firebase Hosting) can keep them.
+    return Response(jpeg, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400, immutable"})
 
 
 @router.post("/audits/{audit_id}/fast-forward", status_code=202)

@@ -14,9 +14,22 @@ Google Cloud AI Builder Cup 2026 · Retail & Commerce. Original concept doc: `Ho
   - Store C is Store A behind a sign-in wall at checkout: the "logged-out shopper" case, where an audit can only be partial.
   - Ground truth lives in `web/src/store/answerKey.ts` (exported to `shared/answer_key.json` for the backend eval).
 
-The dashboard currently runs in **demo mode**: audits replay real captures of the sample stores through the same event stream the agent backend will use. The contract is `web/src/shared/contract.ts`. Setting `VITE_AUDIT_SOURCE=live` switches the dashboard to `POST /api/audits` and the SSE stream at `/api/audits/:id/events`.
+Live at **<https://shop-honest-ai.web.app>**, on the real backend (Cloud Run, Firestore, Cloud Storage, Gemini on Vertex AI):
 
-Live at **<https://shop-honest-ai.web.app>**.
+- **Scan it** replays a recorded run of a sample store: free, instant and unlimited.
+- **Run live** audits the store for real, with Gemini judging. It takes about a minute, and is limited to 3 runs per visitor per hour and 100 a day across the site.
+
+If the backend can't be reached, sample-store scans fall back to the built-in demo replay. Locally, `npm run dev` runs the same dashboard on that built-in demo, with no backend needed; the contract is `web/src/shared/contract.ts`.
+
+### Deploying
+
+```sh
+deploy/setup.sh                              # once: APIs, Firestore, bucket, registry, service account
+deploy/backend.sh                            # build with Cloud Build, deploy to Cloud Run
+npx firebase-tools deploy --only hosting     # the site (production build talks to the backend)
+```
+
+Project `shop-honest-72fd8`, region `asia-south1`; details in [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).
 
 ## Architecture
 
@@ -62,7 +75,7 @@ Needs [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 for the project)
 cd backend
 uv sync                                          # install
 uv run playwright install chromium               # once, for live audits
-uv run pytest                                    # 62 tests; the 4 browser tests need `npm run build` in web/ first
+uv run pytest                                    # the browser tests need `npm run build` in web/ first; cloud tests need SHOP_HONEST_CLOUD_TESTS=1
 uv run uvicorn app.main:app --reload --port 8080
 ```
 
@@ -71,6 +84,6 @@ Then, in another terminal, `cd web && npm run dev:live` and open <http://localho
 - **Scan it** replays a recorded run (instant, and it can skip to the report).
 - **Run live** sends a real headless Chromium through the store: real screenshots, real prices and measured findings, in about 15 seconds. It never pays, signs in or creates an account. On Store C it stops at the sign-in wall and reports what it reached.
 
-**With a model judging.** Start the backend with `MODEL_PROVIDER=ollama` (needs [Ollama](https://ollama.com) and `ollama pull gemma3:4b`). Live audits then also get wording and design findings: the Pattern Analyst reads each screen, and the Adjudicator double-checks every claim. Unverifiable claims land in the report's human review queue. Expect about 30–50 s per audit locally. For Gemini, put a free [Google AI Studio](https://aistudio.google.com) key in `backend/.env` as `GOOGLE_API_KEY` and set `MODEL_PROVIDER=gemini` (see `backend/.env.example`).
+**With a model judging.** Start the backend with `MODEL_PROVIDER=ollama` (needs [Ollama](https://ollama.com) and `ollama pull gemma3:4b`). Live audits then also get wording and design findings: the Pattern Analyst reads each screen, and the Adjudicator double-checks every claim. Unverifiable claims land in the report's human review queue. Expect about 30–50 s per audit locally. For Gemini, set `MODEL_PROVIDER=gemini`: it goes through Vertex AI using your `gcloud auth application-default login`, with no key (see `backend/.env.example`). Add `STORE_BACKEND=gcp` to use the real Firestore and Cloud Storage instead of memory.
 
-How well live audits do against the answer key: `uv run python -m evals.answer_key --provider ollama --runs 3`. With Gemma 3 4B: A 8/9, B no false alarms, C 5/6 before the wall; measured checks alone get A 6/9. Accuracy claims wait for Gemini. Settings are environment variables (or `backend/.env`); see [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).
+How well live audits do against the answer key: `uv run python -m evals.answer_key --provider gemini --runs 2` (Gemini through Vertex AI, using your `gcloud auth application-default login`). With `gemini-3.8-flash`: **A 9/9, B no false alarms, C 6/6 before the wall**, with the unverifiable claim sent to human review every run. Gemma 3 4B locally gets A 8/9, B 0, C 5/6; measured checks alone get A 6/9. Settings are environment variables (or `backend/.env`); see [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).

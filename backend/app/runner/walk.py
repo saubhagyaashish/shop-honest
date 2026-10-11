@@ -80,7 +80,7 @@ class Walk:
         await self.page.wait_for_timeout(250)
         jpeg = await screenshot(self.page)
         self._n += 1
-        shot = self._frames.save(self.audit_id, self._n, jpeg)
+        shot = await asyncio.to_thread(self._frames.save, self.audit_id, self._n, jpeg)
         capture = Capture(
             n=self._n, step=self.step, label=label, url=self.page.url, screenshot_url=shot, signals=await read_signals(self.page)
         )
@@ -134,10 +134,10 @@ class Walk:
         await self._emit({"type": "finding", "finding": finding})
 
     async def screenshot(self, capture: Capture) -> bytes:
-        path = self._frames.path(self.audit_id, capture.n)
-        if path is None:
+        jpeg = await asyncio.to_thread(self._frames.read, self.audit_id, capture.n)
+        if jpeg is None:
             raise FileNotFoundError(f"frame {capture.n} of {self.audit_id}")
-        return await asyncio.to_thread(path.read_bytes)
+        return jpeg
 
     def analyse(self, capture: Capture) -> None:
         """Have the model review this screen in the background (no-op without a model)."""

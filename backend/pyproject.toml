@@ -14,6 +14,8 @@ dependencies = [
     "google-adk>=2.11,<2.12",
     "litellm>=1.104,<1.105",
     "pillow>=11",
+    "google-cloud-firestore>=2.20",
+    "google-cloud-storage>=2.18",
 ]
 
 [dependency-groups]
@@ -27,7 +29,10 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-markers = ["browser: runs a real headless Chromium against web/dist (skipped when it isn't built)"]
+markers = [
+    "browser: runs a real headless Chromium against web/dist (skipped when it isn't built)",
+    "cloud: uses the real Firestore and Cloud Storage (set SHOP_HONEST_CLOUD_TESTS=1 with gcloud ADC)",
+]
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 

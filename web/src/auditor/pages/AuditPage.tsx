@@ -15,6 +15,8 @@ import type { Decision } from '../components/Report'
 import { Sticker } from '../ui/Sticker'
 import { buttonClass, TONE_BG } from '../ui/styles'
 import type { Tone } from '../ui/styles'
+import { auditSource } from '../source'
+import { isDemoAudit } from '../source/withDemoFallback'
 import { useAudit } from '../useAudit'
 import type { AuditState } from '../useAudit'
 
@@ -121,6 +123,12 @@ export function AuditPage() {
           )}
         </div>
       </div>
+
+      {auditId && auditSource.mode === 'live' && isDemoAudit(auditId) && (
+        <p className="brutal-sm rounded-xl bg-sun px-4 py-2.5 text-sm font-semibold">
+          The live audit service can’t be reached right now, so this is the built-in demo replay of this store.
+        </p>
+      )}
 
       {state.status === 'failed' && (
         <div className="brutal rounded-2xl bg-pink p-6 text-sm font-semibold">

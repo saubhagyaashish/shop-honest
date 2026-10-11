@@ -13,5 +13,6 @@ Short notes on the decisions that shape Shop Honest: what we chose, why, and wha
 | [0007](0007-client-side-pdf.md) | PDF reports are generated in the browser | Accepted |
 | [0008](0008-measured-checks-before-judgement.md) | Measured checks first, model judgement on top | Accepted |
 | [0009](0009-grounded-and-verified-model-claims.md) | Model claims are grounded on measured elements and verified before they're reported | Accepted |
+| [0010](0010-event-stream-straight-to-cloud-run.md) | The event stream goes straight to Cloud Run, not through Firebase Hosting | Accepted |
 
 Back to [Architecture](../ARCHITECTURE.md).

@@ -1,0 +1,7 @@
+# Builds the backend image (deploy/backend.sh passes _IMAGE).
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "--file", "backend/Dockerfile", "--tag", "$_IMAGE", "."]
+images: ["$_IMAGE"]
+options:
+  logging: CLOUD_LOGGING_ONLY

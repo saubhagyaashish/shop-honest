@@ -19,7 +19,14 @@ class Settings(BaseSettings):
     version: str = "dev"
     # Which model judges live audits (ADR-0003). "replay": no model, live audits are measured-only.
     model_provider: Literal["replay", "ollama", "gemini"] = "replay"
-    store_backend: Literal["memory"] = "memory"
+    # memory: in-process log and local frames (development, tests). gcp: Firestore + Cloud Storage.
+    store_backend: Literal["memory", "gcp"] = "memory"
+    frames_bucket: str = "shop-honest-72fd8-audits"
+    # Prefix for Firestore collections and Storage objects (tests use one, then clean up).
+    store_prefix: str = ""
+    # Live audits per visitor per hour and for the whole site per day; 0 = no limit.
+    live_per_ip_per_hour: int = 0
+    live_per_day: int = 0
 
     allowed_hosts: CommaList = ["localhost", "127.0.0.1", "shop-honest-ai.web.app", "shop-honest-ai.firebaseapp.com"]
     # Lets allowlisted hosts resolve to private addresses (localhost in development). Off in production.
@@ -30,6 +37,8 @@ class Settings(BaseSettings):
     max_concurrent_audits: int = 20
     recordings_dir: Path = BACKEND_DIR / "app" / "replay" / "recordings"
     cors_origins: CommaList = []
+    # Also allow origins matching this pattern (the site's Firebase preview channels).
+    cors_origin_regex: str | None = None
 
     # Live audits (a real browser walks the store). Off in deployments until the agents are ready.
     enable_live: bool = True
@@ -52,6 +61,8 @@ class Settings(BaseSettings):
     google_cloud_location: str = "global"
     gemini_model_fast: str = "gemini-3.8-flash"
     gemini_model_smart: str = "gemini-3.8-flash"
+    # Asked when the main model is out of capacity (429/503) even after retries; empty = no fallback.
+    gemini_model_fallback: str = "gemini-2.5-flash"
     google_api_key: SecretStr | None = None
     model_timeout_s: float = 90.0
     audit_max_model_calls: int = 40

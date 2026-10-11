@@ -17,7 +17,9 @@ async def test_accepts_allowlisted_public_host():
     assert await check_target(url, make_settings(), resolver_for("199.36.158.100")) == url
 
 
-@pytest.mark.parametrize("url", ["ftp://shop-honest-ai.web.app/x", "javascript:alert(1)", "shop-honest-ai.web.app/x", "https://", ""])
+@pytest.mark.parametrize(
+    "url", ["ftp://shop-honest-ai.web.app/x", "javascript:alert(1)", "shop-honest-ai.web.app/x", "https://", ""]
+)
 async def test_rejects_non_http_urls(url: str):
     with pytest.raises(ApiError) as err:
         await check_target(url, make_settings(), resolver_for("199.36.158.100"))

@@ -12,6 +12,14 @@ export interface AuditSource {
   canSkipAhead?(auditId: string): boolean
 }
 
+/** The API couldn't be reached at all (network down, or no backend behind the site), as opposed to refusing. */
+export class ApiUnreachableError extends Error {
+  constructor(message = 'The audit service can’t be reached right now.') {
+    super(message)
+    this.name = 'ApiUnreachableError'
+  }
+}
+
 export class UnsupportedTargetError extends Error {
   constructor(message: string) {
     super(message)

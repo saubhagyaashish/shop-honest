@@ -4,6 +4,7 @@ dist/
 .env.*
 !.env.example
 !.env.live
+!.env.production
 .DS_Store
 *.log
 __pycache__/
