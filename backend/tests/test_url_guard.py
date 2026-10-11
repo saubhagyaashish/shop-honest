@@ -28,7 +28,7 @@ async def test_rejects_non_http_urls(url: str):
 
 async def test_rejects_hosts_off_the_allowlist():
     with pytest.raises(ApiError) as err:
-        await check_target("https://www.flipkart.com/p/x", make_settings(), resolver_for("93.184.215.14"))
+        await check_target("https://www.amazon.in/dp/x", make_settings(), resolver_for("93.184.215.14"))
     assert (err.value.status, err.value.code) == (403, "host_not_allowed")
 
 

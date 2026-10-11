@@ -2,6 +2,7 @@
 
 import ipaddress
 import logging
+import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from urllib.parse import urlsplit
@@ -14,6 +15,10 @@ from app.config import Settings
 log = logging.getLogger(__name__)
 
 VIEWPORT = {"width": 1280, "height": 800}
+AD_NETWORKS = re.compile(
+    r"(^|\.)(doubleclick\.net|googlesyndication\.com|googleadservices\.com|googletagservices\.com|adservice\.google\.[a-z.]+|"
+    r"amazon-adsystem\.com|adnxs\.com|criteo\.(com|net)|taboola\.com|outbrain\.com)$"
+)
 
 
 class RequestGuard:
@@ -57,6 +62,10 @@ class RequestGuard:
 
     async def handle(self, route: Route, request: Request) -> None:
         navigation = request.is_navigation_request() and request.frame.parent_frame is None
+        if not navigation and AD_NETWORKS.search(urlsplit(request.url).hostname or ""):
+            # Ad networks: full-page interstitials would hijack the journey. First-party "sponsored" items still load.
+            await route.abort("blockedbyclient")
+            return
         if await self.allows(request.url, navigation):
             await route.continue_()
         else:

@@ -138,10 +138,16 @@ def summary(findings: list[dict[str, Any]], steps: list[dict[str, Any]], drift: 
     if blocked:
         rest = [STEP_LABEL[s] for s in JOURNEY_STEPS[JOURNEY_STEPS.index(blocked["step"]) :]]
         reason = (blocked.get("blockedReason") or "blocked").lower()
-        not_audited = f" {' and '.join(rest)} could not be audited: {reason}."
+        names = rest[0] if len(rest) == 1 else f"{', '.join(rest[:-1])} and {rest[-1]}"
+        not_audited = f" {names} could not be audited: {reason}."
 
+    if blocked and not audited:
+        return f"The agent couldn't audit any step of this journey.{not_audited}"
     if not confirmed:
         where = f"the {len(audited)} steps the agent could reach" if blocked else f"all {len(JOURNEY_STEPS)} steps"
+        if review:
+            claims = f"{review} claim{'s' if review != 1 else ''}"
+            return f"No violations confirmed on {where}; {claims} sent for human review." + not_audited
         base = (
             f"No deceptive patterns found on {where}: "
             "urgency, pricing, cart contents, consent and fees matched what the shopper was shown."

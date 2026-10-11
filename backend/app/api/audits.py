@@ -120,7 +120,7 @@ async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAudi
         raise ApiError(
             409,
             "no_navigator",
-            "The agents don't know how to shop this site yet. Try one of the demo stores; any-store navigation is coming.",
+            "The agents don't know how to shop this site. Try a demo store or a real store suggested on the home page.",
         )
     if runner.active_live >= settings.max_live_audits:
         raise ApiError(503, "at_capacity", "Every live browser is busy. Try again in a minute, or replay a recorded run.")

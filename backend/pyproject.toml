@@ -33,6 +33,7 @@ asyncio_mode = "auto"
 markers = [
     "browser: runs a real headless Chromium against web/dist (skipped when it isn't built)",
     "cloud: uses the real Firestore and Cloud Storage (set SHOP_HONEST_CLOUD_TESTS=1 with gcloud ADC)",
+    "internet: audits a real third-party site (set SHOP_HONEST_INTERNET_TESTS=1)",
 ]
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]

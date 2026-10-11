@@ -43,6 +43,20 @@ function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; 
   )
 }
 
+/** Real stores the general navigator can audit (the API's allowlist). Fill the URL box; "Scan it" runs a live audit. */
+const REAL_STORES = [
+  {
+    label: 'AutomationExercise · Blue Top',
+    url: 'https://automationexercise.com/product_details/1',
+    note: 'A real store built for automation practice; checkout needs a login, so the audit stops there.',
+  },
+  {
+    label: 'Flipkart · boAt Airdopes (best effort)',
+    url: 'https://www.flipkart.com/boat-airdopes-71-40-h-battery-enx-tech-low-latency-stream-ad-free-music-via-app-bluetooth/p/itm63134e79353d1',
+    note: 'A real retailer. It may refuse automated browsers; the audit says so instead of getting around it.',
+  },
+]
+
 export function AuditorHome() {
   const navigate = useNavigate()
   const [url, setUrl] = useState('')
@@ -139,6 +153,22 @@ export function AuditorHome() {
           <a href="#samples" className="mt-4 inline-block text-sm font-semibold underline decoration-pink decoration-[3px] underline-offset-4">
             No URL handy? Audit a sample store ↓
           </a>
+          {auditSource.mode === 'live' && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="font-semibold text-ink/70">Or a real store, logged out:</span>
+              {REAL_STORES.map((s) => (
+                <button
+                  key={s.url}
+                  type="button"
+                  onClick={() => setUrl(s.url)}
+                  title={s.note}
+                  className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-xs font-bold hover:bg-sun"
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <motion.div

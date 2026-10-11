@@ -32,6 +32,9 @@ log = logging.getLogger(__name__)
 
 Emit = Callable[[dict[str, Any]], Awaitable[None]]
 
+# Measured findings that depend on reading a page's structure (cart rows, checkboxes, summary rows).
+STRUCTURAL = {"f-sneaked-item", "f-pre-ticked-subscription", "f-late-fees"}
+
 
 def inr(amount: float) -> dict[str, Any]:
     return {"amount": amount, "currency": "INR"}
@@ -67,6 +70,8 @@ class Walk:
         self._n = 0
         self.judge = judge
         self.prices = prices
+        # A site we didn't build: structural checks were validated only on our stores (see add_finding).
+        self.third_party = False
         self._reviews: set[asyncio.Task[None]] = set()
 
     async def log(self, agent: str, message: str) -> None:
@@ -98,6 +103,11 @@ class Walk:
             await self.check()
         return capture
 
+    def note_step(self, step: JourneyStep, capture: Capture) -> None:
+        """Count a step as audited on an earlier screen (e.g. a product with no other variants)."""
+        if not any(s["step"] == step for s in self.steps):
+            self.steps.append({"step": step, "url": capture.url, "screenshotUrl": capture.screenshot_url, "status": "audited"})
+
     def mark_audited(self, capture: Capture) -> None:
         if not any(s["step"] == capture.step for s in self.steps):
             self.steps.append(
@@ -116,7 +126,7 @@ class Walk:
         await self._emit(event)
 
     async def price_on_product_page(self, capture: Capture) -> None:
-        block = capture.signals.get("priceBlock") or {}
+        block = capture.signals.get("priceBlock") or capture.signals.get("mainPrice") or {}
         if block.get("price"):
             total = block["price"] + sum(d["amount"] for d in capture.signals.get("feeDisclosures", []))
             await self._emit({"type": "price.observed", "step": capture.step, "label": "Product page", "total": inr(total)})
@@ -182,6 +192,11 @@ class Walk:
                 await self.add_finding(finding)
 
     async def add_finding(self, finding: dict[str, Any]) -> None:
+        if self.third_party and finding["id"] in STRUCTURAL and finding["status"] == "confirmed":
+            # Generic page parsing can misread a site we haven't validated; a person confirms these.
+            finding = {**finding, "status": "needs_review"}
+            title = finding["title"]
+            await self.log("adjudicator", f'"{title}" rests on how this site lays out its page, so it goes to human review.')
         self.findings.append(finding)
         await self._emit({"type": "finding", "finding": finding})
 

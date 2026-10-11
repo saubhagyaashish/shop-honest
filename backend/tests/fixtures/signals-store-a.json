@@ -207,7 +207,18 @@
     "notes": [],
     "summary": null,
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "botWall": null
    }
   },
   "product-first": {
@@ -370,7 +381,18 @@
     "notes": [],
     "summary": null,
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "botWall": null
    }
   },
   "product-reload": {
@@ -533,7 +555,18 @@
     "notes": [],
     "summary": null,
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "botWall": null
    }
   },
   "variant": {
@@ -696,7 +729,18 @@
     "notes": [],
     "summary": null,
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹3,999 62% off Inclusive of all taxes",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.3260632497273719,
+      "w": 0.4875,
+      "h": 0.09378407851690294
+     }
+    },
+    "botWall": null
    }
   },
   "cart": {
@@ -846,7 +890,18 @@
      }
     },
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "₹3,999 ₹1,499",
+     "bbox": {
+      "x": 0.15,
+      "y": 0.326875,
+      "w": 0.496875,
+      "h": 0.035
+     }
+    },
+    "botWall": null
    }
   },
   "checkout": {
@@ -1017,7 +1072,18 @@
      }
     },
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 79,
+     "text": "UPGRADE TO EXPRESS · ₹79",
+     "bbox": {
+      "x": 0.26927490234375,
+      "y": 0.64125,
+      "w": 0.1833251953125,
+      "h": 0.0325
+     }
+    },
+    "botWall": null
    }
   },
   "payment": {
@@ -1254,7 +1320,18 @@
      }
     },
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1894,
+     "text": "₹1,894",
+     "bbox": {
+      "x": 0.877294921875,
+      "y": 0.501875,
+      "w": 0.047705078125,
+      "h": 0.04
+     }
+    },
+    "botWall": null
    }
   }
  },

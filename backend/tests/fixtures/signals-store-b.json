@@ -146,7 +146,18 @@
       "amount": 9
      }
     ],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout.",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.2950276243093923,
+      "w": 0.4875,
+      "h": 0.11712707182320442
+     }
+    },
+    "botWall": null
    }
   },
   "product-reload": {
@@ -292,7 +303,18 @@
       "amount": 9
      }
     ],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout.",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.2950276243093923,
+      "w": 0.4875,
+      "h": 0.11712707182320442
+     }
+    },
+    "botWall": null
    }
   },
   "variant": {
@@ -438,7 +460,18 @@
       "amount": 9
      }
     ],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "Festive Sale price ₹1,499 MRP ₹1,999 25% off Inclusive of all taxes + ₹9 platform fee per order. No other charges at checkout.",
+     "bbox": {
+      "x": 0.434375,
+      "y": 0.2950276243093923,
+      "w": 0.4875,
+      "h": 0.11712707182320442
+     }
+    },
+    "botWall": null
    }
   },
   "cart": {
@@ -601,7 +634,18 @@
      }
     },
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1499,
+     "text": "₹1,999 ₹1,499",
+     "bbox": {
+      "x": 0.15,
+      "y": 0.326875,
+      "w": 0.496875,
+      "h": 0.035
+     }
+    },
+    "botWall": null
    }
   },
   "checkout": {
@@ -780,7 +824,18 @@
      }
     },
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1508,
+     "text": "₹1,508",
+     "bbox": {
+      "x": 0.877490234375,
+      "y": 0.381875,
+      "w": 0.047509765625,
+      "h": 0.04
+     }
+    },
+    "botWall": null
    }
   },
   "payment": {
@@ -984,7 +1039,18 @@
      }
     },
     "feeDisclosures": [],
-    "signInWall": null
+    "signInWall": null,
+    "mainPrice": {
+     "price": 1508,
+     "text": "₹1,508",
+     "bbox": {
+      "x": 0.877490234375,
+      "y": 0.381875,
+      "w": 0.047509765625,
+      "h": 0.04
+     }
+    },
+    "botWall": null
    }
   }
  },

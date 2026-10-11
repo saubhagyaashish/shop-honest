@@ -104,8 +104,15 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
 
   const shown = step ? confirmed.filter((f) => f.step === step) : confirmed
 
+  const thirdParty = isThirdParty(report.targetUrl)
   return (
     <div className="mx-auto max-w-[1200px]">
+      {thirdParty && (
+        <p className="brutal-sm mb-6 rounded-xl bg-white px-4 py-2.5 text-sm font-medium">
+          Automated observations of <b>{thirdParty}</b> from a logged-out session on {new Date(report.completedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}.
+          They are not a legal finding: the legal section shows which rules such patterns fall under.
+        </p>
+      )}
       <VerdictHero
         report={report}
         pdfBusy={pdfBusy}
@@ -270,4 +277,15 @@ function ReviewActions({ decision, onDecide, onUndo }: { decision?: Decision; on
       </button>
     </>
   )
+}
+
+
+/** The host of a store we didn't build, or null for our own demo stores. */
+function isThirdParty(targetUrl: string): string | null {
+  try {
+    const url = new URL(targetUrl)
+    return /^\/demo\/store-[a-z]\//.test(url.pathname) ? null : url.hostname
+  } catch {
+    return null
+  }
 }

@@ -9,6 +9,7 @@ navigation for any store is Phase 5; until then sites without a journey get
 from typing import TYPE_CHECKING, Protocol
 
 from app.journeys.bazaarnest import BazaarNestJourney
+from app.journeys.generic import GenericJourney
 
 if TYPE_CHECKING:
     from app.runner.walk import Walk
@@ -22,7 +23,8 @@ class Journey(Protocol):
     async def walk(self, walk: "Walk") -> None: ...
 
 
-JOURNEYS: list[Journey] = [BazaarNestJourney()]
+# Most specific first; the general navigator takes any other allowlisted store.
+JOURNEYS: list[Journey] = [BazaarNestJourney(), GenericJourney()]
 
 
 def journey_for(url: str) -> Journey | None:

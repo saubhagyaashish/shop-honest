@@ -6,8 +6,9 @@
 () => {
   const W = document.documentElement.scrollWidth
   const H = document.documentElement.scrollHeight
-  const MONEY = /₹\s?([\d,]+(?:\.\d+)?)/
-  const MONEY_ALL = /₹\s?([\d,]+(?:\.\d+)?)/g
+  // Indian prices: ₹1,499 · Rs. 500 · INR 499.
+  const MONEY = /(?:₹|\bRs\.?|\bINR)\s?([\d,]+(?:\.\d+)?)/i
+  const MONEY_ALL = /(?:₹|\bRs\.?|\bINR)\s?([\d,]+(?:\.\d+)?)/gi
 
   const text = (el) => (el?.innerText || '').replace(/\s+/g, ' ').trim()
   const toNumber = (s) => Number(String(s).replace(/,/g, ''))
@@ -130,19 +131,50 @@
   // Sales-volume claims ("120+ bought in the last 24 hours").
   const salesClaims = smallest(/\b\d[\d,]*\+?\s+(bought|sold|people bought|orders)\b/i).map((el) => ({ text: text(el), bbox: textBox(el) }))
 
-  // Price block: a struck-through ₹ amount (MRP) next to the selling price.
+  // The product's title, to tell its price from prices of recommended products elsewhere on the page.
+  const title = [...document.querySelectorAll('h1')].find(visible)
+  const nearTitle = (el) => {
+    if (!title) return 0
+    const t = title.getBoundingClientRect()
+    const r = el.getBoundingClientRect()
+    const dy = r.top >= t.top ? r.top - t.bottom : (t.top - r.bottom) * 3 // above the title counts triple
+    const dx = r.right < t.left || r.left > t.right ? Math.min(Math.abs(r.left - t.right), Math.abs(t.left - r.right)) : 0
+    return Math.max(0, dy) + dx
+  }
+
+  // Price block: a struck-through amount (MRP) next to the selling price; the one closest to the title wins.
   let priceBlock = null
-  for (const mrpEl of smallest(MONEY, 40).filter(struck)) {
+  let bestDistance = Infinity
+  // Some sites draw the MRP's ₹ separately and strike only the number ("3,999"); accept that when a ₹ price is beside it.
+  const BARE = /^[\d,]{3,}(\.\d+)?$/
+  const sellingIn = (block) => smallest(MONEY, 40).filter((el) => block.contains(el) && !struck(el))
+  for (const mrpEl of [...smallest(MONEY, 40), ...smallest(BARE, 14)].filter(struck)) {
     let block = mrpEl.parentElement
-    for (let i = 0; i < 4 && block && new Set((text(block).match(MONEY_ALL) || [])).size < 2; i++) block = block.parentElement
+    for (let i = 0; i < 4 && block && !sellingIn(block).length; i++) block = block.parentElement
     if (!block) continue
-    const amounts = smallest(MONEY, 40).filter((el) => block.contains(el) && !struck(el))
+    const amounts = sellingIn(block)
     if (!amounts.length) continue
+    const distance = nearTitle(mrpEl)
+    if (distance >= bestDistance) continue
     const priceEl = amounts.reduce((a, b) => (parseFloat(getComputedStyle(b).fontSize) > parseFloat(getComputedStyle(a).fontSize) ? b : a))
     // Grow to include the whole price block (label, discount, tax note).
     while (block.parentElement && text(block.parentElement).length < 200 && !block.parentElement.querySelector('button')) block = block.parentElement
-    priceBlock = { price: money(text(priceEl)), mrp: money(text(mrpEl)), text: text(block), bbox: box(block) }
-    break
+    const mrp = money(text(mrpEl)) ?? toNumber(text(mrpEl))
+    priceBlock = { price: money(text(priceEl)), mrp, text: text(block), bbox: box(block) }
+    bestDistance = distance
+  }
+
+  // The selling price, even without an MRP: the largest price near the title.
+  let mainPrice = priceBlock ? { price: priceBlock.price, text: priceBlock.text, bbox: priceBlock.bbox } : null
+  if (!mainPrice) {
+    const candidates = smallest(MONEY, 40)
+      .filter((el) => !struck(el) && !chrome(el) && nearTitle(el) < 700)
+      .map((el) => ({ el, size: parseFloat(getComputedStyle(el).fontSize), distance: nearTitle(el) }))
+      .sort((a, b) => b.size - a.size || a.distance - b.distance)
+    if (candidates.length) {
+      const el = candidates[0].el
+      mainPrice = { price: money(text(el)), text: text(el), bbox: textBox(el) }
+    }
   }
 
   // Dialogs (offers, newsletters, consent) and their buttons.
@@ -171,7 +203,10 @@
 
   // Cart lines: rows that have a Remove control.
   const cartLines = []
-  for (const control of [...document.querySelectorAll('button, a, [role=button]')].filter((b) => visible(b) && /^(remove|delete)$/i.test(text(b)))) {
+  const removes = (b) =>
+    /^(remove|delete|×|✕|✖|x)$/i.test(text(b)) ||
+    /remove|delete/i.test(`${b.getAttribute('aria-label') || ''} ${b.getAttribute('title') || ''} ${b.className || ''}`)
+  for (const control of [...document.querySelectorAll('button, a, [role=button]')].filter((b) => visible(b) && removes(b))) {
     const row = control.closest('li, tr, [role=listitem], article') || control.parentElement?.parentElement
     if (!row) continue
     const lines = (row.innerText || '').split('\n').map((s) => s.trim()).filter(Boolean)
@@ -233,25 +268,58 @@
     .slice(0, 12)
     .map((el) => ({ text: text(el), section: sectionOf(el), bbox: textBox(el) }))
 
+  // The product's name: the page's h1, else the heading nearest the price, else the title minus the site's name.
+  const productName = () => {
+    if (title && text(title)) return text(title).replace(/\.{3}\s*more$/i, '').trim()
+    const anchor = mainPrice && smallest(MONEY, 40).find((el) => text(el) && mainPrice.text.includes(text(el)))
+    const headings = [...document.querySelectorAll('h2, h3, [itemprop=name]')].filter((h) => visible(h) && !chrome(h) && text(h).length > 1)
+    if (anchor) {
+      // Same column as the price (overlapping horizontally), at or above it, closest first: not a sidebar's headings.
+      const a = anchor.getBoundingClientRect()
+      // Above the price, scored by distance plus how far its left edge is from the price's (aligned = same column).
+      const near = headings
+        .map((h) => ({ h, r: h.getBoundingClientRect() }))
+        .filter(({ r }) => r.top <= a.top + 5 && a.top - r.top < 400)
+        .map(({ h, r }) => ({ h, score: a.top - r.top + 3 * Math.abs(r.left - a.left) }))
+        .sort((x, y) => x.score - y.score)[0]
+      if (near) return text(near.h)
+    }
+    return (document.title || '').split(/\s[|–—-]\s/)[0].trim()
+  }
+
   // Fees disclosed in page text ("+ ₹9 platform fee per order").
   const body = text(document.body)
-  const feeDisclosures = [...body.matchAll(/\+\s?₹\s?([\d,]+)\s+([a-z ]{0,30}?(?:fee|charge))/gi)].map((m) => ({
+  const feeDisclosures = [...body.matchAll(/\+\s?(?:₹|Rs\.?)\s?([\d,]+)\s+([a-z ]{0,30}?(?:fee|charge))/gi)].map((m) => ({
     label: m[2].trim().toLowerCase(),
     amount: toNumber(m[1]),
   }))
 
-  // Sign-in walls: a visible password field, or a "sign in to continue" form.
+  // Sign-in walls: a visible password field, a phone/OTP login form, or "sign in to continue"-style wording.
   const password = [...document.querySelectorAll('input[type=password]')].find(visible)
+  const WALL = /\b(sign|log)\s?-?in( to your account)? (to|and) (continue|checkout|check out|proceed|place)|\blogin account to proceed|\blog\s?in or sign\s?up\b|\b(register|sign\s?up) \/ (login|log in|sign in)\b|\b(request|get|send) otp\b/i
+  const wallText = smallest(WALL, 300).find((el) => !chrome(el))
   const signInWall = password
-    ? { reason: 'Sign-in required', bbox: box(password.closest('form') || password) }
-    : /\b(sign|log)\s?in to (continue|checkout|proceed)\b/i.test(body)
-      ? { reason: 'Sign-in required', bbox: null }
+    ? { reason: 'Sign-in required', bbox: box(password.closest('form, [role=dialog]') || password) }
+    : wallText
+      ? { reason: 'Sign-in required', bbox: box(wallText.closest('form, [role=dialog], .modal') || wallText) }
       : null
+
+  // An error page instead of content ("Something went wrong", "Please try again later"): little text, an apology.
+  const ERROR = /something went wrong|please try again later|we'?re having trouble|unexpected error|oops[!,.]|page (isn'?t|is not) available/i
+  const pageError = body.length < 600 && ERROR.test(body) ? { reason: body.slice(0, 80) } : null
+
+  // Bot protection: a CAPTCHA frame, or a "prove you're human" / "access denied" page.
+  const captcha = [...document.querySelectorAll('iframe')].find(
+    (f) => visible(f) && /recaptcha|hcaptcha|challenges\.cloudflare|turnstile|arkoselabs|funcaptcha/i.test(f.src || ''),
+  )
+  const BOT = /verify (that )?you are (a )?human|are you a (human|robot)|i'?m not a robot|access denied|unusual traffic|press (and|&) hold|checking your browser|request (was )?blocked|bot protection/i
+  const botText = smallest(BOT, 200)[0]
+  const botWall = captcha ? { reason: 'CAPTCHA', bbox: box(captcha) } : botText ? { reason: text(botText).slice(0, 80), bbox: box(botText) } : null
 
   return {
     url: location.href,
     title: document.title,
-    heading: text(document.querySelector('h1')),
+    heading: productName(),
     width: W,
     height: H,
     timers,
@@ -267,5 +335,8 @@
     summary,
     feeDisclosures,
     signInWall,
+    mainPrice,
+    botWall,
+    pageError,
   }
 }

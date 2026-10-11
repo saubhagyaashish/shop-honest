@@ -318,7 +318,8 @@ def closing_line(findings: list[dict[str, Any]], judge: Judge | None) -> str:
             f"{judge.model_name} reviewed {judge.reviewed} of {screens} screens; the others count on the measured checks only."
         )
     else:
-        coverage = f"{judge.model_name} reviewed all {screens} screens and its claims were checked against their evidence."
+        reviewed = "the 1 screen" if screens == 1 else f"all {screens} screens"
+        coverage = f"{judge.model_name} reviewed {reviewed} and its claims were checked against their evidence."
     if not findings:
         return f"Every check passed: nothing to confirm. {coverage}"
     counts = f"{confirmed} finding{'s' if confirmed != 1 else ''} confirmed"

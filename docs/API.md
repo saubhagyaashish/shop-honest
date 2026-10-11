@@ -34,7 +34,7 @@ Response `202 Accepted`
 
 `mode` says which one you got. The web client remembers live audit ids so it doesn't offer "Skip to report" for them.
 
-A live audit needs a *journey* for the site: today that's the BazaarNest demo stores (`/demo/<store>/p/<product>`). Other allowed sites get `409 no_navigator` until general navigation lands (Phase 5).
+A live audit walks the site with a *journey*: the scripted BazaarNest one for the demo stores (`/demo/<store>/p/<product>`), and the general navigator for any other allowlisted store, logged out ([ADR-0013](decisions/0013-general-navigator-on-third-party-stores.md)).
 
 ### `GET /api/audits/{auditId}`: status and report
 
@@ -98,7 +98,7 @@ Every non-2xx response has the same shape:
 | 403 | `host_not_allowed` | Host not on `ALLOWED_HOSTS`, or it resolves to a private/metadata address |
 | 404 | `audit_not_found` | Unknown `auditId` |
 | 409 | `no_recording` | `mode: "replay"` (or `auto` with live audits switched off) and no recorded run exists for this URL |
-| 409 | `no_navigator` | A live audit was needed but the agents don't have a journey for this site yet |
+| 409 | `no_navigator` | Reserved: no journey for this site. Not returned since the general navigator (every allowlisted store has one) |
 | 409 | `not_replay` | Fast-forward requested for a live audit |
 | 400 | `invalid_request` | The body doesn't match the schema (e.g. an unknown `mode`) |
 | 429 | `rate_limited` | A live audit would go over `LIVE_PER_IP_PER_HOUR` for this visitor (counted by a hash of their IP) or `LIVE_PER_DAY` for the whole site. Replays are never limited. |

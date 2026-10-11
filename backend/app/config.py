@@ -28,7 +28,17 @@ class Settings(BaseSettings):
     live_per_ip_per_hour: int = 0
     live_per_day: int = 0
 
-    allowed_hosts: CommaList = ["localhost", "127.0.0.1", "shop-honest-ai.web.app", "shop-honest-ai.firebaseapp.com"]
+    # The demo stores, plus real stores for the general navigator: one built for automation practice,
+    # and one real retailer on a best-effort basis (it may block automated browsers; we never get around that).
+    allowed_hosts: CommaList = [
+        "localhost",
+        "127.0.0.1",
+        "shop-honest-ai.web.app",
+        "shop-honest-ai.firebaseapp.com",
+        "automationexercise.com",
+        "www.flipkart.com",
+        "flipkart.com",
+    ]
     # Lets allowlisted hosts resolve to private addresses (localhost in development). Off in production.
     allow_private_targets: bool = True
 

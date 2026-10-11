@@ -1,7 +1,11 @@
 """Model judgement for one screen: Pattern Analyst → Evidence → Adjudicator, narrated as it goes."""
 
 import asyncio
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+from google.genai import types
+from pydantic import BaseModel
 
 from app.agents import adjudicator, evidence, pattern_analyst
 from app.agents.elements import build_elements
@@ -13,6 +17,14 @@ from app.models.call import ModelCaller, ModelError
 
 if TYPE_CHECKING:
     from app.runner.walk import Walk
+
+NAVIGATOR_PROMPT = (Path(__file__).parent / "prompts" / "navigator.md").read_text(encoding="utf-8")
+
+
+class Pick(BaseModel):
+    reason: str = ""
+    ref: str | None = None
+
 
 SCREEN = {
     "product-popup": "popup",
@@ -37,6 +49,20 @@ class Judge:
         self._settings = settings
         # (pattern, element text) already judged in this audit, kept or not, so each claim is judged once.
         self._judged: set[tuple[str, str]] = set()
+
+    async def pick(self, purpose: str, controls: list[dict]) -> str | None:
+        """Navigator fallback: which of these controls {purpose}? The ref, or None."""
+        listing = "\n".join(
+            f'{c["ref"]} · {c["kind"]}: "{c["text"]}"' + (f" → {c['href']}" if c.get("href") else "") for c in controls
+        )
+        text = f"Goal: find the control that {purpose}.\n\nControls on this page:\n{listing}"
+        try:
+            answer = await self.caller.ask(
+                name="navigator", model=self._fast, instruction=NAVIGATOR_PROMPT, schema=Pick, parts=[types.Part(text=text)]
+            )
+        except ModelError:
+            return None
+        return answer.ref if answer.ref in {c["ref"] for c in controls} else None
 
     async def review(self, walk: "Walk", capture: Capture) -> None:
         screen = SCREEN.get(capture.label, capture.step)

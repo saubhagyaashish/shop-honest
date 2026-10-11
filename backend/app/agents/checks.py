@@ -293,5 +293,16 @@ def _clock(text: str) -> str:
 
 
 def _same_item(line_name: str, added: str) -> bool:
-    a, b = line_name.lower(), added.lower()
-    return a in b or b in a
+    """Real sites shorten names in the cart ("…more", sizes, colours), so compare the opening words, not the whole string."""
+    a, b = _words(line_name), _words(added)
+    if not a or not b:
+        return False
+    if " ".join(a) in " ".join(b) or " ".join(b) in " ".join(a):
+        return True
+    head = min(len(a), len(b), 6)
+    shared = len(set(a[:head]) & set(b[:head]))
+    return shared >= max(2, round(head * 0.6))
+
+
+def _words(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", text.lower())

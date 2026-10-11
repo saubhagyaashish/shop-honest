@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Linen Shirt | Fixture Store</title>
+<style>body{font-family:sans-serif;margin:0} header,aside{padding:8px;background:#eee} main{display:flex;gap:24px;padding:16px}
+.cookie{position:fixed;bottom:0;left:0;right:0;background:#333;color:#fff;padding:12px}
+.price{font-size:28px;font-weight:bold} .btn{display:inline-block;padding:10px 16px;background:#e60;color:#fff;cursor:pointer}
+.modal{position:fixed;top:30%;left:35%;background:#fff;border:1px solid #999;padding:20px}</style></head>
+<body>
+<header><a href="/">Home</a> <a href="cart.html">Cart</a> <a href="#">Signup / Login</a></header>
+<main>
+  <aside><h2>CATEGORY</h2><a href="#">Women</a> <a href="#">Men</a><h2>BRANDS</h2><a href="#">Polo</a></aside>
+  <section>
+    <h2>Linen Shirt</h2>
+    <p>Category: Men &gt; Shirts</p>
+    <span class="price">Rs. 799</span>
+    <p><label>Size <select name="size"><option>M</option><option>L</option><option>XL</option></select></label></p>
+    <div class="btn" id="add"><div><span>Add to cart</span></div></div>
+  </section>
+</main>
+<div class="cookie" id="cookie-banner">We use cookies. <button>Accept all</button> <button>Reject all</button></div>
+<script>
+  document.querySelectorAll('#cookie-banner button').forEach((b) => b.addEventListener('click', () => document.getElementById('cookie-banner').remove()))
+  document.getElementById('add').addEventListener('click', () => {
+    const m = document.createElement('div'); m.className = 'modal'; m.setAttribute('role', 'dialog')
+    m.innerHTML = '<h4>Added!</h4><p>Your product has been added to cart.</p><a href="cart.html">View Cart</a> <button>Continue Shopping</button>'
+    document.body.appendChild(m)
+  })
+</script>
+</body></html>

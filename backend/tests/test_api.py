@@ -94,7 +94,8 @@ async def test_live_mode_errors_without_starting_a_browser():
     app = create_app(make_settings(enable_live=True, max_live_audits=0), resolver=fake_resolver)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         cases = [
-            ({"targetUrl": "http://localhost:5173/some/other/page"}, 409, "no_navigator"),
+            # Any other allowlisted page goes to the general navigator (here: no live browser free).
+            ({"targetUrl": "http://localhost:5173/some/other/page"}, 503, "at_capacity"),
             ({"targetUrl": "http://localhost:5173/some/other/page", "mode": "replay"}, 409, "no_recording"),
             ({"targetUrl": STORE_A, "mode": "live"}, 503, "at_capacity"),
         ]

@@ -18,12 +18,14 @@ import type { Tone } from '../ui/styles'
 import { auditSource } from '../source'
 import { isDemoAudit } from '../source/withDemoFallback'
 import { useAudit } from '../useAudit'
+import { useRunKind } from '../useRunKind'
 import type { AuditState } from '../useAudit'
 
 export function AuditPage() {
   const { auditId } = useParams()
   const [runKey, setRunKey] = useState(0)
   const { state, skipAhead } = useAudit(auditId, runKey)
+  const runKind = useRunKind(auditId)
   // After completion, switch to the report on our own unless the viewer picked a view.
   const [autoReport, setAutoReport] = useState(false)
   const [chosenView, setChosenView] = useState<'live' | 'report' | null>(null)
@@ -80,6 +82,11 @@ export function AuditPage() {
         </Link>
         <div className="order-last flex w-full min-w-0 items-center gap-3 sm:order-none sm:w-auto sm:flex-1">
           <StatusSticker status={state.status} />
+          {runKind && (
+            <span className="shrink-0 rounded-md border-2 border-ink bg-white px-2 py-0.5 text-[11px] font-extrabold tracking-wide uppercase">
+              {runKind}
+            </span>
+          )}
           <span className="truncate rounded-lg border-2 border-ink bg-white px-2.5 py-1 font-mono text-[13px]">{state.targetUrl ?? '…'}</span>
           {view !== 'report' && <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums">{elapsed}</span>}
         </div>
