@@ -2,8 +2,8 @@
   "version": 1,
   "store": "store-b",
   "pathPrefix": "/demo/store-b/",
-  "source": "scripted-mock",
-  "recordedAt": "2026-10-10T17:27:02.912Z",
+  "source": "live",
+  "recordedAt": "2026-10-11T12:02:57.438993Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "startedAt": "2026-10-10T17:27:02.912Z"
+        "startedAt": "2026-10-11T12:02:23.798Z"
       }
     },
     {
-      "delayMs": 500,
+      "delayMs": 223,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -27,7 +27,7 @@
       }
     },
     {
-      "delayMs": 700,
+      "delayMs": 0,
       "event": {
         "type": "step.started",
         "step": "product",
@@ -35,15 +35,15 @@
       }
     },
     {
-      "delayMs": 1200,
+      "delayMs": 2534,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
-        "message": "Opened the product page. No modal or interstitial appeared."
+        "message": "Opened the product page."
       }
     },
     {
-      "delayMs": 1000,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -51,60 +51,28 @@
       }
     },
     {
-      "delayMs": 500,
+      "delayMs": 8329,
       "event": {
         "type": "step.captured",
         "step": "product",
         "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "screenshotUrl": "/mock/screens/b/product.jpg"
+        "screenshotUrl": "/recordings/store-b/1.jpg"
       }
     },
     {
-      "delayMs": 250,
+      "delayMs": 0,
       "event": {
         "type": "price.observed",
         "step": "product",
         "label": "Product page",
         "total": {
-          "amount": 1508,
+          "amount": 1508.0,
           "currency": "INR"
         }
       }
     },
     {
-      "delayMs": 1600,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Urgency signals: \"Festive Sale ends Sun, 11 Oct, 11:59 PM IST\", a fixed date and time. Stock reads \"In stock\", with no scarcity claim."
-      }
-    },
-    {
-      "delayMs": 1200,
-      "event": {
-        "type": "agent.log",
-        "agent": "price_historian",
-        "message": "Pulling 13 weeks of price history for SonicBuds Pro ANC Wireless Earbuds…"
-      }
-    },
-    {
-      "delayMs": 1600,
-      "event": {
-        "type": "agent.log",
-        "agent": "price_historian",
-        "message": "Sold at the ₹1,999 MRP in 12 of 14 weekly observations; ₹1,499 only since the sale began. The 25% discount is genuine. ✓"
-      }
-    },
-    {
-      "delayMs": 1300,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "A ₹9 platform fee is disclosed next to the price. I'll check it's the only extra."
-      }
-    },
-    {
-      "delayMs": 1000,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -112,57 +80,49 @@
       }
     },
     {
-      "delayMs": 900,
+      "delayMs": 1,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Reading the product page with Gemini (gemini-3.8-flash)…"
+      }
+    },
+    {
+      "delayMs": 2845,
       "event": {
         "type": "step.captured",
         "step": "product",
         "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "screenshotUrl": "/mock/screens/b/product-reload.jpg"
+        "screenshotUrl": "/recordings/store-b/2.jpg"
       }
     },
     {
-      "delayMs": 1400,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Sale deadline unchanged after the reload. A fixed, real deadline is legitimate urgency. ✓"
-      }
-    },
-    {
-      "delayMs": 900,
+      "delayMs": 38,
       "event": {
         "type": "step.started",
         "step": "variant",
-        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=ocean"
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=pearl"
       }
     },
     {
-      "delayMs": 800,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
-        "message": "Choosing colour: Ocean Blue."
+        "message": "Choosing colour: Pearl White."
       }
     },
     {
-      "delayMs": 500,
+      "delayMs": 338,
       "event": {
         "type": "step.captured",
         "step": "variant",
-        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=ocean",
-        "screenshotUrl": "/mock/screens/b/variant.jpg"
+        "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=pearl",
+        "screenshotUrl": "/recordings/store-b/3.jpg"
       }
     },
     {
-      "delayMs": 1200,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Price stays ₹1,499 on every colour. ✓"
-      }
-    },
-    {
-      "delayMs": 900,
+      "delayMs": 38,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -170,52 +130,44 @@
       }
     },
     {
-      "delayMs": 900,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
-        "message": "Added 1 × SonicBuds Pro (Ocean Blue) to the cart. Opening the cart."
+        "message": "Added 1 × SonicBuds Pro ANC Wireless Earbuds to the cart. Opening the cart."
       }
     },
     {
-      "delayMs": 500,
+      "delayMs": 282,
       "event": {
         "type": "step.captured",
         "step": "cart",
         "url": "__ORIGIN__/demo/store-b/cart",
-        "screenshotUrl": "/mock/screens/b/cart.jpg"
+        "screenshotUrl": "/recordings/store-b/4.jpg"
       }
     },
     {
-      "delayMs": 250,
+      "delayMs": 0,
       "event": {
         "type": "price.observed",
         "step": "cart",
         "label": "Cart",
         "total": {
-          "amount": 1508,
+          "amount": 1508.0,
           "currency": "INR"
         }
       }
     },
     {
-      "delayMs": 1300,
-      "event": {
-        "type": "agent.log",
-        "agent": "evidence",
-        "message": "Cart holds exactly what I added: 1 line. ✓"
-      }
-    },
-    {
-      "delayMs": 1300,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Protection plan is offered as an unticked opt-in with neutral wording. ✓"
+        "message": "Reading the cart with Gemini (gemini-3.8-flash)…"
       }
     },
     {
-      "delayMs": 900,
+      "delayMs": 57,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -223,52 +175,44 @@
       }
     },
     {
-      "delayMs": 800,
-      "event": {
-        "type": "agent.log",
-        "agent": "navigator",
-        "message": "Proceeding to checkout with the saved address."
-      }
-    },
-    {
-      "delayMs": 500,
+      "delayMs": 310,
       "event": {
         "type": "step.captured",
         "step": "checkout",
         "url": "__ORIGIN__/demo/store-b/checkout",
-        "screenshotUrl": "/mock/screens/b/checkout.jpg"
+        "screenshotUrl": "/recordings/store-b/5.jpg"
       }
     },
     {
-      "delayMs": 250,
+      "delayMs": 0,
+      "event": {
+        "type": "agent.log",
+        "agent": "navigator",
+        "message": "Reached checkout. Leaving every pre-set option as it was, to see what a hurried shopper would pay."
+      }
+    },
+    {
+      "delayMs": 0,
       "event": {
         "type": "price.observed",
         "step": "checkout",
         "label": "Checkout",
         "total": {
-          "amount": 1508,
+          "amount": 1508.0,
           "currency": "INR"
         }
       }
     },
     {
-      "delayMs": 1400,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Membership checkbox is unticked; terms in normal type with one-click cancellation. ✓"
+        "message": "Reading the checkout page with Gemini (gemini-3.8-flash)…"
       }
     },
     {
-      "delayMs": 1300,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Delivery options are two equal cards, with free standard pre-selected. ✓"
-      }
-    },
-    {
-      "delayMs": 900,
+      "delayMs": 33,
       "event": {
         "type": "step.started",
         "step": "payment",
@@ -276,52 +220,84 @@
       }
     },
     {
-      "delayMs": 500,
+      "delayMs": 284,
       "event": {
         "type": "step.captured",
         "step": "payment",
         "url": "__ORIGIN__/demo/store-b/payment",
-        "screenshotUrl": "/mock/screens/b/payment.jpg"
+        "screenshotUrl": "/recordings/store-b/6.jpg"
       }
     },
     {
-      "delayMs": 250,
+      "delayMs": 0,
       "event": {
         "type": "price.observed",
         "step": "payment",
         "label": "Payment",
         "total": {
-          "amount": 1508,
+          "amount": 1508.0,
           "currency": "INR"
         }
       }
     },
     {
-      "delayMs": 1500,
-      "event": {
-        "type": "agent.log",
-        "agent": "evidence",
-        "message": "Reconciling prices: product ₹1,499 + ₹9 disclosed fee → payment ₹1,508. No new charges. ✓"
-      }
-    },
-    {
-      "delayMs": 900,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
-        "message": "Stopped before paying. No order was placed."
+        "message": "Reached the payment page. Stopping here: the agent never pays."
       }
     },
     {
-      "delayMs": 1200,
+      "delayMs": 0,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Reading the payment page with Gemini (gemini-3.8-flash)…"
+      }
+    },
+    {
+      "delayMs": 3410,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the cart needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 6901,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the checkout page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 6574,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the product page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 1433,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the payment page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "No findings. Every check passed; nothing to escalate."
+        "message": "Every check passed: nothing to confirm. Gemini (gemini-3.8-flash) reviewed all 4 screens and its claims were checked against their evidence."
       }
     },
     {
-      "delayMs": 1100,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "reporter",
@@ -329,44 +305,44 @@
       }
     },
     {
-      "delayMs": 1000,
+      "delayMs": 1,
       "event": {
         "type": "audit.completed",
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-          "startedAt": "2026-10-10T17:27:02.912Z",
-          "completedAt": "2026-10-10T17:27:02.912Z",
-          "trustScore": 100,
+          "startedAt": "2026-10-11T12:02:23.798Z",
+          "completedAt": "2026-10-11T12:02:57.430Z",
+          "trustScore": 100.0,
           "steps": [
             {
               "step": "product",
               "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-              "screenshotUrl": "/mock/screens/b/product.jpg",
+              "screenshotUrl": "/recordings/store-b/1.jpg",
               "status": "audited"
             },
             {
               "step": "variant",
-              "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=ocean",
-              "screenshotUrl": "/mock/screens/b/variant.jpg",
+              "url": "__ORIGIN__/demo/store-b/p/sonicbuds-pro?colour=pearl",
+              "screenshotUrl": "/recordings/store-b/3.jpg",
               "status": "audited"
             },
             {
               "step": "cart",
               "url": "__ORIGIN__/demo/store-b/cart",
-              "screenshotUrl": "/mock/screens/b/cart.jpg",
+              "screenshotUrl": "/recordings/store-b/4.jpg",
               "status": "audited"
             },
             {
               "step": "checkout",
               "url": "__ORIGIN__/demo/store-b/checkout",
-              "screenshotUrl": "/mock/screens/b/checkout.jpg",
+              "screenshotUrl": "/recordings/store-b/5.jpg",
               "status": "audited"
             },
             {
               "step": "payment",
               "url": "__ORIGIN__/demo/store-b/payment",
-              "screenshotUrl": "/mock/screens/b/payment.jpg",
+              "screenshotUrl": "/recordings/store-b/6.jpg",
               "status": "audited"
             }
           ],
@@ -375,25 +351,23 @@
           "exposure": {
             "priceDrift": {
               "advertised": {
-                "amount": 1508,
+                "amount": 1508.0,
                 "currency": "INR"
               },
               "payable": {
-                "amount": 1508,
+                "amount": 1508.0,
                 "currency": "INR"
               },
               "lines": [],
               "claimedSaving": {
-                "amount": 500,
+                "amount": 500.0,
                 "currency": "INR"
               },
               "genuineSaving": {
-                "amount": 500,
+                "amount": 500.0,
                 "currency": "INR"
               }
             },
-            "strictest": "GB",
-            "disclaimer": "Shop Honest maps findings to laws and public enforcement outcomes to show exposure. It is not legal advice. Penalties shown are statutory maximums or past outcomes, not a prediction for this business.",
             "jurisdictions": [
               {
                 "code": "IN",
@@ -403,6 +377,7 @@
                 "status": "in_force",
                 "maxPenalty": "Up to ₹10 lakh per contravention, ₹50 lakh for each later one (s 21). Criminal: up to 2 years and ₹10 lakh, or 5 years and ₹50 lakh for repeat offences (s 89).",
                 "penaltyHeadline": "Up to ₹50 lakh + jail for repeat offences",
+                "citations": {},
                 "precedents": [
                   {
                     "id": "in-physicswallah",
@@ -412,7 +387,7 @@
                     "date": "2026-08",
                     "outcome": "₹5 lakh penalty",
                     "amount": {
-                      "amount": 500000,
+                      "amount": 500000.0,
                       "currency": "INR"
                     },
                     "patternIds": [
@@ -430,7 +405,7 @@
                     "date": "2026-08",
                     "outcome": "₹7 lakh penalty",
                     "amount": {
-                      "amount": 700000,
+                      "amount": 700000.0,
                       "currency": "INR"
                     },
                     "patternIds": [
@@ -441,8 +416,7 @@
                     "sourceUrl": "https://www.entertales.com/ccpa-fine-zepto-bookmyshow-indigo-dark-patterns/",
                     "confidence": "reported"
                   }
-                ],
-                "citations": {}
+                ]
               },
               {
                 "code": "SG",
@@ -452,6 +426,7 @@
                 "status": "in_force",
                 "maxPenalty": "CCCS obtains court declarations and injunctions; breaching an injunction can lead to court-ordered fines or jail. Consumers can also claim compensation.",
                 "penaltyHeadline": "Court orders; breaches can mean fines or jail",
+                "citations": {},
                 "precedents": [
                   {
                     "id": "sg-footwear-subscription",
@@ -481,8 +456,7 @@
                     "sourceUrl": "https://cccs.gov.sg/-/media/custom/ccs/files/media-and-publications/media-releases/abc-bargain-centre-16-oct-20/media-release_-abc-valudollar-cease-misleading-ads-w-infogx.ashx",
                     "confidence": "official"
                   }
-                ],
-                "citations": {}
+                ]
               },
               {
                 "code": "GB",
@@ -492,6 +466,7 @@
                 "status": "in_force",
                 "maxPenalty": "The CMA can fine directly: up to 10% of global turnover (or £300,000), plus daily penalties and consumer redress orders.",
                 "penaltyHeadline": "Up to 10% of global turnover",
+                "citations": {},
                 "precedents": [
                   {
                     "id": "gb-marks-electrical",
@@ -501,7 +476,7 @@
                     "date": "2026-06",
                     "outcome": "£720,000 fine and about £600,000 in refunds",
                     "amount": {
-                      "amount": 720000,
+                      "amount": 720000.0,
                       "currency": "GBP"
                     },
                     "patternIds": [
@@ -525,8 +500,7 @@
                     "sourceUrl": "https://www.whitecase.com/insight-alert/hidden-fees-real-consequences-cma-issues-its-first-infringement-decision-under-uks",
                     "confidence": "reported"
                   }
-                ],
-                "citations": {}
+                ]
               },
               {
                 "code": "EU",
@@ -536,6 +510,7 @@
                 "status": "in_force",
                 "maxPenalty": "Widespread consumer-law infringements: at least 4% of annual turnover or €2 million. DSA: up to 6% of worldwide annual turnover.",
                 "penaltyHeadline": "Up to 6% of global turnover",
+                "citations": {},
                 "precedents": [
                   {
                     "id": "eu-x-dsa",
@@ -545,7 +520,7 @@
                     "date": "2025-12-05",
                     "outcome": "€120 million fine",
                     "amount": {
-                      "amount": 120000000,
+                      "amount": 120000000.0,
                       "currency": "EUR"
                     },
                     "patternIds": [
@@ -555,8 +530,7 @@
                     "sourceUrl": "https://digital-strategy.ec.europa.eu/en/news/commission-fines-x-eu120-million-under-digital-services-act",
                     "confidence": "official"
                   }
-                ],
-                "citations": {}
+                ]
               },
               {
                 "code": "US",
@@ -566,6 +540,7 @@
                 "status": "in_force",
                 "maxPenalty": "Injunctions, consumer refunds, and civil penalties per violation for ROSCA and other rule breaches.",
                 "penaltyHeadline": "Civil penalties + refunds (Amazon paid $2.5B)",
+                "citations": {},
                 "precedents": [
                   {
                     "id": "us-amazon-prime",
@@ -575,7 +550,7 @@
                     "date": "2025-09-25",
                     "outcome": "$2.5 billion ($1B civil penalty and $1.5B in refunds)",
                     "amount": {
-                      "amount": 2500000000,
+                      "amount": 2500000000.0,
                       "currency": "USD"
                     },
                     "patternIds": [
@@ -585,8 +560,7 @@
                     "sourceUrl": "https://www.fortune.com/2025/09/25/amazon-ftc-settlement-prime-automatic-renewal-lina-khan-dark-patterns",
                     "confidence": "reported"
                   }
-                ],
-                "citations": {}
+                ]
               },
               {
                 "code": "KR",
@@ -596,8 +570,8 @@
                 "status": "in_force",
                 "maxPenalty": "Corrective orders, administrative fines (reported at ₩1–5 million per breach) and business suspension of up to 12 months.",
                 "penaltyHeadline": "Fines + up to 12-month business suspension",
-                "precedents": [],
-                "citations": {}
+                "citations": {},
+                "precedents": []
               },
               {
                 "code": "AU",
@@ -612,10 +586,12 @@
                   "effectiveFrom": "2027-07-01",
                   "summary": "Bans design that manipulates or unreasonably distorts consumer decisions, and adds drip-pricing and subscription rules."
                 },
-                "precedents": [],
-                "citations": {}
+                "citations": {},
+                "precedents": []
               }
-            ]
+            ],
+            "strictest": "GB",
+            "disclaimer": "Shop Honest maps findings to laws and public enforcement outcomes to show exposure. It is not legal advice. Penalties shown are statutory maximums or past outcomes, not a prediction for this business."
           }
         }
       }

@@ -16,7 +16,7 @@ Google Cloud AI Builder Cup 2026 · Retail & Commerce. Original concept doc: `Ho
 
 Live at **<https://shop-honest-ai.web.app>**, on the real backend (Cloud Run, Firestore, Cloud Storage, Gemini on Vertex AI):
 
-- **Scan it** replays a recorded run of a sample store: free, instant and unlimited.
+- **Scan it** replays a recorded real run of a sample store (the same agents and Gemini as "Run live"): free, instant and unlimited.
 - **Run live** audits the store for real, with Gemini judging. It takes about a minute, and is limited to 3 runs per visitor per hour and 100 a day across the site.
 
 If the backend can't be reached, sample-store scans fall back to the built-in demo replay. Locally, `npm run dev` runs the same dashboard on that built-in demo, with no backend needed; the contract is `web/src/shared/contract.ts`.

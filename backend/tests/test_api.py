@@ -3,6 +3,7 @@ import asyncio
 import httpx
 
 from app.contract.models import JOURNEY_STEPS
+from evals.answer_key import score
 from tests.conftest import EVENT_VALIDATOR, STORE_A, STORE_B, fake_resolver, make_settings, parse_sse, run_audit
 
 
@@ -32,8 +33,10 @@ async def test_store_a_replay_streams_a_valid_ordered_audit(client: httpx.AsyncC
     report = events[-1][1]["report"]
     assert report["auditId"] == audit_id
     assert "__" not in str(report)  # no placeholders left behind
-    assert len(report["findings"]) == 9
-    assert sum(f["status"] == "confirmed" for f in report["findings"]) == 8
+    # The recording finds every planted pattern, and nothing that isn't planted or listed as also acceptable.
+    result = score("store-a", report["findings"])
+    assert (result["hits"], result["missed"], result["false_alarms"]) == (result["expected"], [], [])
+    assert result["review_agreed"] == result["review_expected"]
 
 
 async def test_store_b_is_clean(client: httpx.AsyncClient):
