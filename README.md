@@ -25,11 +25,14 @@ If the backend can't be reached, sample-store scans fall back to the built-in de
 
 ```sh
 deploy/setup.sh                              # once: APIs, Firestore, bucket, registry, service account
-deploy/backend.sh                            # build with Cloud Build, deploy to Cloud Run
+deploy/backend.sh                            # build with Cloud Build, deploy to Cloud Run (image tagged with the commit)
 npx firebase-tools deploy --only hosting     # the site (production build talks to the backend)
+uv run --project backend python deploy/monitoring.py setup   # once: email alerts on errors and 5xx
+deploy/judging.sh on                         # judging day: warm instance, higher per-visitor limit, uptime probe
+deploy/judging.sh off                        # afterwards (a warm instance costs money all day)
 ```
 
-Project `shop-honest-72fd8`, region `asia-south1`; details in [ARCHITECTURE.md §13](docs/ARCHITECTURE.md#13-environments-and-deployment).
+Deploy from a committed tree, so the running image matches a commit (`/api/health` reports it). Project `shop-honest-72fd8`, region `asia-south1`; rollback and the rest in [ARCHITECTURE.md §11 and §13](docs/ARCHITECTURE.md#11-reliability-and-cost-controls).
 
 ## Architecture
 

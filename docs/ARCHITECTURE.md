@@ -274,10 +274,14 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 | Model tokens | 400k | As above |
 | Wall-clock time | 6 min | `audit.failed` with a clear reason |
 
-- **Resumable stream:** events are persisted before they are sent, and SSE `id` is the sequence number. On reconnect the API replays everything after `Last-Event-ID`. This makes refreshes, flaky networks and proxy timeouts harmless. One risk to verify early: Firebase Hosting rewrites to Cloud Run may cut long requests (we believe at about 60 s). If so, the browser either reconnects automatically (fine, given resume) or streams straight from the Cloud Run URL.
-- **Idempotency:** the runner is the only writer of an audit's events. A crashed instance marks the audit `failed` on the next read after a timeout. It doesn't silently restart halfway.
-- **Cold starts:** Chromium makes the container heavy. `min-instances=1` only on judging days (about ₹110/day); otherwise scale to zero.
-- **Spend:** a billing budget with alerts at $50 and $100. Expected total for the hackathon: **$65–135**, mostly Gemini, less with the free tiers.
+- **Resumable stream:** events are persisted before they are sent, and SSE `id` is the sequence number. On reconnect the API replays everything after `Last-Event-ID`, so refreshes and flaky networks are harmless. Firebase Hosting turned out to buffer streams, so the browser reads the stream from Cloud Run directly ([ADR-0010](decisions/0010-event-stream-straight-to-cloud-run.md)). A client watchdog reopens a stream that has gone silent for 60 s.
+- **Idempotency:** the runner is the only writer of an audit's events. An audit still `running` 2 minutes past its time limit (its server restarted) is closed as `failed` on the next read. It doesn't silently restart halfway.
+- **Gemini capacity:** retries with backoff, then `gemini-2.5-flash` as fallback; a screen whose review still fails is reported as such, and the audit completes on its measured findings.
+- **Live-audit limits:** 3 per visitor per hour, 100 per day site-wide (`429 rate_limited`).
+- **Alerts** (`deploy/monitoring.py`, by email to the project owner): any ERROR log from the service, and more than 3 5xx responses in 5 minutes. Both are free while nothing goes wrong. An uptime probe on `/api/health` runs only in judging mode, because probing every few minutes would keep an instance awake all the time (about $3 a day with CPU always allocated).
+- **Judging days:** `deploy/judging.sh on` keeps one instance warm (no cold starts), allows 15 live runs per visitor per hour (judges may share one Wi-Fi IP) and turns the uptime probe on; `off` puts all three back. A warm instance costs money all day, so turn it off afterwards.
+- **Rollback:** Cloud Run keeps earlier revisions, and Artifact Registry keeps the 3 newest images (so rollback reaches two releases back). List revisions with `gcloud run revisions list --service shop-honest-api --region asia-south1`, then `gcloud run services update-traffic shop-honest-api --region asia-south1 --to-revisions REVISION=100`.
+- **Spend:** two billing budgets on the project: ₹2,000 a month after credits and ₹5,000 a month of usage before credits, alerting at 50/90/100%. They alert, they don't cap. Actual use so far: roughly ₹100 of the $300 credit, mostly the Gemini model comparison; a live audit with `gemini-3.8-flash` is about ₹1.5–2.
 
 ## 12. Quality and evaluation
 
@@ -304,6 +308,7 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 - `deploy/setup.sh` (once, safe to re-run) turns on the APIs and creates the Firestore database, the frames bucket, the Artifact Registry repository and the service account `shop-honest-api@…`. That account has only `aiplatform.user`, `datastore.user` and object admin on its own bucket.
 - `deploy/backend.sh` builds `backend/Dockerfile` with Cloud Build and deploys it with `deploy/backend.env.yaml`. The image is the official Playwright Python image with uv and runs as a non-root user; Chromium matches the pinned Playwright.
 - Hosting: `npx firebase-tools deploy --only hosting` (production build, `VITE_AUDIT_SOURCE=live`).
+- `deploy/monitoring.py` (alerts) and `deploy/judging.sh on|off` (judging-day settings); see §11.
 
 **Cloud Run settings:** 2 vCPU, 2 GiB, CPU always allocated (audits run after the POST returns), concurrency 20 (streams are mostly idle; live browsers are capped by `MAX_LIVE_AUDITS=2` per instance), max 3 instances, min 0 (set `--min-instances 1` on judging days), request timeout 15 min, gen2.
 
