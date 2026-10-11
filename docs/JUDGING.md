@@ -9,7 +9,7 @@ Run these from the repo root, logged in with `gcloud auth login` and `gcloud aut
 
 ```sh
 (cd backend && uv run python -m scripts.seed_price_history)   # refresh the demo catalog's 26-week price history
-deploy/judging.sh on                                          # warm instance, 15 live runs per visitor per hour, uptime probe
+deploy/judging.sh on                                          # warm instance (no cold starts), uptime probe
 uv run --project backend python deploy/preflight.py           # about 3 minutes, 2 live audits
 ```
 
@@ -39,7 +39,7 @@ The pre-flight should end with `6/6 checks passed`. If you redeploy after this, 
 |---|---|---|
 | The API is down or slow | The audit page says "The live audit service can't be reached right now", and the scan falls back to the built-in demo replay | Keep demoing on the replay: it's the same store and findings. Check `curl https://shop-honest-ai.web.app/api/health`. |
 | Gemini is busy (429) | "Couldn't read the … page" in the narration | The measured findings still stand. Retry in a minute; the SDK retries and falls back to `gemini-2.5-flash`. |
-| The live limit is reached | "You've started N live audits this hour" | Use **Scan it** (unlimited). Or raise the limit: `JUDGING_PER_IP=30 deploy/judging.sh on`. |
+| The daily live limit is reached (100 a day, site-wide) | "Live audits are paused for today" | Use **Scan it** (unlimited). Or raise the cap for the day: `gcloud run services update shop-honest-api --region asia-south1 --update-env-vars LIVE_PER_DAY=200`. |
 | The real store blocks us | The report is blocked at a step with "bot protection" or "the site showed an error" | That's the honest path: show it. We never get around bot protection. |
 | AutomationExercise is down | The audit fails to open the page | Skip step 4, or show Flipkart. |
 | Stuck on "SCANNING" | No events for a minute | The stream reconnects by itself within 60 s. Otherwise reload the page: audits resume from their event log. |

@@ -279,9 +279,9 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 - **Several instances:** the instance running an audit owns it and writes a heartbeat every 10 s. If the owner goes quiet for 45 s (crash, scale-in), the next request or quiet stream to reach any instance claims the audit atomically. A replay continues from the last stored event; a live audit is closed as `failed`. "Skip to report" is a flag on the audit, so it works from any instance ([ADR-0011](decisions/0011-audit-ownership-and-takeover.md)). The cap of 2 live browsers is per instance, by design.
 - **Idempotency:** each audit has a single writer at a time, and events are create-only, so a takeover can't duplicate or overwrite them. Audits older than their time limit plus 2 minutes are closed as `failed` as a last resort.
 - **Gemini capacity:** retries with backoff, then `gemini-2.5-flash` as fallback; a screen whose review still fails is reported as such, and the audit completes on its measured findings.
-- **Live-audit limits:** 3 per visitor per hour, 100 per day site-wide (`429 rate_limited`).
+- **Live-audit limits:** 100 per day site-wide (`429 rate_limited`). There is no per-visitor limit in production; `LIVE_PER_IP_PER_HOUR` can bring one back.
 - **Alerts** (`deploy/monitoring.py`, by email to the project owner): any ERROR log from the service, and more than 3 5xx responses in 5 minutes. Both are free while nothing goes wrong. An uptime probe on `/api/health` runs only in judging mode, because probing every few minutes would keep an instance awake all the time (about $3 a day with CPU always allocated).
-- **Judging days:** `deploy/judging.sh on` keeps one instance warm (no cold starts), allows 15 live runs per visitor per hour (judges may share one Wi-Fi IP) and turns the uptime probe on; `off` puts all three back. A warm instance costs money all day, so turn it off afterwards.
+- **Judging days:** `deploy/judging.sh on` keeps one instance warm (no cold starts) and turns the uptime probe on; `off` puts both back. A warm instance costs money all day, so turn it off afterwards.
 - **Rollback:** Cloud Run keeps earlier revisions, and Artifact Registry keeps the 3 newest images (so rollback reaches two releases back). List revisions with `gcloud run revisions list --service shop-honest-api --region asia-south1`, then `gcloud run services update-traffic shop-honest-api --region asia-south1 --to-revisions REVISION=100`.
 - **Spend:** two billing budgets on the project: ₹2,000 a month after credits and ₹5,000 a month of usage before credits, alerting at 50/90/100%. They alert, they don't cap. Actual use so far: roughly ₹100 of the $300 credit, mostly the Gemini model comparison; a live audit with `gemini-3.8-flash` is about ₹1.5–2.
 
@@ -330,7 +330,7 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `PRICE_HISTORY_BACKEND` / `BQ_DATASET` | `json` · `bigquery` / `shop_honest` | Price history from the demo catalog file, or BigQuery (deployed) |
 | `AUDIT_MAX_TOKENS` | `400000` | Model tokens (input + output) one audit may spend |
 | `FRAMES_BUCKET` / `BQ_DATASET` | `shop-honest-72fd8-audits` / `shop_honest` | Storage names |
-| `LIVE_PER_IP_PER_HOUR` / `LIVE_PER_DAY` | `3` / `100` (deployed; `0` = no limit) | Live-audit limits per visitor and for the whole site |
+| `LIVE_PER_IP_PER_HOUR` / `LIVE_PER_DAY` | `0` / `100` (deployed; `0` = no limit) | Live-audit limits per visitor and for the whole site |
 | `ALLOWED_HOSTS` | `shop-honest-ai.web.app,localhost` | URL allowlist |
 | `ENABLE_LIVE` / `MAX_LIVE_AUDITS` | `true` / `2` | Live audits on or off; how many browsers at once |
 | `NAV_LINGER_S` / `NAV_STEP_TIMEOUT_S` | `8` / `15` | Time on the product page before the second look; per-action timeout |

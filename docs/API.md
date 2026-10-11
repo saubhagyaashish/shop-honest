@@ -101,7 +101,7 @@ Every non-2xx response has the same shape:
 | 409 | `no_navigator` | Reserved: no journey for this site. Not returned since the general navigator (every allowlisted store has one) |
 | 409 | `not_replay` | Fast-forward requested for a live audit |
 | 400 | `invalid_request` | The body doesn't match the schema (e.g. an unknown `mode`) |
-| 429 | `rate_limited` | A live audit would go over `LIVE_PER_IP_PER_HOUR` for this visitor (counted by a hash of their IP) or `LIVE_PER_DAY` for the whole site. Replays are never limited. |
+| 429 | `rate_limited` | A live audit would go over `LIVE_PER_DAY` for the whole site, or `LIVE_PER_IP_PER_HOUR` for this visitor (counted by a hash of their IP; off in production). Replays are never limited. |
 | 501 | `live_unavailable` | `mode: "live"` requested on a deployment with `ENABLE_LIVE=false` |
 | 503 | `at_capacity` | All audit slots, or all `MAX_LIVE_AUDITS` live browsers, are busy; retry shortly |
 | 404 / 405 | `not_found` / `method_not_allowed` | Unknown route or wrong HTTP method |

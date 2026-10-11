@@ -9,7 +9,7 @@
   - **Store A** is rigged with 8 tricks plus 1 borderline claim.
   - **Store B** is the honest control.
   - **Store C** hides checkout behind a sign-in wall.
-- **Run live** sends a fresh browser and Gemini through the store while you watch: screenshots stream in, the agents narrate, and findings land as they're decided. It takes about a minute, with up to 3 live runs per visitor per hour.
+- **Run live** sends a fresh browser and Gemini through the store while you watch: screenshots stream in, the agents narrate, and findings land as they're decided. It takes about a minute; the site allows 100 live runs a day in total.
 - **A real store, logged out:** the chips under the URL box run the general navigator on stores we didn't build.
   - **AutomationExercise:** reaches the cart and stops honestly at the login wall.
   - **Flipkart, best effort:** reaches the cart if the site allows automated browsers, and otherwise says so instead of getting around it.
