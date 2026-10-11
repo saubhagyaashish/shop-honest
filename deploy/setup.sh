@@ -36,6 +36,9 @@ if ! g artifacts repositories describe "$REPO" --location="$REGION" >/dev/null 2
     --description="Shop Honest backend images"
 fi
 
+# Keep the 3 newest images (rollback reaches two releases back); older ones are deleted.
+g artifacts repositories set-cleanup-policies "$REPO" --location="$REGION" --policy=registry-cleanup.json --no-dry-run >/dev/null
+
 echo "› Service account $SERVICE_ACCOUNT (Gemini, Firestore, its bucket; nothing else)"
 if ! g iam service-accounts describe "$SERVICE_ACCOUNT" >/dev/null 2>&1; then
   g iam service-accounts create "$SERVICE" --display-name="Shop Honest API (Cloud Run)"
