@@ -15,7 +15,7 @@ import { JOURNEY_STEPS } from '../src/shared/contract'
 import { PATTERNS } from '../src/shared/patterns'
 import { FIXES } from '../src/auditor/mock/fixes'
 import { EXPOSURE_DISCLAIMER, JURISDICTIONS, STRICTEST } from '../src/auditor/mock/legal'
-import { ANSWER_KEY } from '../src/store/answerKey'
+import { ALSO_ACCEPTABLE, ANSWER_KEY } from '../src/store/answerKey'
 import { PRODUCTS } from '../src/store/catalog'
 import { ALL_STORES, storePath } from '../src/store/variants'
 
@@ -61,6 +61,7 @@ async function main() {
           findings: ANSWER_KEY[setup.id]
             .filter((f) => JOURNEY_STEPS.indexOf(f.step) < cutAt(setup.behaviour.signInWallAt))
             .map(({ id, patternId, step, status }) => ({ id, patternId, step, status })),
+          alsoAcceptable: ALSO_ACCEPTABLE[setup.id].filter((f) => JOURNEY_STEPS.indexOf(f.step) < cutAt(setup.behaviour.signInWallAt)),
         },
       ]),
     ),

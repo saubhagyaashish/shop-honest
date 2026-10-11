@@ -110,6 +110,27 @@ export const ANSWER_KEY: Record<StoreId, ExpectedFinding[]> = {
 }
 
 /** Elements worth reading on every frame, so audit narration can quote them. */
+/**
+ * Real patterns on a planted element that the answer key doesn't count as a hit or a miss:
+ * the trick was planted as something else, but this reading is also correct.
+ * Store B never gets any: every finding there is a false alarm.
+ */
+export const ALSO_ACCEPTABLE: Record<StoreId, { patternId: PatternId; step: JourneyStep; why: string }[]> = {
+  a: [
+    {
+      patternId: 'interface_interference',
+      step: 'product',
+      why: 'The guilt-trip popup pairs a big filled accept button with a 12 px grey decline link.',
+    },
+    {
+      patternId: 'false_urgency',
+      step: 'checkout',
+      why: '"Most customers choose Express delivery" is an unsourced popularity claim next to the lopsided choice.',
+    },
+  ],
+  b: [],
+}
+
 export const PROBE_SELECTORS = [
   '#deal-timer',
   '#sale-deadline',

@@ -36,6 +36,9 @@ class ModelCaller:
         self._settings = settings
         self._slots = asyncio.Semaphore(settings.model_concurrency)
         self.calls = 0
+        # Tokens reported by the model across this audit (for cost tracking).
+        self.tokens_in = 0
+        self.tokens_out = 0
 
     @property
     def budget_left(self) -> int:
@@ -51,7 +54,7 @@ class ModelCaller:
             try:
                 async with self._slots:
                     async with asyncio.timeout(self._settings.model_timeout_s):
-                        text = await _run(name, model, instruction, schema, parts)
+                        text = await _run(name, model, instruction, schema, parts, self)
                 return schema.model_validate_json(_clean(text))
             except TimeoutError as err:
                 raise ModelError(f"no answer within {self._settings.model_timeout_s:g} s") from err
@@ -64,7 +67,9 @@ class ModelCaller:
         raise ModelError(f"no usable answer ({type(last).__name__})") from last
 
 
-async def _run(name: str, model: Model, instruction: str, schema: type[BaseModel], parts: list[types.Part]) -> str:
+async def _run(
+    name: str, model: Model, instruction: str, schema: type[BaseModel], parts: list[types.Part], usage: "ModelCaller"
+) -> str:
     agent = LlmAgent(
         name=name,
         model=model,
@@ -78,6 +83,11 @@ async def _run(name: str, model: Model, instruction: str, schema: type[BaseModel
     async for event in runner.run_async(
         user_id="audit", session_id=session.id, new_message=types.Content(role="user", parts=parts)
     ):
+        if event.usage_metadata:
+            usage.tokens_in += event.usage_metadata.prompt_token_count or 0
+            usage.tokens_out += (event.usage_metadata.candidates_token_count or 0) + (
+                event.usage_metadata.thoughts_token_count or 0
+            )
         if event.is_final_response() and event.content and event.content.parts:
             text = "".join(p.text or "" for p in event.content.parts)
     if not text:

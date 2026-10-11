@@ -162,6 +162,15 @@ class AuditRunner:
                 await walk.cancel_reviews()
                 await walk.log("adjudicator", "Ran out of time before every screen was reviewed. Reporting what was decided.")
             await walk.log("adjudicator", closing_line(walk.findings, judge))
+            if judge is not None:
+                c = judge.caller
+                log.info(
+                    "audit %s model usage: %d calls, %d input tokens, %d output tokens",
+                    audit_id,
+                    c.calls,
+                    c.tokens_in,
+                    c.tokens_out,
+                )
             await walk.log("reporter", "Building the audit report…")
             report = build_report(
                 audit_id=audit_id,

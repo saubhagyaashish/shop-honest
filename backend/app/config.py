@@ -45,9 +45,13 @@ class Settings(BaseSettings):
     # Models (Phase 3). Ollama serves both tiers locally.
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "gemma3:4b"
-    # Provisional: confirm against the key's model list before relying on them.
-    gemini_model_fast: str = "gemini-2.5-flash"
-    gemini_model_smart: str = "gemini-2.5-pro"
+    # Gemini through Vertex AI (credentials from ADC locally, the service account on Cloud Run),
+    # or through Google AI Studio with GOOGLE_API_KEY. Models are served on the global endpoint.
+    gemini_backend: Literal["vertex", "ai_studio"] = "vertex"
+    google_cloud_project: str = "shop-honest-72fd8"
+    google_cloud_location: str = "global"
+    gemini_model_fast: str = "gemini-3.8-flash"
+    gemini_model_smart: str = "gemini-3.8-flash"
     google_api_key: SecretStr | None = None
     model_timeout_s: float = 90.0
     audit_max_model_calls: int = 40

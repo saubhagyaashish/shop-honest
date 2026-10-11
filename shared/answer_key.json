@@ -56,11 +56,24 @@
         "step": "payment",
         "status": "confirmed"
       }
+    ],
+    "alsoAcceptable": [
+      {
+        "patternId": "interface_interference",
+        "step": "product",
+        "why": "The guilt-trip popup pairs a big filled accept button with a 12 px grey decline link."
+      },
+      {
+        "patternId": "false_urgency",
+        "step": "checkout",
+        "why": "\"Most customers choose Express delivery\" is an unsourced popularity claim next to the lopsided choice."
+      }
     ]
   },
   "store-b": {
     "blockedAt": null,
-    "findings": []
+    "findings": [],
+    "alsoAcceptable": []
   },
   "store-c": {
     "blockedAt": "checkout",
@@ -100,6 +113,13 @@
         "patternId": "basket_sneaking",
         "step": "cart",
         "status": "confirmed"
+      }
+    ],
+    "alsoAcceptable": [
+      {
+        "patternId": "interface_interference",
+        "step": "product",
+        "why": "The guilt-trip popup pairs a big filled accept button with a 12 px grey decline link."
       }
     ]
   }
