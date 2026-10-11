@@ -4,7 +4,7 @@
 >
 > Related: [Architecture](ARCHITECTURE.md) · [Decision records](decisions/README.md)
 
-Base URL: same origin as the web app, `https://shop-honest.web.app/api` (Firebase Hosting rewrites `/api/**` to Cloud Run). Locally: `http://localhost:8080/api`.
+Base URL: same origin as the web app, `https://shop-honest-ai.web.app/api` (Firebase Hosting rewrites `/api/**` to Cloud Run). Locally: `http://localhost:8080/api`.
 
 All bodies are JSON (`Content-Type: application/json`), except the event stream (`text/event-stream`).
 
@@ -16,7 +16,7 @@ Request
 
 ```json
 {
-  "targetUrl": "https://shop-honest.web.app/demo/store-a/p/sonicbuds-pro",
+  "targetUrl": "https://shop-honest-ai.web.app/demo/store-a/p/sonicbuds-pro",
   "mode": "auto"
 }
 ```
@@ -45,7 +45,7 @@ Response `200 OK`
   "auditId": "aud_7Kq2m9",
   "status": "completed",
   "mode": "replay",
-  "targetUrl": "https://shop-honest.web.app/demo/store-a/p/sonicbuds-pro",
+  "targetUrl": "https://shop-honest-ai.web.app/demo/store-a/p/sonicbuds-pro",
   "createdAt": "2026-10-10T12:00:00.000Z",
   "report": { "…": "AuditReport, present when status is completed" },
   "error": null
@@ -159,7 +159,7 @@ Conventions: timestamps are ISO-8601 UTC; money is `{ amount, currency }` in who
     "confidence": 0.96,
     "status": "confirmed",
     "step": "cart",
-    "pageUrl": "https://shop-honest.web.app/demo/store-a/cart",
+    "pageUrl": "https://shop-honest-ai.web.app/demo/store-a/cart",
     "rule": {
       "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
       "clause": "Annexure 1, item 2",
@@ -193,12 +193,12 @@ Conventions: timestamps are ISO-8601 UTC; money is `{ amount, currency }` in who
   "type": "audit.completed",
   "report": {
     "auditId": "aud_7Kq2m9",
-    "targetUrl": "https://shop-honest.web.app/demo/store-a/p/sonicbuds-pro",
+    "targetUrl": "https://shop-honest-ai.web.app/demo/store-a/p/sonicbuds-pro",
     "startedAt": "2026-10-10T12:00:00.000Z",
     "completedAt": "2026-10-10T12:01:42.000Z",
     "trustScore": 22,
     "steps": [
-      { "step": "product", "url": "https://shop-honest.web.app/demo/store-a/p/sonicbuds-pro", "screenshotUrl": "…/frames/2.jpg", "status": "audited" },
+      { "step": "product", "url": "https://shop-honest-ai.web.app/demo/store-a/p/sonicbuds-pro", "screenshotUrl": "…/frames/2.jpg", "status": "audited" },
       { "step": "checkout", "url": "https://shop.example.in/checkout", "status": "blocked", "blockedReason": "Sign-in required" }
     ],
     "findings": ["…same shape as the finding event…"],

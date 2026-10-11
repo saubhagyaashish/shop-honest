@@ -21,7 +21,7 @@ STORE_B = "http://localhost:5173/demo/store-b/p/sonicbuds-pro"
 
 
 async def fake_resolver(host: str) -> list[str]:
-    return {"localhost": ["127.0.0.1"], "shop-honest.web.app": ["199.36.158.100"]}.get(host, ["93.184.215.14"])
+    return {"localhost": ["127.0.0.1"], "shop-honest-ai.web.app": ["199.36.158.100"]}.get(host, ["93.184.215.14"])
 
 
 def make_settings(**overrides: object) -> Settings:

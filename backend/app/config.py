@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     model_provider: Literal["replay", "ollama", "gemini"] = "replay"
     store_backend: Literal["memory"] = "memory"
 
-    allowed_hosts: CommaList = ["localhost", "127.0.0.1", "shop-honest.web.app", "shop-honest.firebaseapp.com"]
+    allowed_hosts: CommaList = ["localhost", "127.0.0.1", "shop-honest-ai.web.app", "shop-honest-ai.firebaseapp.com"]
     # Lets allowlisted hosts resolve to private addresses (localhost in development). Off in production.
     allow_private_targets: bool = True
 

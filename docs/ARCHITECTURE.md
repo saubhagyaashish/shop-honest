@@ -1,6 +1,6 @@
 # Shop Honest: Architecture
 
-> Status: **Phase 3 built** (running locally). On top of the Phase 1 API and the Phase 2 live audits (a headless Chromium walks the store, real screenshots and prices stream to the UI, measured checks find what can be measured; [ADR-0008](decisions/0008-measured-checks-before-judgement.md)), ADK agents now judge each screen: the Pattern Analyst proposes, measurement-based rules and the Adjudicator check, and only grounded claims are reported ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)). It runs on Gemma 3 4B locally; Gemini is wired in and waits for an API key. The web app (dashboard and demo store) is live at <https://shop-honest.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
+> Status: **Phase 3 built** (running locally). On top of the Phase 1 API and the Phase 2 live audits (a headless Chromium walks the store, real screenshots and prices stream to the UI, measured checks find what can be measured; [ADR-0008](decisions/0008-measured-checks-before-judgement.md)), ADK agents now judge each screen: the Pattern Analyst proposes, measurement-based rules and the Adjudicator check, and only grounded claims are reported ([ADR-0009](decisions/0009-grounded-and-verified-model-claims.md)). It runs on Gemma 3 4B locally; Gemini is wired in and waits for an API key. The web app (dashboard and demo store) is live at <https://shop-honest-ai.web.app> and runs on a scripted mock. This document describes the backend we are building behind it, and how the two fit together.
 >
 > Related: [API reference](API.md) · [Decision records](decisions/README.md)
 
@@ -46,7 +46,7 @@ Shop Honest sends AI agents shopping. Given a product URL, they walk the journey
 flowchart LR
   user([Compliance team / judge]) --> web
 
-  subgraph Firebase_Hosting[Firebase Hosting · shop-honest.web.app]
+  subgraph Firebase_Hosting[Firebase Hosting · shop-honest-ai.web.app]
     web[Web app<br/>dashboard + demo store<br/>PDF built in the browser]
   end
 
@@ -307,12 +307,12 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `MODEL_PROVIDER` | `replay` · `ollama` · `gemini` | Which models the agents use |
 | `GOOGLE_GENAI_USE_VERTEXAI` | `TRUE` | Gemini through Vertex AI (otherwise AI Studio) |
 | `GOOGLE_API_KEY` | (Secret Manager) | AI Studio key for development |
-| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | `shop-honest` / `asia-south1` | Project and region |
+| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | `shop-honest-72fd8` / `asia-south1` | Project and region |
 | `GEMINI_MODEL_FAST` / `GEMINI_MODEL_SMART` | Flash- / Pro-class model IDs | Model tiers |
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | `http://localhost:11434` / `gemma3:4b` | Local models |
 | `STORE_BACKEND` | `memory` · `gcp` | Local fallbacks or Google Cloud |
 | `GCS_BUCKET` / `BQ_DATASET` | `shop-honest-audits` / `shop_honest` | Storage names |
-| `ALLOWED_HOSTS` | `shop-honest.web.app,localhost` | URL allowlist |
+| `ALLOWED_HOSTS` | `shop-honest-ai.web.app,localhost` | URL allowlist |
 | `ENABLE_LIVE` / `MAX_LIVE_AUDITS` | `true` / `2` | Live audits on or off; how many browsers at once |
 | `NAV_LINGER_S` / `NAV_STEP_TIMEOUT_S` | `8` / `15` | Time on the product page before the second look; per-action timeout |
 | `FRAMES_DIR` | `backend/var/frames` | Where live screenshots go until Cloud Storage |
@@ -359,8 +359,8 @@ shophonest/
 
 | Phase | Scope | Done when |
 |---|---|---|
-| **0. Setup** | Python 3.12 (uv), gcloud CLI, billing on `shop-honest` (Blaze), enable Run, Vertex AI, Firestore, Storage, BigQuery, Secret Manager, Artifact Registry; Ollama + `gemma3:4b` | `uv run pytest` passes; `gcloud` authenticated |
-| **1. Skeleton** | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest.web.app runs with `VITE_AUDIT_SOURCE=live` end to end |
+| **0. Setup** | Python 3.12 (uv), gcloud CLI, billing on `shop-honest-72fd8` (Blaze), enable Run, Vertex AI, Firestore, Storage, BigQuery, Secret Manager, Artifact Registry; Ollama + `gemma3:4b` | `uv run pytest` passes; `gcloud` authenticated |
+| **1. Skeleton** | FastAPI with all endpoints, memory store, resumable SSE, `replay` provider playing the current mock runs, contract tests; deploy to Cloud Run with the Hosting rewrite | shop-honest-ai.web.app runs with `VITE_AUDIT_SOURCE=live` end to end |
 | **2. Navigator** ✓ | Playwright journeys for stores A, B and C (ported from `web/scripts/capture-screens.ts`), real screenshots (local disk; GCS at deploy), real `step.*` and `price.observed` events, measured checks and a deterministic report, store C's sign-in wall, "Run live" in the UI | A live run streams real screenshots and prices. **Done:** A 6/9, B 0 false alarms, C partial at the wall |
 | **3. Pattern Analyst** ✓ (Ollama) | ADK Pattern Analyst + Evidence rules + Adjudicator, prompts and schemas, scripted model for tests, answer-key eval with runs | Store A ≥ 8/9, store B 0 false positives, **measured with Gemini** (pending an API key). With Gemma 3 4B: A 8/9, B 0 |
 | **4. Price & report** | BigQuery seeding + Price Historian; Reporter (summary, remediation, exposure from `shared/legal.json`); budgets; recordings refreshed | Live report has the same shape as the mock; PDF works on live data |

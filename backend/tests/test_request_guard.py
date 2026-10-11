@@ -7,7 +7,7 @@ from tests.conftest import make_settings
 async def resolver(host: str) -> list[str]:
     return {
         "localhost": ["127.0.0.1"],
-        "shop-honest.web.app": ["199.36.158.100"],
+        "shop-honest-ai.web.app": ["199.36.158.100"],
         "fonts.gstatic.com": ["142.250.1.1"],
         "evil.example": ["93.184.216.34"],
         "rebind.example": ["10.0.0.5"],
@@ -17,7 +17,7 @@ async def resolver(host: str) -> list[str]:
 
 async def test_navigation_stays_on_the_allowlist():
     guard = RequestGuard(make_settings(), resolver)
-    assert await guard.allows("https://shop-honest.web.app/demo/store-a/cart", navigation=True)
+    assert await guard.allows("https://shop-honest-ai.web.app/demo/store-a/cart", navigation=True)
     assert await guard.allows("http://localhost:5173/demo/store-a/cart", navigation=True)
     assert not await guard.allows("https://evil.example/phish", navigation=True)
     assert not await guard.allows("file:///etc/passwd", navigation=True)

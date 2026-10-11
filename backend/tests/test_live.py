@@ -100,7 +100,7 @@ async def test_a_recorded_live_run_replays(web_base: str, tmp_path: Path):
     app = create_app(make_settings(recordings_dir=tmp_path / "recordings"), resolver=fake_resolver)
     assert [r.source for r in RecordingLibrary.load(tmp_path / "recordings").recordings] == ["live"]
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
-        res = await client.post("/api/audits", json={"targetUrl": "https://shop-honest.web.app/demo/store-c/p/sonicbuds-pro"})
+        res = await client.post("/api/audits", json={"targetUrl": "https://shop-honest-ai.web.app/demo/store-c/p/sonicbuds-pro"})
         assert res.json()["mode"] == "replay"
         audit_id = res.json()["auditId"]
         events = [e for _, e in parse_sse((await client.get(f"/api/audits/{audit_id}/events")).text)]
@@ -109,7 +109,7 @@ async def test_a_recorded_live_run_replays(web_base: str, tmp_path: Path):
         EVENT_VALIDATOR.validate(event)
     text = json.dumps(events)
     assert "/recordings/store-c/1.jpg" in text and "/api/audits/" not in text
-    assert "https://shop-honest.web.app/demo/store-c/" in text and web_base not in text
+    assert "https://shop-honest-ai.web.app/demo/store-c/" in text and web_base not in text
     assert events[-1]["report"]["auditId"] == audit_id
 
 

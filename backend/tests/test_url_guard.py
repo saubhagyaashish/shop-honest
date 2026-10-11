@@ -13,11 +13,11 @@ def resolver_for(*addresses: str):
 
 
 async def test_accepts_allowlisted_public_host():
-    url = "https://shop-honest.web.app/demo/store-a/p/sonicbuds-pro"
+    url = "https://shop-honest-ai.web.app/demo/store-a/p/sonicbuds-pro"
     assert await check_target(url, make_settings(), resolver_for("199.36.158.100")) == url
 
 
-@pytest.mark.parametrize("url", ["ftp://shop-honest.web.app/x", "javascript:alert(1)", "shop-honest.web.app/x", "https://", ""])
+@pytest.mark.parametrize("url", ["ftp://shop-honest-ai.web.app/x", "javascript:alert(1)", "shop-honest-ai.web.app/x", "https://", ""])
 async def test_rejects_non_http_urls(url: str):
     with pytest.raises(ApiError) as err:
         await check_target(url, make_settings(), resolver_for("199.36.158.100"))
@@ -32,9 +32,9 @@ async def test_rejects_hosts_off_the_allowlist():
 
 @pytest.mark.parametrize("address", ["169.254.169.254", "10.0.0.7", "127.0.0.1", "192.168.1.4", "::1", "fd00:ec2::254"])
 async def test_blocks_internal_addresses_in_production(address: str):
-    prod = make_settings(allowed_hosts=["shop-honest.web.app"], allow_private_targets=False)
+    prod = make_settings(allowed_hosts=["shop-honest-ai.web.app"], allow_private_targets=False)
     with pytest.raises(ApiError) as err:
-        await check_target("https://shop-honest.web.app/demo/store-a/", prod, resolver_for(address))
+        await check_target("https://shop-honest-ai.web.app/demo/store-a/", prod, resolver_for(address))
     assert err.value.code == "host_not_allowed"
 
 
@@ -57,7 +57,7 @@ async def test_unresolvable_host_is_invalid():
         raise OSError("nodename nor servname provided")
 
     with pytest.raises(ApiError) as err:
-        await check_target("https://shop-honest.web.app/", make_settings(), fail)
+        await check_target("https://shop-honest-ai.web.app/", make_settings(), fail)
     assert err.value.code == "invalid_url"
 
 

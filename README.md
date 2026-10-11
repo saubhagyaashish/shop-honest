@@ -16,7 +16,7 @@ Google Cloud AI Builder Cup 2026 · Retail & Commerce. Original concept doc: `Ho
 
 The dashboard currently runs in **demo mode**: audits replay real captures of the sample stores through the same event stream the agent backend will use. The contract is `web/src/shared/contract.ts`. Setting `VITE_AUDIT_SOURCE=live` switches the dashboard to `POST /api/audits` and the SSE stream at `/api/audits/:id/events`.
 
-Live at **<https://shop-honest.web.app>**.
+Live at **<https://shop-honest-ai.web.app>**.
 
 ## Architecture
 
