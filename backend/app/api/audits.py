@@ -10,12 +10,21 @@ from typing import Any
 from fastapi import APIRouter, Header, Query, Request, Response
 from sse_starlette import EventSourceResponse
 
+from app.agents import fixer
 from app.api.limits import LiveLimits, visitor_of
 from app.browser.url_guard import check_target
 from app.config import Settings
-from app.contract.models import TERMINAL_EVENTS, AuditStatusResponse, CreateAuditRequest, CreateAuditResponse
+from app.contract.models import (
+    TERMINAL_EVENTS,
+    AuditStatusResponse,
+    CreateAuditRequest,
+    CreateAuditResponse,
+    FixProposal,
+)
 from app.errors import ApiError
 from app.journeys import journey_for
+from app.knowledge import load_knowledge
+from app.models.call import ModelCaller, ModelError
 from app.replay.player import RecordingLibrary, origin_of
 from app.runner.runner import AuditRunner
 from app.stores.events import AuditRecord, EventLog, now_iso, seconds_since
@@ -25,6 +34,8 @@ router = APIRouter(prefix="/api")
 log = logging.getLogger(__name__)
 
 HEARTBEAT_SECONDS = 15
+# Fix proposals kept per instance, so reopening "Fix it" (or replaying the same store) doesn't ask the Fixer again.
+MAX_PROPOSALS_KEPT = 256
 
 
 def _settings(request: Request) -> Settings:
@@ -96,7 +107,15 @@ async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAudi
         raise ApiError(503, "at_capacity", "All audit slots are busy. Try again in a moment.")
 
     # auto: a recorded run if there is one, otherwise a live run.
-    recording = _library(request).match(url) if body.mode != "live" else None
+    # Re-auditing a page: compare with an earlier finished audit of it, on a fresh live run.
+    previous = None
+    if body.compareTo:
+        previous = await _events(request).get(body.compareTo)
+        if previous is None or previous.status != "completed" or not previous.report or previous.target_url != url:
+            raise ApiError(400, "invalid_request", "compareTo must be a finished audit of the same page.")
+    # Verifying fixes: apply them to a copy of the store, in the audit's own browser only.
+    applied = _applied_fixes(body, previous.report if previous else None, url, settings) if body.applyFixes else None
+    recording = _library(request).match(url) if body.mode != "live" and previous is None else None
     if recording is None and body.mode == "replay":
         raise ApiError(409, "no_recording", "There's no recorded run for this page yet. Try one of the demo stores.")
 
@@ -130,8 +149,62 @@ async def create_audit(body: CreateAuditRequest, request: Request) -> CreateAudi
 
     record = AuditRecord(audit_id=audit_id, target_url=url, mode="live", owner=runner.instance, heartbeat_at=now_iso())
     await _events(request).create(record)
-    await runner.start_live(record, journey)
+    await runner.start_live(record, journey, previous=previous.report if previous else None, applied=applied)
     return CreateAuditResponse(auditId=audit_id, mode="live", eventsUrl=f"/api/audits/{audit_id}/events")
+
+
+def _applied_fixes(body: CreateAuditRequest, previous: dict[str, Any] | None, url: str, settings: Settings) -> fixer.Fix:
+    """The fixes to verify, checked against the audit they came from and the store's settings."""
+    knowledge = load_knowledge(settings.shared_dir)
+    current = fixer.current_settings(knowledge, url)
+    if previous is None or current is None:
+        raise ApiError(400, "invalid_request", "Fixes can be applied only with compareTo, and only to a demo store.")
+    plan = fixer.FixPlan(changes=[fixer.Change(**c.model_dump()) for c in body.applyFixes or []])
+    fix = fixer.apply_plan(plan, previous["findings"], knowledge, current)
+    if not fix.patch or len(fix.changes) != len(plan.changes):
+        raise ApiError(
+            400, "invalid_request", "Each fix must name a finding of that audit, a setting of this store and a new value."
+        )
+    return fix
+
+
+@router.post("/audits/{audit_id}/fixes", response_model=FixProposal)
+async def propose_fixes(audit_id: str, request: Request) -> FixProposal:
+    """The Fixer's proposal for each finding of a finished audit (docs/API.md)."""
+    record = await _record_or_404(request, audit_id)
+    if record.status != "completed" or not record.report:
+        raise ApiError(409, "not_finished", "Fixes can be proposed once the audit has finished.")
+    settings, models = _settings(request), _runner(request).models
+    knowledge = load_knowledge(settings.shared_dir)
+    findings: list[dict[str, Any]] = record.report["findings"]
+    current = fixer.current_settings(knowledge, record.target_url)
+    fix = None
+    # Only a store whose settings we control can be fixed here; anywhere else every fix is for the site's developers.
+    if current is not None and models is not None and findings:
+        kept: dict[str, fixer.Fix] = request.app.state.fix_proposals
+        key = json.dumps([record.target_url, [(f["id"], f["status"], f["title"]) for f in findings]])
+        fix = kept.get(key)
+        if fix is None:
+            try:
+                plan = await ModelCaller(settings).ask(
+                    name="fixer",
+                    model=models.fast,
+                    instruction=fixer.instruction(),
+                    schema=fixer.FixPlan,
+                    parts=fixer.request_parts(findings, knowledge, current),
+                )
+            except ModelError as err:
+                log.warning("audit %s: the Fixer had no answer (%s)", audit_id, err)
+                message = "The Fixer couldn't write fixes just now. Try again in a moment."
+                raise ApiError(503, "fixer_unavailable", message) from err
+            fix = kept[key] = fixer.apply_plan(plan, findings, knowledge, current)
+            while len(kept) > MAX_PROPOSALS_KEPT:
+                kept.pop(next(iter(kept)))
+    return FixProposal(
+        auditId=audit_id,
+        items=fixer.proposal(findings, fix),
+        canVerify=bool(fix and fix.patch) and settings.enable_live,
+    )
 
 
 @router.get("/audits/{audit_id}", response_model=AuditStatusResponse, response_model_exclude_none=True)

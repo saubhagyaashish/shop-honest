@@ -45,6 +45,8 @@ def create_app(
     if events is not None:
         app.state.events = events
     app.state.library = RecordingLibrary.load(settings.recordings_dir)
+    # The Fixer's proposals, by page and findings (api/audits.py).
+    app.state.fix_proposals = {}
     app.state.runner = AuditRunner(app.state.events, settings, frames=app.state.frames, resolver=resolver, models=models)
 
     install_error_handlers(app)

@@ -32,6 +32,7 @@ from app.stores.events import AuditRecord, EventLog, now_iso
 from app.stores.frames import FrameStore, LocalFrameStore
 
 if TYPE_CHECKING:
+    from app.agents import fixer
     from app.journeys import Journey
 
 log = logging.getLogger(__name__)
@@ -80,9 +81,21 @@ class AuditRunner:
         self._tasks[record.audit_id] = task
         task.add_done_callback(lambda _: self._forget(record.audit_id))
 
-    async def start_live(self, record: AuditRecord, journey: "Journey") -> None:
+    @property
+    def models(self) -> ModelSet | None:
+        return self._models
+
+    async def start_live(
+        self,
+        record: AuditRecord,
+        journey: "Journey",
+        previous: dict[str, Any] | None = None,
+        applied: "fixer.Fix | None" = None,
+    ) -> None:
+        """`previous`: the report of an earlier audit of the same page, to compare this one with; `applied`: fixes
+        from that audit's proposal, applied to a copy of the store before auditing it."""
         self._live.add(record.audit_id)
-        task = asyncio.create_task(self._run_live(record, journey), name=f"audit-{record.audit_id}")
+        task = asyncio.create_task(self._run_live(record, journey, previous, applied), name=f"audit-{record.audit_id}")
         self._tasks[record.audit_id] = task
         task.add_done_callback(lambda _: self._forget(record.audit_id))
 
@@ -174,7 +187,13 @@ class AuditRunner:
             log.exception("audit %s crashed", audit_id)
             await self._emit(audit_id, {"type": "audit.failed", "error": "Something went wrong while running the audit."})
 
-    async def _run_live(self, record: AuditRecord, journey: "Journey") -> None:
+    async def _run_live(
+        self,
+        record: AuditRecord,
+        journey: "Journey",
+        previous: dict[str, Any] | None = None,
+        applied: "fixer.Fix | None" = None,
+    ) -> None:
         audit_id, settings = record.audit_id, self._settings
         started_at = now_iso()
         await self._events.update(audit_id, status="running", started_at=started_at)
@@ -202,6 +221,8 @@ class AuditRunner:
                 prices=self._prices,
                 emit=emit,
                 deadline=deadline,
+                previous=previous,
+                applied=applied,
             )
             report = await (AuditGraph(audit).run() if settings.agent_graph else audit.run())
             await emit({"type": "audit.completed", "report": dump(AuditReport.model_validate(report))})

@@ -223,3 +223,84 @@ async def test_a_live_audit_taken_over_mid_run_stops_without_writing(web_base: s
     await app.state.runner.shutdown()
     assert app.state.runner.active == 0
     assert "audit.failed" not in written and "audit.completed" not in written
+
+
+# "Fix it": fixes proposed for a finished audit, verified on a copy of the store; "Re-audit this page".
+
+
+async def finish(client: httpx.AsyncClient, body: dict) -> tuple[str, list[dict]]:
+    res = await client.post("/api/audits", json=body)
+    assert res.status_code == 202, res.text
+    audit_id = res.json()["auditId"]
+    events = [e for _, e in parse_sse((await client.get(f"/api/audits/{audit_id}/events")).text)]
+    for event in events:
+        EVENT_VALIDATOR.validate(event)
+    assert events[-1]["type"] == "audit.completed", events[-1]
+    return audit_id, events
+
+
+async def test_fixes_are_proposed_then_verified_on_a_copy_of_the_store(web_base: str, tmp_path: Path):
+    settings = make_settings(enable_live=True, nav_linger_s=2, frames_dir=tmp_path, agent_graph=True)
+    app = create_app(settings, resolver=fake_resolver, models=scripted_models())
+    url = f"{web_base}/demo/store-a/p/sonicbuds-pro"
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=180) as client:
+        first, events = await finish(client, {"targetUrl": url, "mode": "live"})
+        assert "appliedFixes" not in events[-1]["report"] and "comparison" not in events[-1]["report"]
+        assert not any(e["type"] == "agent.log" and e["agent"] == "fixer" for e in events)  # fixing is a separate step
+
+        proposal = (await client.post(f"/api/audits/{first}/fixes")).json()
+        assert proposal["canVerify"] is True and len(proposal["items"]) == 9
+        kinds = {i["findingId"]: i["kind"] for i in proposal["items"]}
+        assert [k for k in kinds.values() if k != "setting"] == ["review"]  # the unsourced "bought" claim: a human's call
+        assert all(i["changes"] for i in proposal["items"])
+        changes = [
+            {"findingId": i["findingId"], "setting": c["setting"], "value": c["to"], "why": c["why"]}
+            for i in proposal["items"]
+            for c in i["changes"]
+        ]
+
+        # Every fix on: every finding is gone from the copy.
+        _, events = await finish(client, {"targetUrl": url, "compareTo": first, "applyFixes": changes})
+        report = events[-1]["report"]
+        assert len(report["appliedFixes"]) == len(changes) and report["findings"] == []
+        comparison = report["comparison"]
+        assert {r["outcome"] for r in comparison["results"]} == {"resolved"} and comparison["newFindings"] == []
+        assert (comparison["trustBefore"], comparison["trustAfter"]) == (22, 100)
+        # ₹1,499 plus the ₹97 of fees, now shown from the product page: no protection plan, membership or late fees.
+        assert (comparison["payableBefore"]["amount"], comparison["payableAfter"]["amount"]) == (1894, 1596)
+        fixer_lines = [e for e in events if e["type"] == "agent.log" and e["agent"] == "fixer"]
+        assert {"name": "set", "input": "behaviour.autoAddProtection = off"} in [e.get("tool") for e in fixer_lines]
+        assert fixer_lines[-1]["message"].startswith("Verified on the fixed copy: 9 of 9 fixed findings are gone.")
+
+        # Only the protection plan fixed: only that finding is gone.
+        only = [c for c in changes if c["findingId"] == "f-sneaked-item"]
+        _, events = await finish(client, {"targetUrl": url, "compareTo": first, "applyFixes": only})
+        outcomes = {r["findingId"]: r["outcome"] for r in events[-1]["report"]["comparison"]["results"]}
+        assert outcomes.pop("f-sneaked-item") == "resolved" and set(outcomes.values()) == {"still_present"}
+
+        # A fix must name a finding of that audit and a setting of this store.
+        bad = [{"findingId": "f-sneaked-item", "setting": "behaviour.signInWallAt", "value": "false"}]
+        res = await client.post("/api/audits", json={"targetUrl": url, "compareTo": first, "applyFixes": bad})
+        assert res.status_code == 400
+    await app.state.runner.shutdown()
+
+
+async def test_re_auditing_a_page_compares_with_the_earlier_audit(web_base: str, tmp_path: Path):
+    app = create_app(make_settings(enable_live=True, nav_linger_s=2, frames_dir=tmp_path), resolver=fake_resolver)
+    url = f"{web_base}/demo/store-a/p/sonicbuds-pro"
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=120) as client:
+        first, _ = await finish(client, {"targetUrl": url, "mode": "live"})
+        # Another page can't be compared with it.
+        store_b = f"{web_base}/demo/store-b/p/sonicbuds-pro"
+        assert (await client.post("/api/audits", json={"targetUrl": store_b, "compareTo": first})).status_code == 400
+        # Measured-only: no model to write fixes, so every fix is described for the developers.
+        proposal = (await client.post(f"/api/audits/{first}/fixes")).json()
+        assert proposal["canVerify"] is False and {i["kind"] for i in proposal["items"]} == {"code"}
+        _, events = await finish(client, {"targetUrl": url, "compareTo": first})
+    await app.state.runner.shutdown()
+    comparison = events[-1]["report"]["comparison"]
+    assert comparison["previousAuditId"] == first
+    # Nothing changed in between: every finding is still there.
+    assert {r["outcome"] for r in comparison["results"]} == {"still_present"} and comparison["newFindings"] == []
+    assert comparison["trustBefore"] == comparison["trustAfter"]
+    assert any("Compared with the earlier audit of this page: 0 of 6" in e.get("message", "") for e in events)
