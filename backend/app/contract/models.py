@@ -194,10 +194,16 @@ class StepBlocked(Model):
     screenshotUrl: str | None = None
 
 
+class AgentTool(Model):
+    name: str
+    input: str
+
+
 class AgentLog(Model):
     type: Literal["agent.log"] = "agent.log"
     agent: AgentName
     message: str
+    tool: AgentTool | None = None
 
 
 class PriceObserved(Model):

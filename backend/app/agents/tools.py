@@ -116,9 +116,9 @@ def tools_for(screen: Screen) -> list[Callable[..., dict[str, Any]]]:
     return [measure_elements, compare_reloads, find_on_other_screens, ccpa_definition]
 
 
-def describe(name: str, args: dict[str, Any], result: dict[str, Any]) -> tuple[str, str]:
-    """(the call as a chip, e.g. "measure_elements(e4, e5)"; one line for the agent log)."""
-    call = f"{name}({', '.join(_flat(v) for v in args.values())})"
+def describe(name: str, args: dict[str, Any], result: dict[str, Any]) -> tuple[dict[str, str], str]:
+    """(the call, {"name", "input"} for the agent log's tool chip; one line saying what it found)."""
+    call = {"name": name, "input": ", ".join(_flat(v) for v in args.values())}
     if "error" in result:
         return call, f"Couldn't use {name}: {result['error']}."
     if name == "measure_elements":

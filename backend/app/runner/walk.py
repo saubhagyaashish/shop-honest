@@ -77,8 +77,12 @@ class Walk:
         # The screen_review agent graph (settings.agent_graph), built on the first screen it reviews.
         self._graph: ReviewGraph | None = None
 
-    async def log(self, agent: str, message: str) -> None:
-        await self._emit({"type": "agent.log", "agent": agent, "message": message})
+    async def log(self, agent: str, message: str, tool: dict[str, str] | None = None) -> None:
+        """A line of narration; `tool` is the tool call it reports, {"name", "input"}."""
+        event: dict[str, Any] = {"type": "agent.log", "agent": agent, "message": message}
+        if tool:
+            event["tool"] = tool
+        await self._emit(event)
 
     async def start_step(self, step: JourneyStep, url: str | None = None) -> None:
         self.step = step

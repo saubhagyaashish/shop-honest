@@ -13,6 +13,24 @@
       ],
       "type": "string"
     },
+    "AgentTool": {
+      "additionalProperties": false,
+      "description": "A tool an agent called; its log line says what the tool found.",
+      "properties": {
+        "input": {
+          "description": "The arguments, written out, e.g. \"e4, e5\".",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "input"
+      ],
+      "type": "object"
+    },
     "AuditEvent": {
       "anyOf": [
         {
@@ -122,6 +140,9 @@
             },
             "message": {
               "type": "string"
+            },
+            "tool": {
+              "$ref": "#/definitions/AgentTool"
             },
             "type": {
               "const": "agent.log",

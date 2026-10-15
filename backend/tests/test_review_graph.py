@@ -23,9 +23,12 @@ class FakeWalk:
         self.evidence, _ = load_walk(store)
         self.findings = [f for check in ALL_CHECKS for f in check(self.evidence, KNOWLEDGE)]
         self.logs: list[tuple[str, str]] = []
+        self.tools: list[dict] = []
 
-    async def log(self, agent: str, message: str) -> None:
+    async def log(self, agent: str, message: str, tool: dict | None = None) -> None:
         self.logs.append((agent, message))
+        if tool:
+            self.tools.append(tool)
 
     async def add_finding(self, finding: dict) -> None:
         self.findings.append(finding)
@@ -71,6 +74,8 @@ async def test_the_adjudicator_measures_before_it_rules_and_says_so():
     lines = [m for agent, m in walk.logs if agent == "adjudicator"]
     express = next(i for i, m in enumerate(lines) if "UPGRADE TO EXPRESS" in m and "× the space of" in m)
     assert lines[express + 1].startswith('Confirmed "Standard delivery is a tiny grey link"')
+    # Each tool call is reported with the line, for the agent log's tool chip.
+    assert any(t["name"] == "measure_elements" and len(t["input"].split(", ")) == 2 for t in walk.tools)
     # A claim citing one element gets its measured look.
     assert any(m.startswith('Measured "No thanks, I prefer paying full price": text link, grey text, 12 px') for m in lines)
 

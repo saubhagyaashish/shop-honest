@@ -189,8 +189,8 @@ class ReviewGraph:
             tool: BaseTool, args: dict[str, Any], tool_context: ToolContext, tool_response: dict[str, Any]
         ) -> None:
             if tool.name != ANSWER_TOOL:
-                _, line = tools.describe(tool.name, args, tool_response)
-                await walk.log("adjudicator", line)
+                call, line = tools.describe(tool.name, args, tool_response)
+                await walk.log("adjudicator", line, tool=call)
 
         return LlmAgent(
             name="adjudicator",

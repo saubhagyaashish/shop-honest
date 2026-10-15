@@ -190,13 +190,20 @@ export interface AuditReport {
   exposure?: Exposure
 }
 
+/** A tool an agent called; its log line says what the tool found. */
+export interface AgentTool {
+  name: string
+  /** The arguments, written out, e.g. "e4, e5". */
+  input: string
+}
+
 export type AuditEvent =
   | { type: 'audit.started'; auditId: string; targetUrl: string; startedAt: string }
   | { type: 'step.started'; step: JourneyStep; url: string }
   | { type: 'step.captured'; step: JourneyStep; url: string; screenshotUrl: string }
   /** The agent could not continue at this step, e.g. a sign-in wall. No later steps follow. */
   | { type: 'step.blocked'; step: JourneyStep; url: string; reason: string; screenshotUrl?: string }
-  | { type: 'agent.log'; agent: AgentName; message: string }
+  | { type: 'agent.log'; agent: AgentName; message: string; tool?: AgentTool }
   /** Running total the shopper would pay at this point of the journey. */
   | { type: 'price.observed'; step: JourneyStep; label: string; total: Money }
   | { type: 'finding'; finding: Finding }

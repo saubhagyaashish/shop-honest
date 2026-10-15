@@ -31,7 +31,7 @@ def test_measure_shows_how_much_louder_the_preferred_option_is():
     assert out["largest"] == express and out["smallest"] == standard
     assert out["areaRatio"] >= 3 and out["fontRatio"] > 1
     call, line = describe("measure_elements", {"refs": [express, standard]}, out)
-    assert call == f"measure_elements({express}, {standard})"
+    assert call == {"name": "measure_elements", "input": f"{express}, {standard}"}
     assert "UPGRADE TO EXPRESS" in line and "× the space of" in line
 
 

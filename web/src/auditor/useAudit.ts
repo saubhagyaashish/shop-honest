@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react'
-import type { AgentName, AuditEvent, AuditReport, Finding, JourneyStep, Money, StepCapture } from '../shared/contract'
+import type { AgentName, AgentTool, AuditEvent, AuditReport, Finding, JourneyStep, Money, StepCapture } from '../shared/contract'
 import { auditSource } from './source'
 
 export interface LogEntry {
@@ -7,6 +7,7 @@ export interface LogEntry {
   at: number
   agent: AgentName
   message: string
+  tool?: AgentTool
 }
 
 export interface PricePoint {
@@ -62,7 +63,7 @@ function reduce(state: AuditState, action: Action): AuditState {
     case 'agent.log':
       return {
         ...state,
-        logs: [...state.logs, { id: state.logs.length, at: Date.now(), agent: e.agent, message: e.message }],
+        logs: [...state.logs, { id: state.logs.length, at: Date.now(), agent: e.agent, message: e.message, tool: e.tool }],
       }
     case 'step.blocked':
       return {
