@@ -14,6 +14,7 @@ import { DamageSection } from './DamageSection'
 import { EvidenceViewer } from './Evidence'
 import { ExposureSection } from './ExposureSection'
 import { FindingRow } from './FindingCard'
+import { ComparisonSection } from './ComparisonSection'
 import { ReportNav } from './ReportNav'
 import type { NavItem } from './ReportNav'
 import { SelfAuditSection } from './SelfAuditSection'
@@ -34,6 +35,11 @@ interface ReportProps {
   onDownloadPdf: () => void
   selfAuditBusy: boolean
   onDownloadSelfAudit: () => void
+  /** Open "Fix it" (needs the backend). */
+  onFix?: () => void
+  onReaudit?: () => void
+  reauditBusy?: boolean
+  reauditError?: string
 }
 
 export function Report({
@@ -47,6 +53,10 @@ export function Report({
   onDownloadPdf,
   selfAuditBusy,
   onDownloadSelfAudit,
+  onFix,
+  onReaudit,
+  reauditBusy,
+  reauditError,
 }: ReportProps) {
   const exposure = report.exposure
   const region = exposure?.jurisdictions.find((j) => j.code === jurisdiction)
@@ -83,13 +93,14 @@ export function Report({
   const navItems = useMemo<NavItem[]>(
     () => [
       { id: 'overview', label: 'Overview' },
+      ...(report.comparison ? [{ id: 'compared', label: report.appliedFixes ? 'Verified ✓' : 'Re-audit 🔁' }] : []),
       ...(exposure ? [{ id: 'money', label: 'Money 💸' }, { id: 'legal', label: 'Legal ⚖️' }] : []),
       { id: 'findings', label: 'Findings', count: confirmed.length },
       ...(review.length ? [{ id: 'review', label: 'Review', count: review.length }] : []),
       { id: 'ccpa', label: 'CCPA self-audit' },
       { id: 'trail', label: 'Audit trail' },
     ],
-    [exposure, confirmed.length, review.length],
+    [exposure, confirmed.length, review.length, report.comparison, report.appliedFixes],
   )
 
   const toggle = (id: string) =>
@@ -133,10 +144,16 @@ export function Report({
         pdfBusy={pdfBusy}
         onDownloadPdf={onDownloadPdf}
         onSeeFixes={() => document.getElementById('findings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        onFix={onFix}
+        onReaudit={onReaudit}
+        reauditBusy={reauditBusy}
+        reauditError={reauditError}
       />
       <ReportNav items={navItems} className="mt-3" />
 
       <div className="mt-6 space-y-16">
+        {report.comparison && <ComparisonSection comparison={report.comparison} applied={report.appliedFixes} />}
+
         {exposure && (
           <DamageSection drift={exposure.priceDrift} onJumpToFinding={jumpToFinding} stoppedAfter={!coverage.complete && lastAudited ? STEP_LABEL[lastAudited] : undefined} />
         )}
@@ -248,6 +265,7 @@ export function Report({
             </div>
           </section>
         )}
+
 
         <SelfAuditSection report={report} pdfBusy={selfAuditBusy} onDownloadPdf={onDownloadSelfAudit} onJumpToFinding={jumpToFinding} />
 

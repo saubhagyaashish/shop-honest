@@ -1,12 +1,13 @@
 import { ArrowLeft, FileDown, LoaderCircle, RotateCcw, SkipForward } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import type { JurisdictionCode } from '../../shared/contract'
 import { useDocumentTitle } from '../../shared/useDocumentTitle'
 import { AgentLog } from '../components/AgentLog'
 import { FindingFeedItem } from '../components/FindingCard'
+import { FixPanel } from '../components/FixPanel'
 import { JourneyTimeline } from '../components/JourneyTimeline'
 import { LiveBrowser } from '../components/LiveBrowser'
 import { PriceMeter } from '../components/PriceMeter'
@@ -16,6 +17,7 @@ import { Sticker } from '../ui/Sticker'
 import { buttonClass, TONE_BG } from '../ui/styles'
 import type { Tone } from '../ui/styles'
 import { auditSource } from '../source'
+import type { FixToApply } from '../source/AuditSource'
 import { isDemoAudit } from '../source/withDemoFallback'
 import { useAudit } from '../useAudit'
 import { useRunKind } from '../useRunKind'
@@ -23,6 +25,11 @@ import type { AuditState } from '../useAudit'
 
 export function AuditPage() {
   const { auditId } = useParams()
+  // A fresh page per audit: going from a report to its re-audit starts over (view, decisions, panels).
+  return <AuditView key={auditId} auditId={auditId} />
+}
+
+function AuditView({ auditId }: { auditId: string | undefined }) {
   const [runKey, setRunKey] = useState(0)
   const { state, skipAhead } = useAudit(auditId, runKey)
   const runKind = useRunKind(auditId)
@@ -34,6 +41,10 @@ export function AuditPage() {
   const [decisions, setDecisions] = useState<Record<string, Decision>>({})
   const [pdfState, setPdfState] = useState<'idle' | 'building' | 'error'>('idle')
   const [selfAuditState, setSelfAuditState] = useState<'idle' | 'building' | 'error'>('idle')
+  const [reauditState, setReauditState] = useState<'idle' | 'starting'>('idle')
+  const [reauditError, setReauditError] = useState<string>()
+  const [fixing, setFixing] = useState(false)
+  const navigate = useNavigate()
   const elapsed = useElapsed(state)
   useDocumentTitle(state.status === 'completed' ? 'Audit report · Shop Honest' : 'Scanning… · Shop Honest')
 
@@ -68,6 +79,34 @@ export function AuditPage() {
       console.error(err)
       setPdfState('error')
     }
+  }
+
+  // "Fix it" and "Re-audit this page" need the real backend (never the built-in demo), and make no sense on a report
+  // of a fixed copy: its page is the copy, not the store.
+  const backed = auditSource.mode === 'live' && !!auditId && !isDemoAudit(auditId) && !state.report?.appliedFixes
+  const canReaudit = backed
+  const canFix = backed && !!auditSource.proposeFixes
+  const loadFixes = useCallback(() => auditSource.proposeFixes!(auditId!), [auditId])
+  const reaudit = async () => {
+    if (!state.report) return
+    setReauditState('starting')
+    setReauditError(undefined)
+    setFixing(false)
+    try {
+      const next = await auditSource.start(state.report.targetUrl, { live: true, compareTo: state.report.auditId })
+      setReauditState('idle')
+      navigate(`/audit/${next}`)
+    } catch (err) {
+      setReauditState('idle')
+      setReauditError(err instanceof Error ? err.message : 'Could not start the re-audit.')
+    }
+  }
+  // Audit a copy of the store with these fixes applied, and compare with this audit (errors show in the panel).
+  const verifyFixes = async (fixes: FixToApply[]) => {
+    if (!state.report) return
+    const next = await auditSource.start(state.report.targetUrl, { live: true, compareTo: state.report.auditId, applyFixes: fixes })
+    setFixing(false)
+    navigate(`/audit/${next}`)
   }
 
   const downloadSelfAudit = async () => {
@@ -169,6 +208,20 @@ export function AuditPage() {
           onDownloadPdf={downloadPdf}
           selfAuditBusy={selfAuditState === 'building'}
           onDownloadSelfAudit={downloadSelfAudit}
+          onFix={canFix ? () => setFixing(true) : undefined}
+          onReaudit={canReaudit ? reaudit : undefined}
+          reauditBusy={reauditState === 'starting'}
+          reauditError={reauditError}
+        />
+      )}
+
+      {fixing && state.report && (
+        <FixPanel
+          report={state.report}
+          load={loadFixes}
+          onClose={() => setFixing(false)}
+          onVerify={verifyFixes}
+          onReaudit={canReaudit ? reaudit : undefined}
         />
       )}
 

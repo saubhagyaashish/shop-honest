@@ -1,7 +1,7 @@
-import { ArrowDown, FileDown, Flag as FlagIcon, LoaderCircle, ReceiptText, Scale } from 'lucide-react'
+import { ArrowDown, FileDown, Flag as FlagIcon, LoaderCircle, ReceiptText, RotateCcw, Scale, Wrench } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
-import type { AuditReport } from '../../shared/contract'
+import type { AuditReport, FixChange } from '../../shared/contract'
 import { coverageOf } from '../coverage'
 import { buildHeadline, summariseRisk } from '../headline'
 import { STEP_LABEL } from '../labels'
@@ -19,10 +19,16 @@ interface Props {
   pdfBusy: boolean
   onDownloadPdf: () => void
   onSeeFixes: () => void
+  /** Open "Fix it" (live backends only). */
+  onFix?: () => void
+  /** Re-audit this page and compare (live backends only). */
+  onReaudit?: () => void
+  reauditBusy?: boolean
+  reauditError?: string
 }
 
 /** Above-the-fold verdict: score, one-line takeaway and the three numbers that matter. */
-export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes }: Props) {
+export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix, onReaudit, reauditBusy = false, reauditError }: Props) {
   const { lead, punch } = buildHeadline(report)
   const risk = summariseRisk(report)
   const confirmed = report.findings.filter((f) => f.status === 'confirmed').length
@@ -50,6 +56,7 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes }: Prop
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink/60">
             <span className="rounded-md border-2 border-ink bg-cream px-1.5 py-0.5 font-mono text-[11px] text-ink">{target}</span>
             <span>audited {new Date(report.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            {report.appliedFixes && <FixedCopyBadge fixes={report.appliedFixes} />}
           </div>
           <div className="mt-2">
             <CoverageBar steps={report.steps} />
@@ -99,6 +106,11 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes }: Prop
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3 print:hidden">
+            {onFix && !clean && (
+              <button type="button" onClick={onFix} className={buttonClass('pink', 'md')}>
+                <Wrench size={18} strokeWidth={2.6} /> Fix it
+              </button>
+            )}
             <button type="button" onClick={onDownloadPdf} disabled={pdfBusy} className={buttonClass('lime', 'md')}>
               {pdfBusy ? <LoaderCircle size={18} strokeWidth={2.6} className="animate-spin" /> : <FileDown size={18} strokeWidth={2.6} />}
               {pdfBusy ? 'Building PDF…' : 'Download PDF report'}
@@ -108,10 +120,32 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes }: Prop
                 See what to fix <ArrowDown size={16} strokeWidth={2.6} />
               </button>
             )}
+            {onReaudit && (
+              <button
+                type="button"
+                onClick={onReaudit}
+                disabled={reauditBusy}
+                className={buttonClass('white', 'md')}
+                title="Audit this page again and compare with this audit"
+              >
+                {reauditBusy ? <LoaderCircle size={18} strokeWidth={2.6} className="animate-spin" /> : <RotateCcw size={18} strokeWidth={2.6} />}
+                {reauditBusy ? 'Starting…' : 'Re-audit this page'}
+              </button>
+            )}
+            {reauditError && <p className="basis-full text-sm font-semibold text-[#d6336c]">{reauditError}</p>}
           </div>
         </div>
       </div>
     </motion.section>
+  )
+}
+
+function FixedCopyBadge({ fixes }: { fixes: FixChange[] }) {
+  const n = new Set(fixes.map((c) => c.setting)).size
+  return (
+    <span className="rounded-md border-2 border-ink bg-lime px-1.5 py-0.5 text-[11px] font-extrabold text-ink">
+      🔧 a fixed copy: {n} setting{n === 1 ? '' : 's'} changed, in the auditor’s browser only
+    </span>
   )
 }
 
