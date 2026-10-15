@@ -65,7 +65,7 @@ flowchart LR
   agents --> gcs[(Cloud Storage<br/>screenshots)]
   agents --> bq[(BigQuery<br/>price history)]
   runner --> sm[(Secret Manager)]
-  browser -- "allowlisted only" --> target[Store under audit<br/>demo store or allowlisted site]
+  browser -- "public sites only" --> target[Store under audit<br/>demo store or any public site]
 ```
 
 The web app and the API share one origin through a Hosting rewrite, so there's no CORS in production and one link to share. The backend is a single Cloud Run service; audits run as background work inside it (see [ADR-0001](decisions/0001-python-adk-cloud-run.md)).
@@ -268,7 +268,7 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 | Threat | Control |
 |---|---|
 | SSRF: reaching internal services or the cloud metadata server | Only `http`/`https`. Resolve DNS and reject private, loopback, link-local and metadata IP ranges. Re-check every redirect and navigation inside Playwright (request interception). |
-| Using us as a free crawler | **Allowlist** (`ALLOWED_HOSTS`): the demo store plus approved domains. Per-requester rate limit. |
+| Using us as a free crawler | **Daily cap** on live audits site-wide. `ALLOWED_HOSTS` is `*` (any public site) since 15 Oct 2026; a deployment can narrow it to named domains. |
 | Surprise bills | Per-audit budgets ([§11](#11-reliability-and-cost-controls)), billing alerts. |
 | Acting on a shopper's behalf | A click guard in code: never pay, buy now, confirm an order, sign in, register, subscribe or accept terms; never type. A sign-in wall, bot protection or an error page produces `step.blocked`, and the report shows a partial audit. We never get around CAPTCHAs. |
 | Wrongly accusing a real company | On third-party sites, measured findings that depend on page layout go to human review, and reports carry an "automated observations, not a legal finding" note ([ADR-0013](decisions/0013-general-navigator-on-third-party-stores.md)). |
@@ -343,7 +343,7 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `AUDIT_MAX_TOKENS` | `400000` | Model tokens (input + output) one audit may spend |
 | `FRAMES_BUCKET` / `BQ_DATASET` | `shop-honest-72fd8-audits` / `shop_honest` | Storage names |
 | `LIVE_PER_IP_PER_HOUR` / `LIVE_PER_DAY` | `0` / `100` (deployed; `0` = no limit) | Live-audit limits per visitor and for the whole site |
-| `ALLOWED_HOSTS` | `shop-honest-ai.web.app,localhost` | URL allowlist |
+| `ALLOWED_HOSTS` | `*` · `shop-honest-ai.web.app,localhost` | Sites that can be audited: `*` is any public site; named hosts may resolve to private addresses in development |
 | `ENABLE_LIVE` / `MAX_LIVE_AUDITS` | `true` / `2` | Live audits on or off; how many browsers at once |
 | `NAV_LINGER_S` / `NAV_STEP_TIMEOUT_S` | `8` / `15` | Time on the product page before the second look; per-action timeout |
 | `FRAMES_DIR` | `backend/var/frames` | Where live screenshots go until Cloud Storage |

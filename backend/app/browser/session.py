@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 from playwright.async_api import Page, Request, Route, async_playwright
 
-from app.browser.url_guard import METADATA_HOSTS, METADATA_IPS, Resolver, host_allowed, is_internal
+from app.browser.url_guard import METADATA_HOSTS, METADATA_IPS, Resolver, host_allowed, is_internal, private_allowed
 from app.config import Settings
 
 log = logging.getLogger(__name__)
@@ -54,9 +54,7 @@ class RequestGuard:
         for address in addresses:
             if ipaddress.ip_address(address) in METADATA_IPS:
                 return False
-            if is_internal(address) and not (
-                self._settings.allow_private_targets and host_allowed(host, self._settings.allowed_hosts)
-            ):
+            if is_internal(address) and not private_allowed(host, self._settings):
                 return False
         return True
 

@@ -175,7 +175,7 @@ class ReviewGraph:
         """An Adjudicator for one claim, and the refs to show it. With the check that settles this kind of claim it
         must use it first (capped per claim); without one it rules on exactly what Judge.review shows."""
         walk, judge = self._walk, self._judge
-        check = tools.check_for(screen, candidate.patternId)
+        check = tools.check_for(screen, candidate.patternId) if judge.settings.adjudicator_max_tool_calls > 0 else None
         used = 0
 
         def before_tool(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext) -> dict[str, Any] | None:

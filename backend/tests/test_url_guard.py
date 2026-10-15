@@ -26,10 +26,24 @@ async def test_rejects_non_http_urls(url: str):
     assert (err.value.status, err.value.code) == (400, "invalid_url")
 
 
-async def test_rejects_hosts_off_the_allowlist():
+async def test_any_public_site_is_allowed_by_default():
+    url = "https://www.amazon.in/dp/B0EXAMPLE"
+    assert await check_target(url, make_settings(), resolver_for("93.184.215.14")) == url
+
+
+async def test_rejects_hosts_off_an_explicit_allowlist():
+    only = make_settings(allowed_hosts=["shop-honest-ai.web.app"])
     with pytest.raises(ApiError) as err:
-        await check_target("https://www.amazon.in/dp/x", make_settings(), resolver_for("93.184.215.14"))
+        await check_target("https://www.amazon.in/dp/x", only, resolver_for("93.184.215.14"))
     assert (err.value.status, err.value.code) == (403, "host_not_allowed")
+
+
+@pytest.mark.parametrize("address", ["10.0.0.7", "127.0.0.1", "169.254.169.254"])
+async def test_any_site_never_reaches_a_private_network(address: str):
+    # "*" lets any public name in, but a name that resolves inside a private network stays out, even in development.
+    with pytest.raises(ApiError) as err:
+        await check_target("http://rebind.example/", make_settings(), resolver_for(address))
+    assert err.value.code == "host_not_allowed"
 
 
 @pytest.mark.parametrize("address", ["169.254.169.254", "10.0.0.7", "127.0.0.1", "192.168.1.4", "::1", "fd00:ec2::254"])
@@ -61,6 +75,10 @@ async def test_unresolvable_host_is_invalid():
     with pytest.raises(ApiError) as err:
         await check_target("https://shop-honest-ai.web.app/", make_settings(), fail)
     assert err.value.code == "invalid_url"
+
+
+def test_star_allows_any_host():
+    assert host_allowed("www.lowes.com", ["*"]) and not host_allowed("www.lowes.com", ["localhost"])
 
 
 def test_suffix_entries_cover_subdomains():

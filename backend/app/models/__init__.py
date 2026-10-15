@@ -21,7 +21,10 @@ def model_for(tier: Tier, settings: Settings) -> Model | None:
     if settings.model_provider == "ollama":
         from google.adk.models.lite_llm import LiteLlm
 
-        return LiteLlm(model=f"ollama_chat/{settings.ollama_model}", api_base=settings.ollama_base_url)
+        # Ollama silently drops whatever doesn't fit its context window; real store pages need a big one.
+        return LiteLlm(
+            model=f"ollama_chat/{settings.ollama_model}", api_base=settings.ollama_base_url, num_ctx=settings.ollama_num_ctx
+        )
     if settings.model_provider == "gemini":
         # ADK's Gemini client reads its backend from the environment; backend/.env only reaches Settings.
         # (GOOGLE_GENAI_USE_ENTERPRISE replaces the deprecated GOOGLE_GENAI_USE_VERTEXAI.)

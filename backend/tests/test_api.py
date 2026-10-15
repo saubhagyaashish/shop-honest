@@ -73,7 +73,7 @@ async def test_caught_up_client_gets_204(client: httpx.AsyncClient):
 async def test_errors_share_one_shape(client: httpx.AsyncClient):
     cases = [
         ({"targetUrl": "not a url"}, 400, "invalid_url"),
-        ({"targetUrl": "https://www.amazon.in/dp/B0"}, 403, "host_not_allowed"),
+        ({"targetUrl": "http://metadata.google.internal/computeMetadata/v1/"}, 403, "host_not_allowed"),
         ({"targetUrl": "http://localhost:5173/some/other/page"}, 409, "no_recording"),
         ({"targetUrl": STORE_A, "mode": "live"}, 501, "live_unavailable"),
         ({"targetUrl": STORE_A, "mode": "sideways"}, 400, "invalid_request"),
