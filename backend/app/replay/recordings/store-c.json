@@ -3,7 +3,7 @@
   "store": "store-c",
   "pathPrefix": "/demo/store-c/",
   "source": "live",
-  "recordedAt": "2026-10-11T12:40:45.886109Z",
+  "recordedAt": "2026-10-15T13:39:59.105199Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
-        "startedAt": "2026-10-11T12:40:10.421Z"
+        "startedAt": "2026-10-15T13:39:36.883Z"
       }
     },
     {
-      "delayMs": 389,
+      "delayMs": 219,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -35,7 +35,7 @@
       }
     },
     {
-      "delayMs": 1413,
+      "delayMs": 1338,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -43,7 +43,7 @@
       }
     },
     {
-      "delayMs": 339,
+      "delayMs": 312,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -52,15 +52,15 @@
       }
     },
     {
-      "delayMs": 1,
+      "delayMs": 9,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the popup with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the popup with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 47,
+      "delayMs": 60,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -76,7 +76,7 @@
       }
     },
     {
-      "delayMs": 8326,
+      "delayMs": 8311,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -101,19 +101,11 @@
       "event": {
         "type": "agent.log",
         "agent": "price_historian",
-        "message": "Looking up this product's price history in BigQuery…"
+        "message": "Looking up this product's price history in the demo catalog…"
       }
     },
     {
-      "delayMs": 1,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Reading the product page with Gemini (gemini-3.8-flash)…"
-      }
-    },
-    {
-      "delayMs": 2062,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "price_historian",
@@ -174,7 +166,7 @@
       }
     },
     {
-      "delayMs": 164,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -182,7 +174,23 @@
       }
     },
     {
-      "delayMs": 1695,
+      "delayMs": 3,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Reading the product page with Gemini (gemini-3.6-flash)…"
+      }
+    },
+    {
+      "delayMs": 1370,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Manipulative wording on decline option"
+      }
+    },
+    {
+      "delayMs": 283,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -206,7 +214,7 @@
           "id": "f-restarting-timer",
           "patternId": "false_urgency",
           "title": "Countdown timer restarts on every page load",
-          "explanation": "The countdown read 09:50 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
+          "explanation": "The countdown read 09:51 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
           "severity": "high",
           "confidence": 0.97,
           "status": "confirmed",
@@ -241,9 +249,9 @@
                 }
               }
             ],
-            "elementText": "Deal ends in 09:50",
+            "elementText": "Deal ends in 09:51",
             "observations": [
-              "Before reload: 09:50",
+              "Before reload: 09:51",
               "After reload: 09:59",
               "The deadline moved later, which a real end time cannot do"
             ]
@@ -253,7 +261,7 @@
       }
     },
     {
-      "delayMs": 31,
+      "delayMs": 25,
       "event": {
         "type": "step.started",
         "step": "variant",
@@ -269,7 +277,7 @@
       }
     },
     {
-      "delayMs": 315,
+      "delayMs": 313,
       "event": {
         "type": "step.captured",
         "step": "variant",
@@ -339,7 +347,7 @@
       }
     },
     {
-      "delayMs": 33,
+      "delayMs": 37,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -355,7 +363,7 @@
       }
     },
     {
-      "delayMs": 279,
+      "delayMs": 278,
       "event": {
         "type": "step.captured",
         "step": "cart",
@@ -429,15 +437,15 @@
       }
     },
     {
-      "delayMs": 2,
+      "delayMs": 3,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the cart with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the cart with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 43,
+      "delayMs": 41,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -445,7 +453,7 @@
       }
     },
     {
-      "delayMs": 288,
+      "delayMs": 303,
       "event": {
         "type": "step.captured",
         "step": "checkout",
@@ -472,85 +480,11 @@
       }
     },
     {
-      "delayMs": 1035,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Unverified popularity claim creates false urgency"
-      }
-    },
-    {
-      "delayMs": 0,
+      "delayMs": 2848,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "Nothing on the page can confirm or refute this claim. Sending it to human review."
-      }
-    },
-    {
-      "delayMs": 0,
-      "event": {
-        "type": "finding",
-        "finding": {
-          "id": "m-product-first-false_urgency-1",
-          "patternId": "false_urgency",
-          "title": "Unverified popularity claim creates false urgency",
-          "explanation": "The badge claiming \"🔥 120+ bought in the last 24 hours\" pressures shoppers with popularity metrics that cannot be verified on the page.",
-          "severity": "low",
-          "confidence": 0.74,
-          "status": "needs_review",
-          "step": "product",
-          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
-          "rule": {
-            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
-            "clause": "Annexure 1, item 1",
-            "verified": true
-          },
-          "detectedBy": "pattern_analyst",
-          "evidence": {
-            "frames": [
-              {
-                "screenshotUrl": "/recordings/store-c/2.jpg",
-                "caption": "The product page, as the shopper saw it",
-                "bbox": {
-                  "x": 0.434375,
-                  "y": 0.28680479825517996,
-                  "w": 0.185498046875,
-                  "h": 0.034896401308615044
-                }
-              }
-            ],
-            "elementText": "🔥 120+ bought in the last 24 hours",
-            "observations": [
-              "Claim: \"🔥 120+ bought in the last 24 hours\""
-            ]
-          },
-          "remediation": "Remove the unverified purchase counter badge unless backed by real-time, auditable sales data."
-        }
-      }
-    },
-    {
-      "delayMs": 3653,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Nothing on the cart needs flagging beyond what was measured."
-      }
-    },
-    {
-      "delayMs": 6716,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Decline option uses guilt-inducing language"
-      }
-    },
-    {
-      "delayMs": 4422,
-      "event": {
-        "type": "agent.log",
-        "agent": "adjudicator",
-        "message": "Confirmed \"Decline option uses guilt-inducing language\" (confidence 0.95)."
+        "message": "Confirmed \"Manipulative wording on decline option\" (confidence 0.95)."
       }
     },
     {
@@ -560,8 +494,8 @@
         "finding": {
           "id": "m-product-popup-confirm_shaming-1",
           "patternId": "confirm_shaming",
-          "title": "Decline option uses guilt-inducing language",
-          "explanation": "The opt-out link is worded as \"No thanks, I prefer paying full price\" to make shoppers feel foolish for declining the offer.",
+          "title": "Manipulative wording on decline option",
+          "explanation": "The opt-out link text 'No thanks, I prefer paying full price' uses guilt-inducing language to make shoppers feel foolish for turning down the discount.",
           "severity": "medium",
           "confidence": 0.95,
           "status": "confirmed",
@@ -591,7 +525,7 @@
               "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
             ]
           },
-          "remediation": "Change the decline option text to a neutral label such as \"No thanks\"."
+          "remediation": "Change the decline option text to a neutral phrase like 'No thanks'."
         }
       }
     },
@@ -600,15 +534,15 @@
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Discount button is made far more prominent than the opt-out link"
+        "message": "Unverifiable popularity claim"
       }
     },
     {
-      "delayMs": 4200,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "Confirmed \"Discount button is made far more prominent than the opt-out link\" (confidence 0.90)."
+        "message": "Nothing on the page can confirm or refute this claim. Sending it to human review."
       }
     },
     {
@@ -616,10 +550,88 @@
       "event": {
         "type": "finding",
         "finding": {
-          "id": "m-product-popup-interface_interference-2",
+          "id": "m-product-popup-false_urgency-2",
+          "patternId": "false_urgency",
+          "title": "Unverifiable popularity claim",
+          "explanation": "The claim '🔥 120+ bought in the last 24 hours' creates purchase pressure based on popularity data that cannot be verified by the shopper on this page.",
+          "severity": "low",
+          "confidence": 0.74,
+          "status": "needs_review",
+          "step": "product",
+          "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+          "rule": {
+            "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+            "clause": "Annexure 1, item 1",
+            "verified": true
+          },
+          "detectedBy": "pattern_analyst",
+          "evidence": {
+            "frames": [
+              {
+                "screenshotUrl": "/recordings/store-c/1.jpg",
+                "caption": "The popup, as the shopper saw it",
+                "bbox": {
+                  "x": 0.434375,
+                  "y": 0.28680479825517996,
+                  "w": 0.185498046875,
+                  "h": 0.034896401308615044
+                }
+              }
+            ],
+            "elementText": "🔥 120+ bought in the last 24 hours",
+            "observations": [
+              "Claim: \"🔥 120+ bought in the last 24 hours\""
+            ]
+          },
+          "remediation": "Remove the unverified purchase count claim or provide a verifiable real-time data source."
+        }
+      }
+    },
+    {
+      "delayMs": 0,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Asymmetric styling favoring offer acceptance"
+      }
+    },
+    {
+      "delayMs": 2520,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the cart needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 484,
+      "event": {
+        "type": "agent.log",
+        "agent": "adjudicator",
+        "message": "\"Unlock my 10% off\" takes up 4.2× the space of \"No thanks, I prefer paying full price\", with 1.17× the font size.",
+        "tool": {
+          "name": "measure_elements",
+          "input": "e2, e3"
+        }
+      }
+    },
+    {
+      "delayMs": 3452,
+      "event": {
+        "type": "agent.log",
+        "agent": "adjudicator",
+        "message": "Confirmed \"Asymmetric styling favoring offer acceptance\" (confidence 0.90)."
+      }
+    },
+    {
+      "delayMs": 0,
+      "event": {
+        "type": "finding",
+        "finding": {
+          "id": "m-product-popup-interface_interference-3",
           "patternId": "interface_interference",
-          "title": "Discount button is made far more prominent than the opt-out link",
-          "explanation": "The preferred action \"Unlock my 10% off\" is rendered as a prominent 336×40 px teal button, while the alternative \"No thanks, I prefer paying full price\" is diminished to a small 12 px grey text link.",
+          "title": "Asymmetric styling favoring offer acceptance",
+          "explanation": "The store-preferred action 'Unlock my 10% off' is styled as a prominent 336x40 px filled dark teal button, while the alternative 'No thanks, I prefer paying full price' is deemphasized as a small 12 px grey text link.",
           "severity": "medium",
           "confidence": 0.9,
           "status": "confirmed",
@@ -650,20 +662,20 @@
               "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
             ]
           },
-          "remediation": "Give the opt-out option comparable visual prominence and button styling to the accept option."
+          "remediation": "Provide the decline option with visual prominence comparable to the accept button."
         }
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 3,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "6 findings confirmed, 1 sent to human review, each with a screenshot and a rule citation. Gemini (gemini-3.8-flash) reviewed all 3 screens and its claims were checked against their evidence."
+        "message": "6 findings confirmed, 1 sent to human review, each with a screenshot and a rule citation. Gemini (gemini-3.6-flash) reviewed all 3 screens and its claims were checked against their evidence."
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 1,
       "event": {
         "type": "agent.log",
         "agent": "reporter",
@@ -677,8 +689,8 @@
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
-          "startedAt": "2026-10-11T12:40:10.421Z",
-          "completedAt": "2026-10-11T12:40:45.875Z",
+          "startedAt": "2026-10-15T13:39:36.883Z",
+          "completedAt": "2026-10-15T13:39:59.098Z",
           "trustScore": 46.0,
           "steps": [
             {
@@ -751,7 +763,7 @@
               "id": "f-restarting-timer",
               "patternId": "false_urgency",
               "title": "Countdown timer restarts on every page load",
-              "explanation": "The countdown read 09:50 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
+              "explanation": "The countdown read 09:51 on the first look. Straight after a reload it read 09:59. A real deadline cannot move later, so this timer restarts per visit and the urgency it creates is false.",
               "severity": "high",
               "confidence": 0.97,
               "status": "confirmed",
@@ -786,9 +798,9 @@
                     }
                   }
                 ],
-                "elementText": "Deal ends in 09:50",
+                "elementText": "Deal ends in 09:51",
                 "observations": [
-                  "Before reload: 09:50",
+                  "Before reload: 09:51",
                   "After reload: 09:59",
                   "The deadline moved later, which a real end time cannot do"
                 ]
@@ -882,46 +894,10 @@
               "remediation": "Don't put \"1-Year Accidental Damage Protection\" in the cart for the shopper; offer it as an unticked option."
             },
             {
-              "id": "m-product-first-false_urgency-1",
-              "patternId": "false_urgency",
-              "title": "Unverified popularity claim creates false urgency",
-              "explanation": "The badge claiming \"🔥 120+ bought in the last 24 hours\" pressures shoppers with popularity metrics that cannot be verified on the page.",
-              "severity": "low",
-              "confidence": 0.74,
-              "status": "needs_review",
-              "step": "product",
-              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
-              "rule": {
-                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
-                "clause": "Annexure 1, item 1",
-                "verified": true
-              },
-              "detectedBy": "pattern_analyst",
-              "evidence": {
-                "frames": [
-                  {
-                    "screenshotUrl": "/recordings/store-c/2.jpg",
-                    "caption": "The product page, as the shopper saw it",
-                    "bbox": {
-                      "x": 0.434375,
-                      "y": 0.28680479825517996,
-                      "w": 0.185498046875,
-                      "h": 0.034896401308615044
-                    }
-                  }
-                ],
-                "elementText": "🔥 120+ bought in the last 24 hours",
-                "observations": [
-                  "Claim: \"🔥 120+ bought in the last 24 hours\""
-                ]
-              },
-              "remediation": "Remove the unverified purchase counter badge unless backed by real-time, auditable sales data."
-            },
-            {
               "id": "m-product-popup-confirm_shaming-1",
               "patternId": "confirm_shaming",
-              "title": "Decline option uses guilt-inducing language",
-              "explanation": "The opt-out link is worded as \"No thanks, I prefer paying full price\" to make shoppers feel foolish for declining the offer.",
+              "title": "Manipulative wording on decline option",
+              "explanation": "The opt-out link text 'No thanks, I prefer paying full price' uses guilt-inducing language to make shoppers feel foolish for turning down the discount.",
               "severity": "medium",
               "confidence": 0.95,
               "status": "confirmed",
@@ -951,13 +927,49 @@
                   "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
                 ]
               },
-              "remediation": "Change the decline option text to a neutral label such as \"No thanks\"."
+              "remediation": "Change the decline option text to a neutral phrase like 'No thanks'."
             },
             {
-              "id": "m-product-popup-interface_interference-2",
+              "id": "m-product-popup-false_urgency-2",
+              "patternId": "false_urgency",
+              "title": "Unverifiable popularity claim",
+              "explanation": "The claim '🔥 120+ bought in the last 24 hours' creates purchase pressure based on popularity data that cannot be verified by the shopper on this page.",
+              "severity": "low",
+              "confidence": 0.74,
+              "status": "needs_review",
+              "step": "product",
+              "pageUrl": "__ORIGIN__/demo/store-c/p/sonicbuds-pro",
+              "rule": {
+                "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                "clause": "Annexure 1, item 1",
+                "verified": true
+              },
+              "detectedBy": "pattern_analyst",
+              "evidence": {
+                "frames": [
+                  {
+                    "screenshotUrl": "/recordings/store-c/1.jpg",
+                    "caption": "The popup, as the shopper saw it",
+                    "bbox": {
+                      "x": 0.434375,
+                      "y": 0.28680479825517996,
+                      "w": 0.185498046875,
+                      "h": 0.034896401308615044
+                    }
+                  }
+                ],
+                "elementText": "🔥 120+ bought in the last 24 hours",
+                "observations": [
+                  "Claim: \"🔥 120+ bought in the last 24 hours\""
+                ]
+              },
+              "remediation": "Remove the unverified purchase count claim or provide a verifiable real-time data source."
+            },
+            {
+              "id": "m-product-popup-interface_interference-3",
               "patternId": "interface_interference",
-              "title": "Discount button is made far more prominent than the opt-out link",
-              "explanation": "The preferred action \"Unlock my 10% off\" is rendered as a prominent 336×40 px teal button, while the alternative \"No thanks, I prefer paying full price\" is diminished to a small 12 px grey text link.",
+              "title": "Asymmetric styling favoring offer acceptance",
+              "explanation": "The store-preferred action 'Unlock my 10% off' is styled as a prominent 336x40 px filled dark teal button, while the alternative 'No thanks, I prefer paying full price' is deemphasized as a small 12 px grey text link.",
               "severity": "medium",
               "confidence": 0.9,
               "status": "confirmed",
@@ -988,7 +1000,7 @@
                   "Popup button: \"No thanks, I prefer paying full price\" (text link, grey text, 12 px, 198×16 px)"
                 ]
               },
-              "remediation": "Give the opt-out option comparable visual prominence and button styling to the accept option."
+              "remediation": "Provide the decline option with visual prominence comparable to the accept button."
             }
           ],
           "summary": "6 violations confirmed across 2 of the 3 reachable journey steps, and 1 claim sent for human review. The amount payable rose from ₹1,499 on the product page to ₹1,698 (+13%). Checkout and Payment could not be audited: sign-in required.",
@@ -1054,17 +1066,17 @@
                     "clause": "Annexure 1, item 2",
                     "verified": true
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
-                    "clause": "Annexure 1, item 1",
-                    "verified": true
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
                     "clause": "Annexure 1, item 3",
                     "verified": true
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
+                    "clause": "Annexure 1, item 1",
+                    "verified": true
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023",
                     "clause": "Annexure 1, item 6",
                     "verified": true
@@ -1139,17 +1151,17 @@
                     "clause": "Pre-ticked boxes for add-on purchases",
                     "verified": true
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
-                    "clause": "s 4 unfair practice (time-limited offers that are not)",
-                    "verified": true
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
                     "clause": "s 4 unfair practice (saying or doing anything that may deceive or mislead a consumer)",
                     "verified": true
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
+                    "clause": "s 4 unfair practice (time-limited offers that are not)",
+                    "verified": true
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "Consumer Protection (Fair Trading) Act (CPFTA)",
                     "clause": "s 4 unfair practice (saying or doing anything that may deceive or mislead a consumer)",
                     "verified": true
@@ -1215,17 +1227,17 @@
                     "clause": "reg 40: no extra payment without express consent; pre-ticked boxes do not count",
                     "verified": true
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "Digital Markets, Competition and Consumers Act 2024",
-                    "clause": "Sch. 20 banned practices (false limited-time claims); s 226 misleading actions",
-                    "verified": false
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "Digital Markets, Competition and Consumers Act 2024",
                     "clause": "s 228 aggressive practices",
                     "verified": false
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "Digital Markets, Competition and Consumers Act 2024",
+                    "clause": "Sch. 20 banned practices (false limited-time claims); s 226 misleading actions",
+                    "verified": false
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "Digital Markets, Competition and Consumers Act 2024",
                     "clause": "s 226 misleading actions (deceptive overall presentation)",
                     "verified": true
@@ -1295,17 +1307,17 @@
                     "clause": "Art. 22: express consent for extra payments; no pre-ticked boxes",
                     "verified": true
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "Unfair Commercial Practices Directive",
-                    "clause": "Annex I, point 7: false “very limited time” claims are banned outright",
-                    "verified": true
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "Digital Services Act",
                     "clause": "Art. 25: online interfaces must not deceive or manipulate users",
                     "verified": true
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "Unfair Commercial Practices Directive",
+                    "clause": "Annex I, point 7: false “very limited time” claims are banned outright",
+                    "verified": true
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "Digital Services Act",
                     "clause": "Art. 25: online interfaces must not deceive or manipulate users",
                     "verified": true
@@ -1361,17 +1373,17 @@
                     "clause": "Unfair or deceptive acts or practices",
                     "verified": true
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "FTC Act §5, 15 U.S.C. §45",
-                    "clause": "Unfair or deceptive acts or practices",
-                    "verified": true
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "FTC Act §5, 15 U.S.C. §45",
                     "clause": "Unfair or deceptive acts or practices",
                     "verified": true
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "FTC Act §5, 15 U.S.C. §45",
+                    "clause": "Unfair or deceptive acts or practices",
+                    "verified": true
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "FTC Act §5, 15 U.S.C. §45",
                     "clause": "Unfair or deceptive acts or practices",
                     "verified": true
@@ -1427,17 +1439,17 @@
                     "clause": "Dark-pattern rule: pre-selection of purchase options",
                     "verified": true
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
-                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
-                    "verified": false
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
                     "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
                     "verified": false
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
+                    "clause": "Art. 21(1)(i): deceptive or unfair means of inducing consumers",
+                    "verified": false
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "Act on Consumer Protection in Electronic Commerce (amended, in force 14 Feb 2025)",
                     "clause": "Dark-pattern rule: false hierarchy",
                     "verified": true
@@ -1479,17 +1491,17 @@
                     "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
                     "verified": false
                   },
-                  "m-product-first-false_urgency-1": {
-                    "source": "Australian Consumer Law",
-                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
-                    "verified": false
-                  },
                   "m-product-popup-confirm_shaming-1": {
                     "source": "Australian Consumer Law",
                     "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
                     "verified": false
                   },
-                  "m-product-popup-interface_interference-2": {
+                  "m-product-popup-false_urgency-2": {
+                    "source": "Australian Consumer Law",
+                    "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
+                    "verified": false
+                  },
+                  "m-product-popup-interface_interference-3": {
                     "source": "Australian Consumer Law",
                     "clause": "s 18 misleading or deceptive conduct (s 28B unfair trading practices from 1 Jul 2027)",
                     "verified": false

@@ -3,7 +3,7 @@
   "store": "store-b",
   "pathPrefix": "/demo/store-b/",
   "source": "live",
-  "recordedAt": "2026-10-11T12:40:10.401527Z",
+  "recordedAt": "2026-10-15T13:39:36.875094Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "startedAt": "2026-10-11T12:39:12.187Z"
+        "startedAt": "2026-10-15T13:39:15.609Z"
       }
     },
     {
-      "delayMs": 270,
+      "delayMs": 232,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -35,7 +35,7 @@
       }
     },
     {
-      "delayMs": 2536,
+      "delayMs": 2533,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -51,7 +51,7 @@
       }
     },
     {
-      "delayMs": 8317,
+      "delayMs": 8331,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -76,19 +76,11 @@
       "event": {
         "type": "agent.log",
         "agent": "price_historian",
-        "message": "Looking up this product's price history in BigQuery…"
+        "message": "Looking up this product's price history in the demo catalog…"
       }
     },
     {
-      "delayMs": 1,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Reading the product page with Gemini (gemini-3.8-flash)…"
-      }
-    },
-    {
-      "delayMs": 2128,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "price_historian",
@@ -96,7 +88,7 @@
       }
     },
     {
-      "delayMs": 150,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -104,15 +96,15 @@
       }
     },
     {
-      "delayMs": 2158,
+      "delayMs": 7,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Nothing on the product page needs flagging beyond what was measured."
+        "message": "Reading the product page with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 686,
+      "delayMs": 2850,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -121,7 +113,7 @@
       }
     },
     {
-      "delayMs": 36,
+      "delayMs": 35,
       "event": {
         "type": "step.started",
         "step": "variant",
@@ -137,7 +129,7 @@
       }
     },
     {
-      "delayMs": 337,
+      "delayMs": 340,
       "event": {
         "type": "step.captured",
         "step": "variant",
@@ -146,7 +138,7 @@
       }
     },
     {
-      "delayMs": 40,
+      "delayMs": 37,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -162,7 +154,7 @@
       }
     },
     {
-      "delayMs": 282,
+      "delayMs": 318,
       "event": {
         "type": "step.captured",
         "step": "cart",
@@ -183,15 +175,15 @@
       }
     },
     {
-      "delayMs": 1,
+      "delayMs": 2,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the cart with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the cart with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 59,
+      "delayMs": 50,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -199,7 +191,7 @@
       }
     },
     {
-      "delayMs": 288,
+      "delayMs": 273,
       "event": {
         "type": "step.captured",
         "step": "checkout",
@@ -228,15 +220,15 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 3,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the checkout page with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the checkout page with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 35,
+      "delayMs": 37,
       "event": {
         "type": "step.started",
         "step": "payment",
@@ -244,7 +236,7 @@
       }
     },
     {
-      "delayMs": 280,
+      "delayMs": 284,
       "event": {
         "type": "step.captured",
         "step": "payment",
@@ -273,15 +265,23 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 4,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the payment page with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the payment page with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 3026,
+      "delayMs": 689,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the product page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 1950,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -289,7 +289,7 @@
       }
     },
     {
-      "delayMs": 2045,
+      "delayMs": 1839,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -297,7 +297,7 @@
       }
     },
     {
-      "delayMs": 35530,
+      "delayMs": 1436,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -305,15 +305,15 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 4,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "Every check passed: nothing to confirm. Gemini (gemini-3.8-flash) reviewed all 4 screens and its claims were checked against their evidence."
+        "message": "Every check passed: nothing to confirm. Gemini (gemini-3.6-flash) reviewed all 4 screens and its claims were checked against their evidence."
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 1,
       "event": {
         "type": "agent.log",
         "agent": "reporter",
@@ -327,8 +327,8 @@
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-          "startedAt": "2026-10-11T12:39:12.187Z",
-          "completedAt": "2026-10-11T12:40:10.394Z",
+          "startedAt": "2026-10-15T13:39:15.609Z",
+          "completedAt": "2026-10-15T13:39:36.864Z",
           "trustScore": 100.0,
           "steps": [
             {
