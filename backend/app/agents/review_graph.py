@@ -8,8 +8,8 @@ screen_review (Workflow), one session per screen the journey hands to analyse():
               ▼ "claims"
             ground ──"none"──▶ finish         evidence rules drop what the measurements contradict
               ▼ "claims"
-            adjudicate                        per claim, the Adjudicator (LlmAgent) checks the evidence
-                                              with tools (tools.py), then decide() sets the status
+            adjudicate                        per claim, the Adjudicator (LlmAgent) runs the check that settles
+                                              that kind of claim (tools.py), then decide() sets the status
 
 The agents run as child nodes (ctx.run_node), so they receive the screen exactly
 as Judge.review sends it, screenshot included. The narration matches
@@ -19,7 +19,6 @@ Judge's own (ground, decide…), so both paths judge alike.
 
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from google.adk.agents import Context, LlmAgent
@@ -47,7 +46,6 @@ log = logging.getLogger(__name__)
 # node runner stays quiet. A failure this file doesn't handle still reaches Walk._review, which logs it.
 logging.getLogger("google_adk.google.adk.workflow._node_runner").setLevel(logging.CRITICAL)
 
-TOOLS_NOTE = (Path(__file__).parent / "prompts" / "adjudicator_tools.md").read_text(encoding="utf-8")
 # The tool ADK adds so a model without native support can return a structured answer; not an evidence check.
 ANSWER_TOOL = "set_model_response"
 
@@ -143,15 +141,16 @@ class ReviewGraph:
         @node(rerun_on_resume=True)
         async def adjudicate(ctx: Context, node_input: str) -> None:
             work = self._screens[node_input]
-            screen = tools.Screen(work.capture, work.elements, walk.evidence, judge.knowledge)
+            screen = tools.Screen(work.capture, work.elements, walk.evidence)
             for finding, candidate in work.claims:
                 await walk.log("pattern_analyst", candidate.title)
                 verdict = None
                 if judge.verifies(candidate):
                     try:
                         region = await judge.region(work.jpeg, finding)
-                        parts = adjudicator.request_parts(judge.knowledge, finding, region, candidate.elementRefs)
-                        verdict = adjudicator.Verdict.model_validate(await self._ask(ctx, self._adjudicator(screen), parts))
+                        agent, refs = self._adjudicator(screen, candidate)
+                        parts = adjudicator.request_parts(judge.knowledge, finding, region, refs)
+                        verdict = adjudicator.Verdict.model_validate(await self._ask(ctx, agent, parts))
                     except ModelError as err:
                         await judge.unverified(walk, finding, err)
                         continue
@@ -171,9 +170,11 @@ class ReviewGraph:
             ],
         )
 
-    def _adjudicator(self, screen: tools.Screen) -> LlmAgent:
-        """An Adjudicator for one claim, with the evidence tools of its screen and a cap on how many it may call."""
+    def _adjudicator(self, screen: tools.Screen, candidate: Candidate) -> tuple[LlmAgent, list[str] | None]:
+        """An Adjudicator for one claim, and the refs to show it. With the check that settles this kind of claim it
+        must use it first (capped per claim); without one it rules on exactly what Judge.review shows."""
         walk, judge = self._walk, self._judge
+        check = tools.check_for(screen, candidate.patternId)
         used = 0
 
         def before_tool(tool: BaseTool, args: dict[str, Any], tool_context: ToolContext) -> dict[str, Any] | None:
@@ -192,17 +193,21 @@ class ReviewGraph:
                 call, line = tools.describe(tool.name, args, tool_response)
                 await walk.log("adjudicator", line, tool=call)
 
-        return LlmAgent(
+        instruction = adjudicator.instruction()
+        if check:
+            instruction = f"{instruction.rstrip()}\n\n{check[1]}\n"
+        agent = LlmAgent(
             name="adjudicator",
             model=judge.caller.metered(judge.fast),
-            static_instruction=f"{adjudicator.instruction().rstrip()}\n\n{TOOLS_NOTE}",
-            tools=tools.tools_for(screen),
+            static_instruction=instruction,
+            tools=[check[0]] if check else [],
             output_schema=adjudicator.Verdict,
             include_contents="none",
             generate_content_config=types.GenerateContentConfig(temperature=0),
             before_tool_callback=before_tool,
             after_tool_callback=after_tool,
         )
+        return agent, candidate.elementRefs if check else None
 
     async def _ask(self, ctx: Context, agent: LlmAgent, parts: list[types.Part]) -> Any:
         """Run the agent as a child node: once, again on an unusable answer; ModelError when there's still none."""

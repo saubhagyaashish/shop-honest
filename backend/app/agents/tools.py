@@ -13,9 +13,7 @@ from typing import Any
 
 from app.agents.elements import Element
 from app.agents.findings import Evidence
-from app.agents.pattern_analyst import GUIDANCE
 from app.browser.capture import Capture
-from app.knowledge import Knowledge
 
 PRODUCT_LOOKS = ("product-first", "product-reload")
 SCREEN_NAMES = {"product": "product page", "variant": "product page", "checkout": "checkout page", "payment": "payment page"}
@@ -28,7 +26,6 @@ class Screen:
     capture: Capture
     elements: list[Element]
     evidence: Evidence
-    knowledge: Knowledge
 
     def element(self, ref: str) -> Element | None:
         return next((e for e in self.elements if e.ref == ref), None)
@@ -78,22 +75,30 @@ def seen_elsewhere(screen: Screen, ref: str) -> dict[str, Any]:
     return {"text": _short(element.text), "otherScreens": names}
 
 
-def ccpa_rule(screen: Screen, pattern_id: str) -> dict[str, Any]:
-    try:
-        pattern = screen.knowledge.pattern(pattern_id)
-    except KeyError:
-        return {"error": f"unknown pattern {pattern_id}"}
-    rule = pattern.get("rule") or {}
-    return {
-        "pattern": pattern["name"],
-        "definition": pattern["description"],
-        "lookFor": GUIDANCE.get(pattern_id, ""),
-        "rule": ", ".join(p for p in (rule.get("source"), rule.get("clause")) if p),
-    }
+# The one check that can settle each kind of claim, and how the Adjudicator is told to use it. Claims about wording
+# (confirm shaming, trick questions…) get none: no measurement adds to what the crop and the facts already show,
+# and every tool call costs another model turn.
+CHECKS: dict[str, tuple[str, str]] = {
+    "interface_interference": (
+        "measure_elements",
+        "Before you rule, call measure_elements on the cited options to compare how prominent each one is.",
+    ),
+    "false_urgency": (
+        "compare_reloads",
+        "Before you rule, call compare_reloads on the cited claim: a real figure stays put when the page is reloaded.",
+    ),
+    "nagging": (
+        "find_on_other_screens",
+        "Before you rule, call find_on_other_screens on the cited popup: nagging repeats across the journey.",
+    ),
+}
 
 
-def tools_for(screen: Screen) -> list[Callable[..., dict[str, Any]]]:
-    """The tools as plain functions over this screen, for ADK to declare to the model."""
+def check_for(screen: Screen, pattern_id: str) -> tuple[Callable[..., dict[str, Any]], str] | None:
+    """The tool that settles this kind of claim on this screen, with the line telling the Adjudicator to use it."""
+    name, note = CHECKS.get(pattern_id, ("", ""))
+    if not name or (name == "compare_reloads" and screen.capture.step != "product"):
+        return None
 
     def measure_elements(refs: list[str]) -> dict[str, Any]:
         """Measured size, font and colour of the listed elements (refs like "e3"), and how many times larger the
@@ -109,11 +114,8 @@ def tools_for(screen: Screen) -> list[Callable[..., dict[str, Any]]]:
         """Which other screens of this shopping journey showed the same text (for repeated interruptions)."""
         return seen_elsewhere(screen, ref)
 
-    def ccpa_definition(pattern_id: str) -> dict[str, Any]:
-        """The CCPA guideline's definition of a dark pattern (by id, such as "confirm_shaming") and its clause."""
-        return ccpa_rule(screen, pattern_id)
-
-    return [measure_elements, compare_reloads, find_on_other_screens, ccpa_definition]
+    tools = {f.__name__: f for f in (measure_elements, compare_reloads, find_on_other_screens)}
+    return tools[name], note
 
 
 def describe(name: str, args: dict[str, Any], result: dict[str, Any]) -> tuple[dict[str, str], str]:
@@ -139,8 +141,6 @@ def describe(name: str, args: dict[str, Any], result: dict[str, Any]) -> tuple[d
     if name == "find_on_other_screens":
         screens = result["otherScreens"]
         return call, ("Also shown on the " + ", ".join(screens) + ".") if screens else "Not shown on any other screen."
-    if name == "ccpa_definition":
-        return call, f"Checked the rule: {result['pattern']}, {result['rule']}."
     return call, f"Used {name}."
 
 

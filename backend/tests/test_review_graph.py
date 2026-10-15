@@ -75,9 +75,10 @@ async def test_the_adjudicator_measures_before_it_rules_and_says_so():
     express = next(i for i, m in enumerate(lines) if "UPGRADE TO EXPRESS" in m and "× the space of" in m)
     assert lines[express + 1].startswith('Confirmed "Standard delivery is a tiny grey link"')
     # Each tool call is reported with the line, for the agent log's tool chip.
-    assert any(t["name"] == "measure_elements" and len(t["input"].split(", ")) == 2 for t in walk.tools)
-    # A claim citing one element gets its measured look.
-    assert any(m.startswith('Measured "No thanks, I prefer paying full price": text link, grey text, 12 px') for m in lines)
+    assert [t["name"] for t in walk.tools] == ["measure_elements"]
+    assert len(walk.tools[0]["input"].split(", ")) == 2
+    # Wording (the shaming decline link) is ruled on directly: no measurement adds to it.
+    assert not any("No thanks" in m for m in lines if m.startswith("Measured"))
 
 
 async def test_unverifiable_claims_skip_the_adjudicator():
@@ -109,11 +110,12 @@ async def test_a_model_that_answers_nonsense_never_breaks_the_audit():
 
 
 async def test_a_spent_budget_sends_claims_to_human_review():
-    walk, judge = await judge_with("store-a", graph=True, audit_max_model_calls=2)
-    # The popup is read (call 1); its adjudicator measures (call 2) but has nothing left to rule with.
-    assert (judge.reviewed, judge.failed) == (1, 4)
-    shaming = next(f for f in walk.findings if f["patternId"] == "confirm_shaming")
-    assert shaming["status"] == "needs_review"
+    walk, judge = await judge_with("store-a", graph=True, audit_max_model_calls=6)
+    # Calls 1 to 5: four screens read and the popup's claim ruled on. At checkout the adjudicator measures (call 6),
+    # then has nothing left to rule with; the payment page isn't read at all.
+    assert (judge.reviewed, judge.failed) == (4, 1)
+    steered = next(f for f in walk.findings if f["patternId"] == "interface_interference")
+    assert steered["status"] == "needs_review"
     message = "Couldn't double-check this (the audit's model-call budget is used up). Sending it to human review."
     assert ("adjudicator", message) in walk.logs
 

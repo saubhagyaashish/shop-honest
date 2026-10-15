@@ -3,12 +3,8 @@
 import copy
 
 from app.agents.elements import build_elements
-from app.agents.tools import Screen, ccpa_rule, compare_looks, describe, measure, seen_elsewhere
-from app.config import REPO_DIR
-from app.knowledge import load_knowledge
+from app.agents.tools import Screen, check_for, compare_looks, describe, measure, seen_elsewhere
 from tests.conftest import load_walk
-
-KNOWLEDGE = load_knowledge(REPO_DIR / "shared")
 
 
 def screen(store: str, label: str, edit=None) -> Screen:
@@ -17,7 +13,7 @@ def screen(store: str, label: str, edit=None) -> Screen:
         ev.captures = copy.deepcopy(ev.captures)
         edit(ev.captures)
     capture = ev.captures[label]
-    return Screen(capture=capture, elements=build_elements(capture, []), evidence=ev, knowledge=KNOWLEDGE)
+    return Screen(capture=capture, elements=build_elements(capture, []), evidence=ev)
 
 
 def ref(s: Screen, text: str) -> str:
@@ -83,8 +79,18 @@ def test_seen_elsewhere_ignores_the_same_step():
     assert seen_elsewhere(s, ref(s, "bought in the last"))["otherScreens"] == []
 
 
-def test_ccpa_rule_cites_the_clause():
-    s = screen("store-a", "product-popup")
-    out = ccpa_rule(s, "confirm_shaming")
-    assert out["pattern"] == "Confirm shaming" and "Annexure 1, item 3" in out["rule"]
-    assert ccpa_rule(s, "made_up") == {"error": "unknown pattern made_up"}
+def test_each_kind_of_claim_gets_the_one_check_that_settles_it():
+    checkout, product = screen("store-a", "checkout"), screen("store-a", "product-first")
+    assert check_for(checkout, "interface_interference")[0].__name__ == "measure_elements"  # type: ignore[index]
+    assert check_for(product, "false_urgency")[0].__name__ == "compare_reloads"  # type: ignore[index]
+    assert check_for(product, "nagging")[0].__name__ == "find_on_other_screens"  # type: ignore[index]
+    # Wording is ruled on directly, and only the product page is looked at twice.
+    assert check_for(checkout, "confirm_shaming") is None
+    assert check_for(checkout, "false_urgency") is None
+
+
+def test_the_check_runs_on_its_screen():
+    s = screen("store-a", "checkout")
+    tool, note = check_for(s, "interface_interference")  # type: ignore[misc]
+    out = tool(refs=[ref(s, "upgrade to express"), ref(s, "continue with standard")])
+    assert out["areaRatio"] >= 3 and "measure_elements" in note
