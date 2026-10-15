@@ -12,6 +12,32 @@ from app.models.scripted import ScriptedLlm
 
 LINE = re.compile(r'^(e\d+) · ([a-z ]+?)(?: \(.*?\))?: "(.*?)"', re.M)
 CITED = re.compile(r"^Cited elements: (.+)$", re.M)
+FINDING = re.compile(r"^- (\S+) · (\w+) at the (\w+) step", re.M)
+
+# What a good Fixer changes for each of Store A's findings (by finding id, or the judged pattern of a model finding).
+STORE_A_FIXES: dict[str, list[tuple[str, str]]] = {
+    "f-restarting-timer": [("behaviour.resettingTimer", "false")],
+    "f-frozen-stock": [("behaviour.frozenStock", "false")],
+    "f-inflated-mrp": [("mrp.sonicbuds-pro", "1599")],
+    "f-sneaked-item": [("behaviour.autoAddProtection", "false")],
+    "f-pre-ticked-subscription": [("behaviour.membershipTickedByDefault", "false")],
+    "f-late-fees": [("behaviour.feesAtPaymentOnly", "false"), ("upfrontPlatformFee", "97")],
+    "confirm_shaming": [("behaviour.guiltDeclinePopup", "false")],
+    "interface_interference": [("behaviour.lopsidedDeliveryChoice", "false")],
+    "false_urgency": [("behaviour.buyersClaim", "false")],
+}
+
+
+def demo_store_fixer(user_text: str, skip: frozenset[str] = frozenset()) -> list[dict]:
+    """Fixes for every finding listed, except those whose id or pattern is in skip."""
+    out = []
+    for finding_id, pattern, _ in FINDING.findall(user_text):
+        key = finding_id if finding_id.startswith("f-") else pattern
+        if finding_id in skip or key in skip:
+            continue
+        for setting, value in STORE_A_FIXES.get(key, []):
+            out.append({"findingId": finding_id, "setting": setting, "value": value, "why": f"Fixes {finding_id}."})
+    return out
 
 
 def elements_in(user_text: str) -> list[tuple[str, str, str]]:
@@ -51,11 +77,16 @@ def demo_store_analyst(user_text: str) -> list[dict]:
 
 
 def scripted_models(
-    analyst: Callable[[str], list[dict]] = demo_store_analyst, agreement: float = 0.9, delay: float = 0
+    analyst: Callable[[str], list[dict]] = demo_store_analyst,
+    agreement: float = 0.9,
+    delay: float = 0,
+    fixer: Callable[[str], list[dict]] = demo_store_fixer,
 ) -> ModelSet:
     def respond(system: str, user: str, images: int) -> str | dict:
         if "Pattern Analyst" in system:
             return json.dumps({"candidates": analyst(user)})
+        if "You are the Fixer" in system:
+            return json.dumps({"changes": fixer(user)})
         # In the agent graph the adjudicator has tools: measure the cited elements first, then rule.
         if "measure_elements" in system and "[measure_elements]" not in user and (cited := CITED.search(user)):
             return {"tool": "measure_elements", "args": {"refs": cited.group(1).split(", ")}}
