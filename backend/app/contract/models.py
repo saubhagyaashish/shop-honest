@@ -27,7 +27,11 @@ PatternId = Literal[
 ]
 JourneyStep = Literal["product", "variant", "cart", "checkout", "payment"]
 JOURNEY_STEPS: tuple[JourneyStep, ...] = ("product", "variant", "cart", "checkout", "payment")
-AgentName = Literal["navigator", "pattern_analyst", "evidence", "price_historian", "seller_trust", "adjudicator", "reporter"]
+AgentName = Literal[
+    "navigator", "pattern_analyst", "evidence", "price_historian", "seller_trust", "adjudicator", "reporter", "fixer"
+]
+FixOutcome = Literal["resolved", "still_present"]
+FixKind = Literal["setting", "code", "review"]
 Severity = Literal["high", "medium", "low"]
 FindingStatus = Literal["confirmed", "needs_review"]
 StepStatus = Literal["audited", "blocked"]
@@ -115,6 +119,7 @@ class JurisdictionExposure(Model):
     status: Literal["in_force", "coming"]
     maxPenalty: str
     penaltyHeadline: str
+    perContraventionMax: Money | None = None
     upcoming: UpcomingLaw | None = None
     citations: dict[str, RuleCitation]
     precedents: list[Precedent]
@@ -151,6 +156,43 @@ class StepCapture(Model):
     blockedReason: str | None = None
 
 
+class FixChange(Model):
+    findingId: str
+    setting: str
+    to: str
+    why: str
+    # "from" is a Python keyword.
+    from_: str = Field(alias="from")
+
+
+class FixResult(Model):
+    findingId: str
+    title: str
+    patternId: PatternId
+    step: JourneyStep
+    outcome: FixOutcome
+
+
+class FindingRef(Model):
+    title: str
+    patternId: PatternId
+    step: JourneyStep
+
+
+class Verification(Model):
+    trustBefore: float
+    trustAfter: float
+    payableBefore: Money | None = None
+    payableAfter: Money | None = None
+    results: list[FixResult]
+    newFindings: list[FindingRef]
+
+
+class Comparison(Verification):
+    previousAuditId: str
+    previousCompletedAt: str
+
+
 class AuditReport(Model):
     auditId: str
     targetUrl: str
@@ -162,6 +204,8 @@ class AuditReport(Model):
     summary: str
     exposure: Exposure | None = None
     reviewedSteps: list[JourneyStep] | None = None
+    appliedFixes: list[FixChange] | None = None
+    comparison: Comparison | None = None
 
 
 # Events (the discriminated union AuditEvent)
@@ -247,7 +291,7 @@ TERMINAL_EVENTS = frozenset({"audit.completed", "audit.failed"})
 
 def dump(model: BaseModel) -> dict[str, Any]:
     """JSON-ready dict with empty optional fields left out, as the TypeScript contract expects."""
-    return model.model_dump(mode="json", exclude_none=True)
+    return model.model_dump(mode="json", exclude_none=True, by_alias=True)
 
 
 # API request / response bodies (docs/API.md)
@@ -256,9 +300,37 @@ AuditMode = Literal["replay", "live"]
 AuditStatus = Literal["queued", "running", "completed", "failed"]
 
 
+class AppliedFix(Model):
+    findingId: str
+    setting: str
+    value: str
+    why: str = ""
+
+
 class CreateAuditRequest(Model):
     targetUrl: str
     mode: Literal["auto", "replay", "live"] = "auto"
+    # A finished audit of the same page to compare with ("Re-audit this page"); the new audit runs live.
+    compareTo: str | None = None
+    # With compareTo: fixes from that audit's proposal to apply to a copy of the store before auditing it.
+    applyFixes: list[AppliedFix] | None = Field(default=None, max_length=30)
+
+
+class FixItem(Model):
+    findingId: str
+    title: str
+    patternId: PatternId
+    step: JourneyStep
+    status: FindingStatus
+    kind: FixKind
+    changes: list[FixChange]
+    suggestion: str
+
+
+class FixProposal(Model):
+    auditId: str
+    items: list[FixItem]
+    canVerify: bool
 
 
 class CreateAuditResponse(Model):

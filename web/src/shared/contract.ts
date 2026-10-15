@@ -31,6 +31,7 @@ export type AgentName =
   | 'seller_trust'
   | 'adjudicator'
   | 'reporter'
+  | 'fixer'
 
 export type Severity = 'high' | 'medium' | 'low'
 
@@ -128,6 +129,8 @@ export interface JurisdictionExposure {
   maxPenalty: string
   /** One short line for at-a-glance cards, e.g. "Up to 10% of global turnover". */
   penaltyHeadline: string
+  /** The statutory maximum for one contravention, where the law fixes an amount (India: ₹10 lakh, the first time). */
+  perContraventionMax?: Money
   /** New law already passed but not yet in force. */
   upcoming?: { law: string; effectiveFrom: string; summary: string }
   /** Rule each finding breaches here, keyed by finding id. */
@@ -176,6 +179,79 @@ export interface StepCapture {
   blockedReason?: string
 }
 
+/** A change the Fixer made to the store's settings, to fix one finding. */
+export interface FixChange {
+  findingId: string
+  /** The setting, e.g. "behaviour.autoAddProtection". */
+  setting: string
+  from: string
+  to: string
+  /** Why this removes the dark pattern, in one sentence. */
+  why: string
+}
+
+export type FixOutcome = 'resolved' | 'still_present'
+
+/** A finding of the earlier audit, and whether the later one still found it. */
+export interface FixResult {
+  findingId: string
+  title: string
+  patternId: PatternId
+  step: JourneyStep
+  outcome: FixOutcome
+}
+
+export interface FindingRef {
+  title: string
+  patternId: PatternId
+  step: JourneyStep
+}
+
+/** The same journey audited again: was each earlier finding still there? */
+export interface Verification {
+  trustBefore: number
+  trustAfter: number
+  payableBefore?: Money
+  payableAfter?: Money
+  results: FixResult[]
+  /** Found the second time but not the first. */
+  newFindings: FindingRef[]
+}
+
+/**
+ * How a finding can be fixed: `setting` by changing the store's own settings (stores whose settings we control),
+ * `code` only by the site's developers, `review` a human's call first (the finding awaits review).
+ */
+export type FixKind = 'setting' | 'code' | 'review'
+
+/** The Fixer's proposal for one finding. */
+export interface FixItem {
+  findingId: string
+  title: string
+  patternId: PatternId
+  step: JourneyStep
+  status: FindingStatus
+  kind: FixKind
+  /** Settings changes that fix it; empty unless the store's settings can. */
+  changes: FixChange[]
+  /** What to change, in words, for the site's developers. */
+  suggestion: string
+}
+
+/** Response of POST /api/audits/{auditId}/fixes: a fix proposed for each finding of a finished audit. */
+export interface FixProposal {
+  auditId: string
+  items: FixItem[]
+  /** The changes can be applied to a copy of this store and verified by re-auditing it (demo stores). */
+  canVerify: boolean
+}
+
+/** This audit against an earlier one of the same page ("Re-audit this page", or verifying fixes). */
+export interface Comparison extends Verification {
+  previousAuditId: string
+  previousCompletedAt: string
+}
+
 export interface AuditReport {
   auditId: string
   targetUrl: string
@@ -193,6 +269,10 @@ export interface AuditReport {
    * Empty for a measured-only audit. Absent in reports from before 15 Oct 2026, which a model judged throughout.
    */
   reviewedSteps?: JourneyStep[]
+  /** Set when this audit checked a copy of the store with these fixes applied ("Verify these fixes"). */
+  appliedFixes?: FixChange[]
+  /** Set when this audit re-checked an earlier one of the same page. */
+  comparison?: Comparison
 }
 
 /** A tool an agent called; its log line says what the tool found. */

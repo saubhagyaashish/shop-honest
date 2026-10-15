@@ -9,7 +9,8 @@
         "price_historian",
         "seller_trust",
         "adjudicator",
-        "reporter"
+        "reporter",
+        "fixer"
       ],
       "type": "string"
     },
@@ -237,8 +238,19 @@
     "AuditReport": {
       "additionalProperties": false,
       "properties": {
+        "appliedFixes": {
+          "description": "Set when this audit checked a copy of the store with these fixes applied (\"Verify these fixes\").",
+          "items": {
+            "$ref": "#/definitions/FixChange"
+          },
+          "type": "array"
+        },
         "auditId": {
           "type": "string"
+        },
+        "comparison": {
+          "$ref": "#/definitions/Comparison",
+          "description": "Set when this audit re-checked an earlier one of the same page."
         },
         "completedAt": {
           "type": "string"
@@ -314,6 +326,52 @@
         "y",
         "w",
         "h"
+      ],
+      "type": "object"
+    },
+    "Comparison": {
+      "additionalProperties": false,
+      "description": "This audit against an earlier one of the same page (\"Re-audit this page\", or verifying fixes).",
+      "properties": {
+        "newFindings": {
+          "description": "Found the second time but not the first.",
+          "items": {
+            "$ref": "#/definitions/FindingRef"
+          },
+          "type": "array"
+        },
+        "payableAfter": {
+          "$ref": "#/definitions/Money"
+        },
+        "payableBefore": {
+          "$ref": "#/definitions/Money"
+        },
+        "previousAuditId": {
+          "type": "string"
+        },
+        "previousCompletedAt": {
+          "type": "string"
+        },
+        "results": {
+          "items": {
+            "$ref": "#/definitions/FixResult"
+          },
+          "type": "array"
+        },
+        "trustAfter": {
+          "type": "number"
+        },
+        "trustBefore": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "newFindings",
+        "previousAuditId",
+        "previousCompletedAt",
+        "results",
+        "trustAfter",
+        "trustBefore"
       ],
       "type": "object"
     },
@@ -466,6 +524,26 @@
       ],
       "type": "object"
     },
+    "FindingRef": {
+      "additionalProperties": false,
+      "properties": {
+        "patternId": {
+          "$ref": "#/definitions/PatternId"
+        },
+        "step": {
+          "$ref": "#/definitions/JourneyStep"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "patternId",
+        "step"
+      ],
+      "type": "object"
+    },
     "FindingStatus": {
       "description": "Adjudicator outcome: asserted in the report, or sent to a human.",
       "enum": [
@@ -473,6 +551,153 @@
         "needs_review"
       ],
       "type": "string"
+    },
+    "FixChange": {
+      "additionalProperties": false,
+      "description": "A change the Fixer made to the store's settings, to fix one finding.",
+      "properties": {
+        "findingId": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "setting": {
+          "description": "The setting, e.g. \"behaviour.autoAddProtection\".",
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "why": {
+          "description": "Why this removes the dark pattern, in one sentence.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "findingId",
+        "setting",
+        "from",
+        "to",
+        "why"
+      ],
+      "type": "object"
+    },
+    "FixItem": {
+      "additionalProperties": false,
+      "description": "The Fixer's proposal for one finding.",
+      "properties": {
+        "changes": {
+          "description": "Settings changes that fix it; empty unless the store's settings can.",
+          "items": {
+            "$ref": "#/definitions/FixChange"
+          },
+          "type": "array"
+        },
+        "findingId": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/FixKind"
+        },
+        "patternId": {
+          "$ref": "#/definitions/PatternId"
+        },
+        "status": {
+          "$ref": "#/definitions/FindingStatus"
+        },
+        "step": {
+          "$ref": "#/definitions/JourneyStep"
+        },
+        "suggestion": {
+          "description": "What to change, in words, for the site's developers.",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "findingId",
+        "title",
+        "patternId",
+        "step",
+        "status",
+        "kind",
+        "changes",
+        "suggestion"
+      ],
+      "type": "object"
+    },
+    "FixKind": {
+      "description": "How a finding can be fixed: `setting` by changing the store's own settings (stores whose settings we control), `code` only by the site's developers, `review` a human's call first (the finding awaits review).",
+      "enum": [
+        "setting",
+        "code",
+        "review"
+      ],
+      "type": "string"
+    },
+    "FixOutcome": {
+      "enum": [
+        "resolved",
+        "still_present"
+      ],
+      "type": "string"
+    },
+    "FixProposal": {
+      "additionalProperties": false,
+      "description": "Response of POST /api/audits/{auditId}/fixes: a fix proposed for each finding of a finished audit.",
+      "properties": {
+        "auditId": {
+          "type": "string"
+        },
+        "canVerify": {
+          "description": "The changes can be applied to a copy of this store and verified by re-auditing it (demo stores).",
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/FixItem"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "auditId",
+        "items",
+        "canVerify"
+      ],
+      "type": "object"
+    },
+    "FixResult": {
+      "additionalProperties": false,
+      "description": "A finding of the earlier audit, and whether the later one still found it.",
+      "properties": {
+        "findingId": {
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/definitions/FixOutcome"
+        },
+        "patternId": {
+          "$ref": "#/definitions/PatternId"
+        },
+        "step": {
+          "$ref": "#/definitions/JourneyStep"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "findingId",
+        "title",
+        "patternId",
+        "step",
+        "outcome"
+      ],
+      "type": "object"
     },
     "JourneyStep": {
       "enum": [
@@ -518,6 +743,10 @@
         "penaltyHeadline": {
           "description": "One short line for at-a-glance cards, e.g. \"Up to 10% of global turnover\".",
           "type": "string"
+        },
+        "perContraventionMax": {
+          "$ref": "#/definitions/Money",
+          "description": "The statutory maximum for one contravention, where the law fixes an amount (India: ₹10 lakh, the first time)."
         },
         "precedents": {
           "items": {
@@ -815,6 +1044,44 @@
         "blocked"
       ],
       "type": "string"
+    },
+    "Verification": {
+      "additionalProperties": false,
+      "description": "The same journey audited again: was each earlier finding still there?",
+      "properties": {
+        "newFindings": {
+          "description": "Found the second time but not the first.",
+          "items": {
+            "$ref": "#/definitions/FindingRef"
+          },
+          "type": "array"
+        },
+        "payableAfter": {
+          "$ref": "#/definitions/Money"
+        },
+        "payableBefore": {
+          "$ref": "#/definitions/Money"
+        },
+        "results": {
+          "items": {
+            "$ref": "#/definitions/FixResult"
+          },
+          "type": "array"
+        },
+        "trustAfter": {
+          "type": "number"
+        },
+        "trustBefore": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "trustBefore",
+        "trustAfter",
+        "results",
+        "newFindings"
+      ],
+      "type": "object"
     }
   }
 }
