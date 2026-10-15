@@ -43,7 +43,11 @@ flowchart LR
 - **Price Historian** looks the product up in **BigQuery** and flags an MRP it never actually sold at. Every audit adds the prices it saw.
 - **Pattern Analyst** (Gemini) judges wording and design: shaming opt-outs, lopsided buttons, unverifiable claims. It can only cite elements measured on the page. The evidence rules and the **Adjudicator** (a second Gemini agent, on a crop of the evidence) drop anything the measurements contradict. Before it rules on a claim it can check, the Adjudicator calls a measurement tool, for example how many times larger the preferred button is, and the agent log shows the call. Claims nobody can check go to a **human review** queue instead of being asserted.
 - The whole audit runs as **ADK agent graphs** (`Workflow`): navigate → review each screen (analyse → ground → adjudicate) → summarise → report ([ADR-0014](docs/decisions/0014-audit-as-adk-workflow.md)).
-- **Reporter** builds the trust score, the money breakdown and the legal exposure.
+- **Fixer**, behind **Fix it** on the report, sorts each finding into "can fix here", "needs your developers" or "your call", with the fix for each ([ADR-0015](docs/decisions/0015-fix-and-verify.md)).
+  - **Projected numbers.** Switching fixes on updates the trust score, the hidden extras, the fine ceiling and the CCPA patterns found, labelled "projected".
+  - **Proof on our demo stores.** **Verify** applies the fixes to a copy of the store, in the auditor's own browser only, and audits the copy the same way: with every fix on, Store A goes from trust score 22 to 100, and the shopper pays ₹1,596 instead of ₹1,894.
+  - **On any other site** nothing is ever changed. You copy the fix list for the developers, and **Re-audit this page** compares once they've shipped.
+- **Reporter** builds the trust score, the money breakdown, the legal exposure and the CCPA self-audit of all 13 patterns.
 
 Details: [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Decision records](docs/decisions/README.md) · [Judging runbook](docs/JUDGING.md)
 

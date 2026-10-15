@@ -150,6 +150,12 @@ The Pattern Analyst and the Adjudicator run as child agents of their nodes, and 
 
 Wording claims are ruled on directly. Each tool call appears in the agent log with a chip. `AGENT_GRAPH=false` runs the same steps without the graphs.
 
+**"Fix it" (ADR-0015)** is a separate step after the audit.
+- **Proposing:** `POST /api/audits/{id}/fixes` asks the **Fixer** (`agents/fixer.py`) once for a finished audit. On stores whose settings we control (the demo stores, `shared/store_settings.json`), it writes settings changes, each checked against the dark patterns that setting can fix. Every finding gets a kind: `setting`, `code` or `review`.
+- **Projecting:** the web app recalculates the report's numbers as fixes are switched on (`web/src/auditor/projection.ts`).
+- **Verifying:** `POST /api/audits` with `compareTo` and `applyFixes` runs a live audit whose browser writes the patch to sessionStorage before the page loads, so only that browser sees the fixed copy. Its prices are never recorded. The report gets `appliedFixes` and a `comparison` with the earlier audit.
+- **Re-auditing:** `compareTo` alone re-audits a page (real sites included) and compares, which is the "Re-audit this page" button.
+
 ## 5. One audit, end to end
 
 ```mermaid

@@ -25,6 +25,8 @@ Request
 |---|---|---|---|
 | `targetUrl` | string (http/https URL) | yes | A product page. Must pass the URL guard (allowlist, no private or metadata addresses). |
 | `mode` | `"auto"` · `"replay"` · `"live"` | no, default `auto` | `auto`: replay a recorded run if one exists for this URL, otherwise run live. `replay`: only a recorded run. `live`: always a fresh run by the agents in a real browser (capped at `MAX_LIVE_AUDITS` at a time). |
+| `compareTo` | string (an audit id) | no | Re-audit: a finished audit of the same `targetUrl`. The new audit always runs live, and its report gets `comparison`: each earlier finding marked resolved or still present, plus new ones, trust score and payable price before and after. `400 invalid_request` if it isn't a finished audit of this page. |
+| `applyFixes` | `[{findingId, setting, value, why}]`, up to 30 | no | Verify fixes (with `compareTo`, demo stores only): changes from that audit's [fix proposal](#post-apiauditsauditidfixes-propose-a-fix-for-each-finding), applied to a copy of the store in the audit's own browser before it loads the page. `value` as the proposal's `to` (`"off"`, `"₹1,599"`). The report gets `appliedFixes`. `400 invalid_request` if a fix names a finding not in that audit, a setting this store doesn't have or isn't meant for that kind of finding, or a value that isn't a change. |
 
 Response `202 Accepted`
 
@@ -80,6 +82,32 @@ Replayed audits point at static files instead (`/mock/screens/…` for the scrip
 
 Plays the rest of a replayed audit without delays; this powers "Skip to report". `202 {"ok": true}`. It works whichever instance the request reaches: the skip is stored on the audit, and the instance playing it picks it up within about a second. Returns `409 not_replay` for live audits, which can't be sped up.
 
+### `POST /api/audits/{auditId}/fixes`: propose a fix for each finding
+
+"Fix it". For a finished audit (replay or live), `200` with a `FixProposal`:
+
+```json
+{
+  "auditId": "aud_7Kq2m9",
+  "canVerify": true,
+  "items": [
+    {
+      "findingId": "f-sneaked-item", "title": "…", "patternId": "basket_sneaking", "step": "cart", "status": "confirmed",
+      "kind": "setting",
+      "changes": [{ "findingId": "f-sneaked-item", "setting": "behaviour.autoAddProtection", "from": "on", "to": "off", "why": "…" }],
+      "suggestion": "Do not add items to the cart without the shopper's explicit choice."
+    }
+  ]
+}
+```
+
+- **`kind`** is `setting` when a change to the store's own settings fixes it, `code` when only the site's developers can (`suggestion` says how), or `review` when the finding awaits human review.
+- **Who answers:** only a store whose settings we control (the demo stores) gets settings changes, from the Fixer, in one model call. Any other site gets `code` and `review` items, and no model is asked.
+- **Repeat calls:** proposals are kept per instance by page and findings, so asking again doesn't call the model.
+- **`canVerify`:** the changes can be applied with `applyFixes` (a demo store, live audits on).
+
+`404 audit_not_found`, `409 not_finished` before the audit completes, and `503 fixer_unavailable` if the model gave no usable answer (try again).
+
 ### `GET /api/health`
 
 `200 OK` → `{ "ok": true, "version": "<git sha>" }`. Used by Cloud Run.
@@ -100,10 +128,12 @@ Every non-2xx response has the same shape:
 | 409 | `no_recording` | `mode: "replay"` (or `auto` with live audits switched off) and no recorded run exists for this URL |
 | 409 | `no_navigator` | Reserved: no journey for this site. Not returned since the general navigator (every allowlisted store has one) |
 | 409 | `not_replay` | Fast-forward requested for a live audit |
+| 409 | `not_finished` | Fixes requested for an audit that hasn't completed |
 | 400 | `invalid_request` | The body doesn't match the schema (e.g. an unknown `mode`) |
 | 429 | `rate_limited` | A live audit would go over `LIVE_PER_DAY` for the whole site, or `LIVE_PER_IP_PER_HOUR` for this visitor (counted by a hash of their IP; off in production). Replays are never limited. |
 | 501 | `live_unavailable` | `mode: "live"` requested on a deployment with `ENABLE_LIVE=false` |
 | 503 | `at_capacity` | All audit slots, or all `MAX_LIVE_AUDITS` live browsers, are busy; retry shortly |
+| 503 | `fixer_unavailable` | The Fixer gave no usable answer; retry shortly |
 | 404 / 405 | `not_found` / `method_not_allowed` | Unknown route or wrong HTTP method |
 
 Failures *during* an audit are not HTTP errors: they arrive on the stream as `audit.failed`. A live audit that is stopped part-way (a sign-in wall, a page that stops responding, a redirect off the allowlist) is not a failure: it sends `step.blocked` and completes with a partial report.
