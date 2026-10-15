@@ -61,6 +61,20 @@ class JsonPriceHistory:
         return None
 
 
+class ReadOnlyPrices:
+    """Looks prices up but records nothing: for a fixed copy of a store, whose prices aren't the store's real ones."""
+
+    def __init__(self, inner: PriceHistory) -> None:
+        self._inner = inner
+        self.name = inner.name
+
+    async def lookup(self, key: str) -> History | None:
+        return await self._inner.lookup(key)
+
+    async def record(self, observation: Observation) -> None:
+        return None
+
+
 class BigQueryPriceHistory:
     """`<project>.<dataset>.price_history`: one row per observation (catalog seed or audit), queried per product."""
 
