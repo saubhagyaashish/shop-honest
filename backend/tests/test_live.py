@@ -3,12 +3,14 @@
 Skipped when web/dist hasn't been built (`npm --prefix web run build`).
 """
 
+import asyncio
 import json
 from collections.abc import Iterator
 from pathlib import Path
 
 import httpx
 import pytest
+from fastapi import FastAPI
 
 from app.config import REPO_DIR
 from app.main import create_app
@@ -23,6 +25,10 @@ pytestmark = [
     pytest.mark.browser,
     pytest.mark.skipif(not (DIST / "index.html").exists(), reason="web/dist not built"),
 ]
+
+
+# Both ways of running an audit: the steps in order, and the ADK agent graph (settings.agent_graph).
+GRAPH = pytest.mark.parametrize("agent_graph", [False, True], ids=["pipeline", "graph"])
 
 
 @pytest.fixture(scope="module")
@@ -53,8 +59,9 @@ def of_type(events: list[dict], kind: str) -> list[dict]:
     return [e for e in events if e["type"] == kind]
 
 
-async def test_live_store_a(web_base: str, tmp_path: Path):
-    events, frame = await live_audit(web_base, "store-a", tmp_path)
+@GRAPH
+async def test_live_store_a(web_base: str, tmp_path: Path, agent_graph: bool):
+    events, frame = await live_audit(web_base, "store-a", tmp_path, agent_graph=agent_graph)
     report = events[-1]["report"]
     assert [s["step"] for s in report["steps"]] == ["product", "variant", "cart", "checkout", "payment"]
     assert sorted(f["patternId"] for f in report["findings"]) == sorted(
@@ -72,16 +79,18 @@ async def test_live_store_a(web_base: str, tmp_path: Path):
     assert {fr["screenshotUrl"] for f in report["findings"] for fr in f["evidence"]["frames"]} <= shots
 
 
-async def test_live_store_b_has_no_false_alarms(web_base: str, tmp_path: Path):
-    events, _ = await live_audit(web_base, "store-b", tmp_path)
+@GRAPH
+async def test_live_store_b_has_no_false_alarms(web_base: str, tmp_path: Path, agent_graph: bool):
+    events, _ = await live_audit(web_base, "store-b", tmp_path, agent_graph=agent_graph)
     report = events[-1]["report"]
     assert report["findings"] == [] and report["trustScore"] == 100
     assert len(report["steps"]) == 5
     assert {p["total"]["amount"] for p in of_type(events, "price.observed")} == {1508}
 
 
-async def test_live_store_c_stops_at_the_sign_in_wall(web_base: str, tmp_path: Path):
-    events, _ = await live_audit(web_base, "store-c", tmp_path)
+@GRAPH
+async def test_live_store_c_stops_at_the_sign_in_wall(web_base: str, tmp_path: Path, agent_graph: bool):
+    events, _ = await live_audit(web_base, "store-c", tmp_path, agent_graph=agent_graph)
     report = events[-1]["report"]
     blocked = of_type(events, "step.blocked")
     assert [(b["step"], b["reason"]) for b in blocked] == [("checkout", "Sign-in required")]
@@ -120,10 +129,6 @@ ANSWER_KEY = json.loads((REPO_DIR / "shared" / "answer_key.json").read_text(enco
 
 def by_pattern_and_step(findings: list[dict]) -> list[tuple[str, str]]:
     return sorted((f["patternId"], f["step"]) for f in findings)
-
-
-# Both ways of judging: the pipeline (Judge.review) and the screen_review agent graph.
-GRAPH = pytest.mark.parametrize("agent_graph", [False, True], ids=["pipeline", "graph"])
 
 
 @GRAPH
@@ -167,3 +172,54 @@ async def test_a_slow_model_cannot_hold_the_audit_past_its_time_limit(web_base: 
     # Measured findings stand; the unfinished model reviews were cancelled, not waited for.
     assert len(report["findings"]) == 4 and all(f["id"].startswith("f-") for f in report["findings"])
     assert any("Ran out of time" in e.get("message", "") for e in events)
+
+
+# Failures and cancellation come out the same through the agent graph.
+
+
+async def start_live(web_base: str, store: str, **settings) -> tuple[httpx.AsyncClient, FastAPI, str]:
+    app = create_app(make_settings(enable_live=True, **settings), resolver=fake_resolver)
+    client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=120)
+    res = await client.post("/api/audits", json={"targetUrl": f"{web_base}/demo/{store}/p/sonicbuds-pro", "mode": "live"})
+    assert res.status_code == 202, res.text
+    return client, app, res.json()["auditId"]
+
+
+@GRAPH
+async def test_an_audit_past_its_time_limit_fails_with_the_same_message(web_base: str, tmp_path: Path, agent_graph: bool):
+    client, app, audit_id = await start_live(
+        web_base, "store-a", nav_linger_s=2, frames_dir=tmp_path, audit_timeout_s=1, agent_graph=agent_graph
+    )
+    events = [e for _, e in parse_sse((await client.get(f"/api/audits/{audit_id}/events")).text)]
+    await client.aclose()
+    await app.state.runner.shutdown()
+    assert events[-1] == {"type": "audit.failed", "error": "The audit took longer than 1 s and was stopped."}
+
+
+@GRAPH
+async def test_a_server_stopping_mid_audit_says_so(web_base: str, tmp_path: Path, agent_graph: bool):
+    client, app, audit_id = await start_live(web_base, "store-a", nav_linger_s=5, frames_dir=tmp_path, agent_graph=agent_graph)
+    await asyncio.sleep(2)
+    await app.state.runner.shutdown()
+    record = await app.state.events.get(audit_id)
+    await client.aclose()
+    assert (record.status, record.error) == ("failed", "The server stopped before the audit finished.")
+
+
+@GRAPH
+async def test_a_live_audit_taken_over_mid_run_stops_without_writing(web_base: str, tmp_path: Path, agent_graph: bool):
+    client, app, audit_id = await start_live(
+        web_base, "store-a", nav_linger_s=5, frames_dir=tmp_path, heartbeat_s=0.2, agent_graph=agent_graph
+    )
+    events = app.state.events
+    await asyncio.sleep(2)
+    await events.update(audit_id, owner="another-instance")  # it took over
+    for _ in range(50):
+        if app.state.runner.active == 0:
+            break
+        await asyncio.sleep(0.2)
+    written = [e["type"] for _, e in await events.read_after(audit_id, 0)]
+    await client.aclose()
+    await app.state.runner.shutdown()
+    assert app.state.runner.active == 0
+    assert "audit.failed" not in written and "audit.completed" not in written

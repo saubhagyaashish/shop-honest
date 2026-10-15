@@ -105,8 +105,8 @@ class Usage(logging.Handler):
 
 
 USAGE = Usage()
-logging.getLogger("app.runner.runner").addHandler(USAGE)
-logging.getLogger("app.runner.runner").setLevel(logging.INFO)
+logging.getLogger("app.runner").addHandler(USAGE)
+logging.getLogger("app.runner").setLevel(logging.INFO)
 
 
 def show(results: dict[str, list[dict[str, Any]]], label: str) -> None:
