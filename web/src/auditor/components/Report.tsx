@@ -16,6 +16,7 @@ import { ExposureSection } from './ExposureSection'
 import { FindingRow } from './FindingCard'
 import { ReportNav } from './ReportNav'
 import type { NavItem } from './ReportNav'
+import { SelfAuditSection } from './SelfAuditSection'
 import { VerdictHero } from './VerdictHero'
 
 export type Decision = 'approved' | 'dismissed'
@@ -31,9 +32,22 @@ interface ReportProps {
   onDecide: (findingId: string, decision: Decision | undefined) => void
   pdfBusy: boolean
   onDownloadPdf: () => void
+  selfAuditBusy: boolean
+  onDownloadSelfAudit: () => void
 }
 
-export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, onDecide, pdfBusy, onDownloadPdf }: ReportProps) {
+export function Report({
+  report,
+  logs,
+  jurisdiction,
+  onJurisdiction,
+  decisions,
+  onDecide,
+  pdfBusy,
+  onDownloadPdf,
+  selfAuditBusy,
+  onDownloadSelfAudit,
+}: ReportProps) {
   const exposure = report.exposure
   const region = exposure?.jurisdictions.find((j) => j.code === jurisdiction)
   const confirmed = useMemo(
@@ -72,6 +86,7 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
       ...(exposure ? [{ id: 'money', label: 'Money 💸' }, { id: 'legal', label: 'Legal ⚖️' }] : []),
       { id: 'findings', label: 'Findings', count: confirmed.length },
       ...(review.length ? [{ id: 'review', label: 'Review', count: review.length }] : []),
+      { id: 'ccpa', label: 'CCPA self-audit' },
       { id: 'trail', label: 'Audit trail' },
     ],
     [exposure, confirmed.length, review.length],
@@ -233,6 +248,8 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
             </div>
           </section>
         )}
+
+        <SelfAuditSection report={report} pdfBusy={selfAuditBusy} onDownloadPdf={onDownloadSelfAudit} onJumpToFinding={jumpToFinding} />
 
         <section id="trail" className="scroll-mt-32 break-before-page">
           <details className="group brutal rounded-3xl bg-white" open={clean}>

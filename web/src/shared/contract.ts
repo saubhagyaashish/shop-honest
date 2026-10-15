@@ -188,6 +188,11 @@ export interface AuditReport {
   summary: string
   /** Money and law. Optional so older backends still render. */
   exposure?: Exposure
+  /**
+   * Steps whose screens a model judged; patterns that need judgement were checked only there.
+   * Empty for a measured-only audit. Absent in reports from before 15 Oct 2026, which a model judged throughout.
+   */
+  reviewedSteps?: JourneyStep[]
 }
 
 /** A tool an agent called; its log line says what the tool found. */

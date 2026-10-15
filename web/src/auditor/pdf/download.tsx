@@ -2,19 +2,34 @@ import { pdf } from '@react-pdf/renderer'
 import type { AuditReport, BBox, EvidenceFrame } from '../../shared/contract'
 import { AuditPdf } from './AuditPdf'
 import type { AuditPdfProps } from './AuditPdf'
+import { SelfAuditPdf } from './SelfAuditPdf'
 
 /** Builds the audit PDF in the browser and saves it. Loaded on demand, so react-pdf stays out of the main bundle. */
 export async function downloadAuditPdf(props: Omit<AuditPdfProps, 'origin'>): Promise<void> {
+  patchBuffer()
+  const report = await withCroppedEvidence(props.report)
+  const blob = await pdf(<AuditPdf {...props} report={report} origin={window.location.origin} />).toBlob()
+  save(blob, fileName('shop-honest-audit', report.targetUrl, report.completedAt))
+}
+
+/** The CCPA self-audit PDF: the 13 patterns and the findings, text only. */
+export async function downloadSelfAuditPdf(report: AuditReport): Promise<void> {
+  patchBuffer()
+  const blob = await pdf(<SelfAuditPdf report={report} />).toBlob()
+  save(blob, fileName('ccpa-self-audit', report.targetUrl, report.completedAt))
+}
+
+function patchBuffer() {
   // react-pdf's browser build calls the Node-only Buffer.isBuffer() after loading each image.
   const g = globalThis as { Buffer?: { isBuffer: (x: unknown) => boolean } }
   g.Buffer ??= { isBuffer: () => false }
+}
 
-  const report = await withCroppedEvidence(props.report)
-  const blob = await pdf(<AuditPdf {...props} report={report} origin={window.location.origin} />).toBlob()
+function save(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = fileName(report.targetUrl, report.completedAt)
+  a.download = name
   document.body.appendChild(a)
   a.click()
   a.remove()
@@ -75,7 +90,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-function fileName(targetUrl: string, completedAt: string): string {
+function fileName(prefix: string, targetUrl: string, completedAt: string): string {
   let slug = 'site'
   try {
     const u = new URL(targetUrl)
@@ -84,5 +99,5 @@ function fileName(targetUrl: string, completedAt: string): string {
     // keep default
   }
   slug = slug.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 60)
-  return `shop-honest-audit_${slug}_${completedAt.slice(0, 10)}.pdf`
+  return `${prefix}_${slug}_${completedAt.slice(0, 10)}.pdf`
 }

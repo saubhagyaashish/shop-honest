@@ -35,7 +35,14 @@ async function main() {
     Object.fromEntries(
       (Object.keys(PATTERNS) as PatternId[]).map((id) => [
         id,
-        { name: PATTERNS[id].name, description: PATTERNS[id].description, defaultSeverity: PATTERNS[id].defaultSeverity, rule: PATTERNS[id].rule, fix: FIXES[id] },
+        {
+          name: PATTERNS[id].name,
+          description: PATTERNS[id].description,
+          defaultSeverity: PATTERNS[id].defaultSeverity,
+          rule: PATTERNS[id].rule,
+          fix: FIXES[id],
+          check: PATTERNS[id].check,
+        },
       ]),
     ),
   )

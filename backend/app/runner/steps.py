@@ -132,6 +132,7 @@ class LiveAudit:
             findings=walk.findings,
             ev=walk.evidence,
             knowledge=self.knowledge,
+            reviewed_steps=self.judge.reviewed_steps if self.judge else set(),
         )
 
     def _walked(self) -> Walk:

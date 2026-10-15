@@ -45,6 +45,8 @@ class Judge:
         # Screens the model read, and screens it couldn't (for the closing summary).
         self.reviewed = 0
         self.failed = 0
+        # Journey steps with at least one screen the model read (for the CCPA self-audit report).
+        self.reviewed_steps: set[str] = set()
         self.smart = models.smart
         self.fast = models.fast
         self.knowledge = knowledge
@@ -80,6 +82,7 @@ class Judge:
             await walk.log("pattern_analyst", f"Couldn't read the {screen}: {err}. The measured checks still apply.")
             return
         self.reviewed += 1
+        self.reviewed_steps.add(capture.step)
         if not candidates:
             await walk.log("pattern_analyst", f"Nothing on the {screen} needs flagging beyond what was measured.")
             return

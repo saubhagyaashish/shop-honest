@@ -120,6 +120,7 @@ class ReviewGraph:
                 ctx.route = "done"
                 return node_input
             judge.reviewed += 1
+            judge.reviewed_steps.add(work.capture.step)
             work.candidates = Analysis.model_validate(answer).candidates
             if not work.candidates:
                 await walk.log("pattern_analyst", f"Nothing on the {work.screen} needs flagging beyond what was measured.")

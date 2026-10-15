@@ -175,7 +175,9 @@ def build_report(
     findings: list[dict[str, Any]],
     ev: Evidence,
     knowledge: Knowledge,
+    reviewed_steps: set[str] | None = None,
 ) -> dict[str, Any]:
+    """`reviewed_steps`: steps whose screens a model judged (None: not known, e.g. a report rebuilt from a recording)."""
     drift = price_drift(ev, findings, knowledge)
     report: dict[str, Any] = {
         "auditId": audit_id,
@@ -189,4 +191,6 @@ def build_report(
     }
     if drift:
         report["exposure"] = exposure(findings, drift, knowledge)
+    if reviewed_steps is not None:
+        report["reviewedSteps"] = [s for s in JOURNEY_STEPS if s in reviewed_steps]
     return report

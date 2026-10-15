@@ -161,6 +161,7 @@ class AuditReport(Model):
     findings: list[Finding]
     summary: str
     exposure: Exposure | None = None
+    reviewedSteps: list[JourneyStep] | None = None
 
 
 # Events (the discriminated union AuditEvent)

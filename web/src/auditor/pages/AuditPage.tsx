@@ -33,6 +33,7 @@ export function AuditPage() {
   const [jurisdiction, setJurisdiction] = useState<JurisdictionCode>('IN')
   const [decisions, setDecisions] = useState<Record<string, Decision>>({})
   const [pdfState, setPdfState] = useState<'idle' | 'building' | 'error'>('idle')
+  const [selfAuditState, setSelfAuditState] = useState<'idle' | 'building' | 'error'>('idle')
   const elapsed = useElapsed(state)
   useDocumentTitle(state.status === 'completed' ? 'Audit report · Shop Honest' : 'Scanning… · Shop Honest')
 
@@ -66,6 +67,19 @@ export function AuditPage() {
     } catch (err) {
       console.error(err)
       setPdfState('error')
+    }
+  }
+
+  const downloadSelfAudit = async () => {
+    if (!state.report) return
+    setSelfAuditState('building')
+    try {
+      const { downloadSelfAuditPdf } = await import('../pdf/download')
+      await downloadSelfAuditPdf(state.report)
+      setSelfAuditState('idle')
+    } catch (err) {
+      console.error(err)
+      setSelfAuditState('error')
     }
   }
 
@@ -153,6 +167,8 @@ export function AuditPage() {
           onDecide={decide}
           pdfBusy={pdfState === 'building'}
           onDownloadPdf={downloadPdf}
+          selfAuditBusy={selfAuditState === 'building'}
+          onDownloadSelfAudit={downloadSelfAudit}
         />
       )}
 
