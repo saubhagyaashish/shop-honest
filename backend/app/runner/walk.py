@@ -33,8 +33,9 @@ log = logging.getLogger(__name__)
 
 Emit = Callable[[dict[str, Any]], Awaitable[None]]
 
-# Measured findings that depend on reading a page's structure (cart rows, checkboxes, summary rows).
-STRUCTURAL = {"f-sneaked-item", "f-pre-ticked-subscription", "f-late-fees"}
+# Measured findings that rest on checks validated only on stores we built: reading a page's structure (cart rows,
+# checkboxes, summary rows), or assuming each variant has its own stock. On other sites a person confirms them.
+REVIEW_ON_THIRD_PARTY = {"f-sneaked-item", "f-pre-ticked-subscription", "f-late-fees", "f-frozen-stock"}
 
 
 def inr(amount: float) -> dict[str, Any]:
@@ -199,11 +200,12 @@ class Walk:
                 await self.add_finding(finding)
 
     async def add_finding(self, finding: dict[str, Any]) -> None:
-        if self.third_party and finding["id"] in STRUCTURAL and finding["status"] == "confirmed":
-            # Generic page parsing can misread a site we haven't validated; a person confirms these.
+        if self.third_party and finding["id"] in REVIEW_ON_THIRD_PARTY and finding["status"] == "confirmed":
             finding = {**finding, "status": "needs_review"}
             title = finding["title"]
-            await self.log("adjudicator", f'"{title}" rests on how this site lays out its page, so it goes to human review.')
+            await self.log(
+                "adjudicator", f'"{title}" relies on a check validated only on stores we built, so it goes to human review.'
+            )
         self.findings.append(finding)
         await self._emit({"type": "finding", "finding": finding})
 

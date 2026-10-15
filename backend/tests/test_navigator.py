@@ -62,6 +62,38 @@ async def test_the_model_can_pick_a_control_but_only_one_that_exists():
     assert await judge_answering("c99").pick("adds this product to the cart", controls) is None
 
 
+# Checks validated only on stores we built
+
+
+async def test_on_a_site_we_did_not_build_frozen_stock_goes_to_human_review(tmp_path):
+    from app.agents.checks import frozen_stock
+    from app.runner.walk import Walk
+    from app.stores.frames import LocalFrameStore
+    from tests.conftest import load_walk
+
+    knowledge = load_knowledge(REPO_DIR / "shared")
+    (finding,) = frozen_stock(load_walk("store-a")[0], knowledge)
+    events: list[dict] = []
+
+    async def emit(event: dict) -> None:
+        events.append(event)
+
+    walk = Walk(
+        audit_id="aud_t",
+        target_url="https://shop.example/p/1",
+        page=None,
+        guard=None,  # type: ignore[arg-type]
+        frames=LocalFrameStore(tmp_path),
+        knowledge=knowledge,
+        settings=make_settings(),
+        emit=emit,
+    )
+    walk.third_party = True
+    await walk.add_finding(finding)
+    assert walk.findings[0]["status"] == "needs_review"
+    assert any("validated only on stores we built" in e.get("message", "") for e in events)
+
+
 # Page signals on real-site patterns (a browser, no internet)
 
 
@@ -111,9 +143,51 @@ async def test_sign_in_walls_in_their_usual_wordings(html: str):
     assert (await signals_of(html))["signInWall"]["reason"] == "Sign-in required"
 
 
+async def signals_at(path: str) -> dict:
+    """Signals of a fixture page served at its own address (for rules that read the URL)."""
+    from playwright.async_api import async_playwright
+
+    with serve_dist(SITES) as base:
+        async with async_playwright() as pw:
+            browser = await pw.chromium.launch()
+            page = await browser.new_page(viewport={"width": 1280, "height": 800})
+            await page.goto(f"{base}/{path}")
+            signals = await page.evaluate(SIGNALS)
+            await browser.close()
+    return signals
+
+
+@pytest.mark.browser
+async def test_only_the_main_product_is_read_on_a_busy_marketplace_page():
+    # A screen-reader-only h1 comes first, and a row of other products below has its own prices and "Only 1 left".
+    s = await signals_of((SITES / "market" / "product.html").read_text())
+    assert s["heading"] == "Acme Buds T310 Wireless Earbuds"
+    assert (s["priceBlock"]["price"], s["priceBlock"]["mrp"]) == (1899, 3999)
+    assert s["mainPrice"]["price"] == 1899
+    assert s["stock"] == []
+    assert s["unavailable"] is None
+
+
+@pytest.mark.browser
+async def test_an_unavailable_product_is_recognised():
+    s = await signals_of((SITES / "market" / "unavailable.html").read_text())
+    assert s["unavailable"]["text"].startswith("Currently unavailable")
+
+
+@pytest.mark.browser
+async def test_sign_in_pages_that_ask_for_an_email_first():
+    assert (await signals_at("market/ap/signin.html"))["signInWall"]["reason"] == "Sign-in required"
+    # Nothing in the wording gives it away: the address and the email box do.
+    assert (await signals_at("market/ap/signin-plain.html"))["signInWall"]["reason"] == "Sign-in required"
+    assert (await signals_at("market/product.html"))["signInWall"] is None
+
+
 @pytest.mark.browser
 async def test_bot_walls_and_error_pages_are_recognised():
     assert (await signals_of("<h1>Please verify you are human</h1>"))["botWall"]
+    walmart = "<h1>Robot or human?</h1><p>Activate and hold the button to confirm that you’re human. Thank You!</p>"
+    assert (await signals_of(walmart))["botWall"]
+    assert (await signals_at("market/blocked.html"))["botWall"]["reason"] == "Blocked page"
     assert (await signals_of("<p>Something went wrong! Please try again later.</p><button>Retry</button>"))["pageError"]
     assert not (await signals_of((SITES / "product.html").read_text()))["pageError"]
 
@@ -145,6 +219,50 @@ async def test_a_logged_out_walk_of_a_store_we_did_not_build(tmp_path):
     assert any("Adding 1 × Linen Shirt" in m for m in logs) and any("Choosing another option: L" in m for m in logs)
     assert report["findings"] == []  # the right item is in the cart: nothing sneaked
     assert not any("login.html" in json.dumps(e) for e in events)  # never followed "Register / Login"
+
+
+async def walk_of(path: str, tmp_path: Path) -> list[dict]:
+    with serve_dist(SITES) as base:
+        app = create_app(make_settings(enable_live=True, nav_linger_s=1, frames_dir=tmp_path), resolver=fake_resolver)
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=120) as client:
+            res = await client.post("/api/audits", json={"targetUrl": f"{base}/{path}", "mode": "live"})
+            assert res.status_code == 202, res.text
+            events = [e for _, e in parse_sse((await client.get(f"/api/audits/{res.json()['auditId']}/events")).text)]
+        await app.state.runner.shutdown()
+    for event in events:
+        EVENT_VALIDATOR.validate(event)
+    return events
+
+
+@pytest.mark.browser
+async def test_a_logged_out_walk_of_a_busy_marketplace(tmp_path):
+    events = await walk_of("market/product.html", tmp_path)
+    report = events[-1]["report"]
+    assert [(s["step"], s["status"]) for s in report["steps"]] == [
+        ("product", "audited"),
+        ("variant", "audited"),
+        ("cart", "audited"),
+        ("checkout", "blocked"),
+    ]
+    assert report["steps"][-1]["blockedReason"] == "Sign-in required"
+    logs = [e["message"] for e in events if e["type"] == "agent.log"]
+    # Add to cart sits after 200 menu links; the variant picked is one that can be bought.
+    assert any("Adding 1 × Acme Buds T310 Wireless Earbuds" in m for m in logs)
+    assert any("Choosing another option: Pearl White" in m for m in logs)
+    # No other product's price or stock, and a "Limited time" badge in the cart is not a sneaked item.
+    assert report["findings"] == []
+    prices = [(e["label"], e["total"]["amount"]) for e in events if e["type"] == "price.observed"]
+    assert prices[0] == ("Product page", 1899)
+
+
+@pytest.mark.browser
+async def test_an_unavailable_product_stops_the_walk_honestly(tmp_path):
+    events = await walk_of("market/unavailable.html", tmp_path)
+    report = events[-1]["report"]
+    last = report["steps"][-1]
+    assert (last["step"], last["status"], last["blockedReason"]) == ("cart", "blocked", "Product unavailable")
+    logs = [e["message"] for e in events if e["type"] == "agent.log"]
+    assert any(m.startswith('The product page says "Currently unavailable') for m in logs)
 
 
 @pytest.mark.internet

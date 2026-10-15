@@ -35,10 +35,19 @@
     const r = range.getBoundingClientRect()
     return r.width > 0 && r.width < el.getBoundingClientRect().width * 0.8 ? rectBox(r) : box(el)
   }
+  // A line drawn across the text by a ::before/::after box (some sites strike the MRP this way, not with line-through).
+  const lineOver = (el) =>
+    ['::before', '::after'].some((pseudo) => {
+      const ps = getComputedStyle(el, pseudo)
+      if (ps.content === 'none' || ps.content === 'normal') return false
+      const bordered = ['Top', 'Bottom'].some((side) => ps[`border${side}Style`] !== 'none' && parseFloat(ps[`border${side}Width`]) >= 1)
+      return bordered && (parseFloat(ps.height) || 0) <= 2
+    })
   const struck = (el) => {
-    for (let n = el; n && n !== document.body; n = n.parentElement) {
+    for (let n = el, depth = 0; n && n !== document.body; n = n.parentElement, depth++) {
       if (['S', 'DEL', 'STRIKE'].includes(n.tagName)) return true
       if (getComputedStyle(n).textDecorationLine.includes('line-through')) return true
+      if (depth < 3 && lineOver(n)) return true
     }
     return false
   }
@@ -108,10 +117,45 @@
     return ''
   }
 
+  // Really on screen: not screen-reader-only text (tiny or clipped away), and not made see-through by a parent.
+  const shown = (el) => {
+    if (!visible(el)) return false
+    const r = el.getBoundingClientRect()
+    if (r.width < 4 || r.height < 4) return false
+    const cs = getComputedStyle(el)
+    if (/inset\(50%\)/.test(cs.clipPath) || /^rect\(0(px)?,?\s*0(px)?/.test(cs.clip)) return false
+    return typeof el.checkVisibility !== 'function' || el.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+  }
+
+  // The product's title: the largest visible h1 (some sites put a screen-reader-only h1 first).
+  const fontPx = (el) => parseFloat(getComputedStyle(el).fontSize)
+  const title = [...document.querySelectorAll('h1')].filter(shown).sort((a, b) => fontPx(b) - fontPx(a))[0]
+
+  // Inside a list of other products (a carousel, "customers also viewed", variant swatches): an ancestor, below the
+  // product's own area, with 3+ children that each show an image and a price.
+  const productLists = new WeakMap()
+  const isProductList = (n) => {
+    if (!productLists.has(n)) {
+      const cards = [...n.children].filter((c) => c.querySelector('img') && MONEY.test(c.innerText || ''))
+      productLists.set(n, cards.length >= 3)
+    }
+    return productLists.get(n)
+  }
+  const otherProducts = (el) => {
+    // Deep: a big marketplace wraps each card in a dozen or more layers.
+    for (let n = el.parentElement, depth = 0; n && n !== document.body && depth < 30; n = n.parentElement, depth++) {
+      if (title && n.contains(title)) return false
+      if (isProductList(n)) return true
+    }
+    return false
+  }
+  // About the product under audit: not the site's header, menus or footer, and not another product's card.
+  const aboutProduct = (el) => !chrome(el) && !otherProducts(el)
+
   // Countdown timers ("Deal ends in 09:51"). Clock times ("11:59 PM") are deadlines, not countdowns.
   const timers = []
   const deadlines = []
-  for (const el of smallest(/(ends?|left|hurry|deal|offer|expires|closes)\b[^]{0,40}?\b\d{1,2}:\d{2}/i)) {
+  for (const el of smallest(/(ends?|left|hurry|deal|offer|expires|closes)\b[^]{0,40}?\b\d{1,2}:\d{2}/i).filter(aboutProduct)) {
     const t = text(el)
     if (/\b\d{1,2}:\d{2}\s?(am|pm)\b/i.test(t)) {
       deadlines.push({ text: t, bbox: box(el) })
@@ -123,16 +167,17 @@
   }
 
   // Scarcity ("only 2 left in stock").
-  const stock = smallest(/\bonly\s+\d+\s+(left|remaining)\b|\b\d+\s+left in stock\b/i).map((el) => {
+  const stock = smallest(/\bonly\s+\d+\s+(left|remaining)\b|\b\d+\s+left in stock\b/i).filter(aboutProduct).map((el) => {
     const t = text(el)
     return { text: t, count: Number(/(\d+)/.exec(t)[1]), bbox: textBox(el) }
   })
 
   // Sales-volume claims ("120+ bought in the last 24 hours").
-  const salesClaims = smallest(/\b\d[\d,]*\+?\s+(bought|sold|people bought|orders)\b/i).map((el) => ({ text: text(el), bbox: textBox(el) }))
+  const salesClaims = smallest(/\b\d[\d,]*\+?\s+(bought|sold|people bought|orders)\b/i)
+    .filter(aboutProduct)
+    .map((el) => ({ text: text(el), bbox: textBox(el) }))
 
-  // The product's title, to tell its price from prices of recommended products elsewhere on the page.
-  const title = [...document.querySelectorAll('h1')].find(visible)
+  // Distance from the product's title, to tell its price from prices elsewhere on the page.
   const nearTitle = (el) => {
     if (!title) return 0
     const t = title.getBoundingClientRect()
@@ -148,9 +193,12 @@
   // Some sites draw the MRP's ₹ separately and strike only the number ("3,999"); accept that when a ₹ price is beside it.
   const BARE = /^[\d,]{3,}(\.\d+)?$/
   const sellingIn = (block) => smallest(MONEY, 40).filter((el) => block.contains(el) && !struck(el))
-  for (const mrpEl of [...smallest(MONEY, 40), ...smallest(BARE, 14)].filter(struck)) {
+  // Only an MRP beside the product's title: further down the page, prices belong to other products.
+  const besideTitle = (el) => !title || nearTitle(el) < 900
+  for (const mrpEl of [...smallest(MONEY, 40), ...smallest(BARE, 14)].filter((el) => struck(el) && aboutProduct(el) && besideTitle(el))) {
+    // Up to the block that also holds the selling price (some sites put the MRP on its own row, several layers apart).
     let block = mrpEl.parentElement
-    for (let i = 0; i < 4 && block && !sellingIn(block).length; i++) block = block.parentElement
+    for (let i = 0; i < 8 && block && !sellingIn(block).length && text(block).length < 300; i++) block = block.parentElement
     if (!block) continue
     const amounts = sellingIn(block)
     if (!amounts.length) continue
@@ -168,7 +216,7 @@
   let mainPrice = priceBlock ? { price: priceBlock.price, text: priceBlock.text, bbox: priceBlock.bbox } : null
   if (!mainPrice) {
     const candidates = smallest(MONEY, 40)
-      .filter((el) => !struck(el) && !chrome(el) && nearTitle(el) < 700)
+      .filter((el) => !struck(el) && aboutProduct(el) && nearTitle(el) < 700)
       .map((el) => ({ el, size: parseFloat(getComputedStyle(el).fontSize), distance: nearTitle(el) }))
       .sort((a, b) => b.size - a.size || a.distance - b.distance)
     if (candidates.length) {
@@ -264,7 +312,7 @@
     /\b(most (customers|people|shoppers)|popular|recommended|best ?seller|selling fast|in (high )?demand|(people|others) (are )?(viewing|looking)|limited (time|stock|offer)|don'?t miss|last chance|exclusive|one-time|guaranteed?)\b/i,
     120,
   )
-    .filter((el) => !chrome(el) && !claimed.has(text(el)) && !el.closest('[role=dialog], [aria-modal=true], dialog'))
+    .filter((el) => aboutProduct(el) && !claimed.has(text(el)) && !el.closest('[role=dialog], [aria-modal=true], dialog'))
     .slice(0, 12)
     .map((el) => ({ text: text(el), section: sectionOf(el), bbox: textBox(el) }))
 
@@ -272,7 +320,7 @@
   const productName = () => {
     if (title && text(title)) return text(title).replace(/\.{3}\s*more$/i, '').trim()
     const anchor = mainPrice && smallest(MONEY, 40).find((el) => text(el) && mainPrice.text.includes(text(el)))
-    const headings = [...document.querySelectorAll('h2, h3, [itemprop=name]')].filter((h) => visible(h) && !chrome(h) && text(h).length > 1)
+    const headings = [...document.querySelectorAll('h2, h3, [itemprop=name]')].filter((h) => shown(h) && !chrome(h) && text(h).length > 1)
     if (anchor) {
       // Same column as the price (overlapping horizontally), at or above it, closest first: not a sidebar's headings.
       const a = anchor.getBoundingClientRect()
@@ -296,13 +344,20 @@
 
   // Sign-in walls: a visible password field, a phone/OTP login form, or "sign in to continue"-style wording.
   const password = [...document.querySelectorAll('input[type=password]')].find(visible)
-  const WALL = /\b(sign|log)\s?-?in( to your account)? (to|and) (continue|checkout|check out|proceed|place)|\blogin account to proceed|\blog\s?in or sign\s?up\b|\b(register|sign\s?up) \/ (login|log in|sign in)\b|\b(request|get|send) otp\b/i
+  const WALL = /\b(sign|log)\s?-?in( to your account)? (to|and) (continue|checkout|check out|proceed|place)|\blogin account to proceed|\blog\s?in or sign\s?up\b|\b(register|sign\s?up) \/ (login|log in|sign in)\b|\b(request|get|send) otp\b|\b(sign|log)\s?-?in or (create|register)\b|\bcreate (an |your )?account or (sign|log)\s?-?in\b/i
   const wallText = smallest(WALL, 300).find((el) => !chrome(el))
+  // A sign-in page that asks for an email or phone first, with the password on a later screen.
+  const SIGN_IN_PATH = /\/(ap\/)?(sign-?in|log-?in)\b|\/account\/login\b/i
+  const credential = SIGN_IN_PATH.test(location.pathname)
+    ? [...document.querySelectorAll('input[type=email], input[type=tel], input[type=text], input:not([type])')].find(shown)
+    : null
   const signInWall = password
     ? { reason: 'Sign-in required', bbox: box(password.closest('form, [role=dialog]') || password) }
     : wallText
       ? { reason: 'Sign-in required', bbox: box(wallText.closest('form, [role=dialog], .modal') || wallText) }
-      : null
+      : credential
+        ? { reason: 'Sign-in required', bbox: box(credential.closest('form, [role=dialog]') || credential) }
+        : null
 
   // An error page instead of content ("Something went wrong", "Please try again later"): little text, an apology.
   const ERROR = /something went wrong|please try again later|we'?re having trouble|unexpected error|oops[!,.]|page (isn'?t|is not) available/i
@@ -312,9 +367,24 @@
   const captcha = [...document.querySelectorAll('iframe')].find(
     (f) => visible(f) && /recaptcha|hcaptcha|challenges\.cloudflare|turnstile|arkoselabs|funcaptcha/i.test(f.src || ''),
   )
-  const BOT = /verify (that )?you are (a )?human|are you a (human|robot)|i'?m not a robot|access denied|unusual traffic|press (and|&) hold|checking your browser|request (was )?blocked|bot protection/i
+  const BOT =
+    /verify (that )?you are (a )?human|are you a (human|robot)|robot or human|i'?m not a robot|access denied|unusual traffic|(press|click|tap|activate) (and|&) hold|confirm (that )?you'?(re| are) (a )?human|checking your browser|request (was )?blocked|bot protection/i
   const botText = smallest(BOT, 200)[0]
-  const botWall = captcha ? { reason: 'CAPTCHA', bbox: box(captcha) } : botText ? { reason: text(botText).slice(0, 80), bbox: box(botText) } : null
+  // A short page at a /blocked or /captcha address, whatever it says.
+  const blockedPage = /\/(blocked|captcha)\b/i.test(location.pathname) && body.length < 1500
+  const botWall = captcha
+    ? { reason: 'CAPTCHA', bbox: box(captcha) }
+    : botText
+      ? { reason: text(botText).slice(0, 80), bbox: box(botText) }
+      : blockedPage
+        ? { reason: 'Blocked page', bbox: { x: 0, y: 0, w: 1, h: Math.min(1, 800 / H) } }
+        : null
+
+  // The product can't be bought right now ("Currently unavailable", "Out of stock").
+  const unavailableEl = smallest(/\b(currently unavailable|out of stock|sold out|temporarily unavailable|no longer available)\b/i, 160).find(
+    aboutProduct,
+  )
+  const unavailable = unavailableEl ? { text: text(unavailableEl), bbox: textBox(unavailableEl) } : null
 
   return {
     url: location.href,
@@ -335,8 +405,10 @@
     summary,
     feeDisclosures,
     signInWall,
-    mainPrice,
+    // An unavailable product with no price block of its own: any price nearby is another option's (a colour swatch).
+    mainPrice: unavailable && !priceBlock ? null : mainPrice,
     botWall,
     pageError,
+    unavailable,
   }
 }

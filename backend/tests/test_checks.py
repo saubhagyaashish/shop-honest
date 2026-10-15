@@ -135,6 +135,14 @@ def test_a_cart_holding_only_what_was_added_is_clean():
     assert "f-sneaked-item" not in run_checks(ev)
 
 
+def test_one_item_added_and_one_line_in_the_cart_is_never_sneaking():
+    # Big marketplaces label the line with a deal badge ("Limited time"), not the product's name.
+    ev = store_a()
+    cart = ev.captures["cart"].signals
+    cart["cartLines"] = [{**cart["cartLines"][0], "name": "Limited time", "text": "Limited time ₹1,899.00 Quantity is 1"}]
+    assert "f-sneaked-item" not in run_checks(ev)
+
+
 @pytest.mark.parametrize("change", ["unticked", "one_off"])
 def test_membership_needs_to_be_ticked_and_recurring(change: str):
     ev = store_a()

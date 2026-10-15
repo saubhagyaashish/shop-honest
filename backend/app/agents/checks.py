@@ -151,6 +151,9 @@ def sneaked_items(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
     if not cart or not ev.added_items:
         return []
     lines = cart.signals.get("cartLines", [])
+    # No more priced lines than items added: nothing was sneaked in, whatever a line's label says ("Limited time").
+    if len([line for line in lines if line.get("amount") is not None]) <= len(ev.added_items):
+        return []
     extra = [line for line in lines if not any(_same_item(line["name"], item) for item in ev.added_items)]
     if not extra:
         return []

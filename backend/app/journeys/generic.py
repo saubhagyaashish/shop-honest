@@ -38,7 +38,12 @@ CLOSE = re.compile(
     r"only (necessary|essential)( cookies)?|continue without accepting)$",
     re.I,
 )
+# Radio groups that pick a picture, not a product option.
+GALLERY = re.compile(r"image|thumbnail|photo|gallery|media|video|slide", re.I)
+# A product, or one of its options, that can't be bought right now.
+UNAVAILABLE = re.compile(r"\b(unavailable|out of stock|sold out|no longer available)\b", re.I)
 BOT_STOP = "The site's bot protection stopped the agent; it doesn't try to get around it."
+UNAVAILABLE_STOP = "Product unavailable"
 ERROR_STOP = "The site showed an error instead of the page (it may be blocking automated browsers)"
 
 CONTROLS_JS = """(max) => {
@@ -46,6 +51,9 @@ CONTROLS_JS = """(max) => {
     const s = getComputedStyle(el), r = el.getBoundingClientRect()
     return s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0 && r.width > 0 && r.height > 0
   }
+  // In the site's header, menus or footer, and how far down the page: the model is shown the page body first.
+  const chrome = (el) => !!el.closest('header, nav, footer, [role=banner], [role=navigation], [role=contentinfo]')
+  const y = (el) => Math.round(el.getBoundingClientRect().top + window.scrollY)
   document.querySelectorAll('[data-shophonest-ref]').forEach((el) => el.removeAttribute('data-shophonest-ref'))
   const out = []
   const CLICKABLE = 'a, button, [role=button], input[type=submit], input[type=button], [onclick]'
@@ -62,6 +70,8 @@ CONTROLS_JS = """(max) => {
       ref, text, href: href.slice(0, 120),
       kind: el.tagName === 'A' ? 'link' : 'button',
       inDialog: !!el.closest('[role=dialog], [aria-modal=true], dialog, .modal, [class*=cookie], [id*=cookie], [class*=consent]'),
+      chrome: chrome(el),
+      y: y(el),
     })
     if (out.length >= max) break
   }
@@ -78,7 +88,10 @@ CONTROLS_JS = """(max) => {
     if ([...el.children].some((c) => (c.innerText || '').replace(/\\s+/g, ' ').trim() === text)) continue
     const ref = 'c' + (out.length + 1)
     el.setAttribute('data-shophonest-ref', ref)
-    out.push({ ref, text, href: '', kind: 'button', inDialog: !!el.closest('[role=dialog], [aria-modal=true], dialog, .modal') })
+    out.push({
+      ref, text, href: '', kind: 'button', inDialog: !!el.closest('[role=dialog], [aria-modal=true], dialog, .modal'),
+      chrome: chrome(el), y: y(el),
+    })
   }
   return out
 }"""
@@ -132,10 +145,17 @@ class GenericJourney:
             await walk.log("navigator", "No other variants to compare on this page.")
             walk.note_step("variant", first)
 
-        # Cart: add exactly one item, then open the cart.
-        add = await self._find(walk, ADD_TO_CART, "adds this product to the cart")
+        # Cart: add exactly one item, then open the cart. A product the page says is unavailable has nothing to add,
+        # so the model isn't asked to guess a control.
+        gone = (walk.evidence.captures.get("variant") or first).signals.get("unavailable")
+        add = await self._find(walk, ADD_TO_CART, "adds this product to the cart", use_model=not gone)
         if add is None:
             await walk.start_step("cart")
+            if gone:
+                said = gone["text"][:60]
+                await walk.log("navigator", f'The product page says "{said}", so there is nothing to add to the cart.')
+                await walk.blocked(UNAVAILABLE_STOP)
+                return
             await walk.log("navigator", "I couldn't find a way to add this product to the cart, so the walk stops here.")
             await walk.blocked("No add-to-cart control found")
             return
@@ -197,7 +217,8 @@ class GenericJourney:
         await walk.log("navigator", "Reached the payment page. Stopping here: the agent never pays.")
 
     async def _controls(self, page: Page) -> list[dict[str, Any]]:
-        return await page.evaluate(CONTROLS_JS, 150)
+        # Long pages (big marketplaces) have hundreds of menu links before the buy box.
+        return await page.evaluate(CONTROLS_JS, 600)
 
     async def _find(
         self,
@@ -221,7 +242,9 @@ class GenericJourney:
         judge = walk.judge
         if not use_model or judge is None or not safe:
             return None
-        ref = await judge.pick(purpose, safe[:90])
+        # The page body before the header and menus, top to bottom: the controls a shopper would look at first.
+        ranked = sorted(safe, key=lambda c: (c.get("chrome", False), c.get("y", 0)))
+        ref = await judge.pick(purpose, ranked[:90])
         chosen = next((c for c in safe if c["ref"] == ref), None)
         if chosen is not None:
             await walk.log(
@@ -267,24 +290,50 @@ async def _settle(page: Page) -> None:
 
 
 async def _other_variant(page: Page) -> str | None:
-    """Pick another colour/size if the page offers a generic choice; return its label."""
-    radio = page.locator('[role=radiogroup] [role=radio][aria-checked="false"]').first
-    if await radio.count():
-        label = (await radio.get_attribute("aria-label")) or (await radio.inner_text()).strip() or "another option"
-        with contextlib.suppress(Exception):
-            await radio.click(timeout=5000)
-            await _settle(page)
-            return label
+    """Pick another colour/size that can be bought, if the page offers a generic choice; return its label."""
+    groups = page.locator("[role=radiogroup]")
+    for g in range(min(await groups.count(), 6)):
+        group = groups.nth(g)
+        name = " ".join(filter(None, [await group.get_attribute(a) for a in ("aria-label", "id")]))
+        if GALLERY.search(name):
+            continue
+        radios = group.locator('[role=radio][aria-checked="false"]')
+        for i in range(min(await radios.count(), 8)):
+            radio = radios.nth(i)
+            alt = radio.locator("img[alt]").first
+            try:
+                shown = (await radio.inner_text(timeout=3000)).strip()
+                label = (
+                    (await radio.get_attribute("aria-label", timeout=3000))
+                    or (await alt.get_attribute("alt", timeout=3000) if await alt.count() else None)
+                    or shown
+                )
+            except Exception:
+                continue  # gone after an earlier click re-rendered the page
+            if UNAVAILABLE.search(label) or UNAVAILABLE.search(shown):
+                continue
+            # The element itself: the locator would match another option once this one is checked.
+            option = await radio.element_handle()
+            before = urlsplit(page.url).path
+            with contextlib.suppress(Exception):
+                await option.click(timeout=5000)
+                await _settle(page)
+            # Only a click that selected the option, or loaded its own page, counts as choosing it (a tracking parameter
+            # added to the same page doesn't).
+            with contextlib.suppress(Exception):
+                if urlsplit(page.url).path != before or await option.get_attribute("aria-checked") == "true":
+                    return " ".join(label.split())[:60] or "another option"
     for select in await page.locator("select").all():
         name = " ".join(filter(None, [await select.get_attribute(a) for a in ("name", "id", "aria-label")]))
         if not re.search(r"size|colou?r|variant|style|storage|capacity|pack", name, re.I):
             continue
-        options = [o for o in await select.locator("option").all_inner_texts() if o.strip()]
-        if len(options) > 1:
+        options = await select.locator("option").all_inner_texts()
+        index = next((i for i, o in enumerate(options) if i > 0 and o.strip() and not UNAVAILABLE.search(o)), None)
+        if index is not None:
             with contextlib.suppress(Exception):
-                await select.select_option(index=1, timeout=5000)
+                await select.select_option(index=index, timeout=5000)
                 await _settle(page)
-                return options[1].strip()
+                return options[index].strip()
     return None
 
 
