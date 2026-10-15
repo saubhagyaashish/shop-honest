@@ -1,6 +1,6 @@
 # 0014. The live audit runs as an ADK agent graph, with an Adjudicator that checks evidence through tools
 
-**Status:** Proposed · 2026-10-15 (behind `AGENT_GRAPH` until it passes the answer-key eval)
+**Status:** Accepted · 2026-10-15 (on by default; `AGENT_GRAPH=false` switches it off)
 
 ## Context
 Until now each model call built its own one-agent ADK `LlmAgent` and runner (`models/call.py`), and plain Python passed outputs from one agent to the next. It worked and it was honest, but nothing in it used what ADK is for: a graph the framework runs, and agents that decide to call tools. The Adjudicator could only score the crop it was handed.
@@ -26,7 +26,8 @@ ADK 2.11, the version we run, deprecates `SequentialAgent`, `LoopAgent` and `Par
 - **Same judgement, same failures.** The steps around the models are shared with the old path: grounding, the evidence rules, `decide()`, the closing line and the report. A node that fails stores its error, and the runner raises it after the graph ends, so failures read exactly as before. Cancellation passes straight through. ADK logs a failed node at ERROR, and every ERROR log raises an alert, so its node runner is kept quiet; failures we handle are logged as warnings, as before.
 
 ## Consequences
-- The old path stays, and `AGENT_GRAPH=0` switches back to it. Tests run both paths (parity on the demo-store fixtures, and live audits in a real browser).
+- **Measured on `gemini-3.6-flash`, 2 runs per store:** Store A 9/9, Store B 0 false alarms, Store C 6/6. Alternating audits with and without the graph, Store A took 26.9 s with it and 28.6 s without, and used 21.0k input tokens against 17.2k (+22%).
+- The old path stays, and `AGENT_GRAPH=false` switches back to it. Tests run both paths (parity on the demo-store fixtures, and live audits in a real browser).
 - One more model turn per claim that has a check. On Store A that's the interface-interference claims.
-- Local models without native schema-plus-tools support answer through ADK's `set_model_response` tool. Gemma 3 4B is weaker at that, so local development may prefer `AGENT_GRAPH=0`.
+- Local models without native schema-plus-tools support answer through ADK's `set_model_response` tool. Gemma 3 4B is weaker at that, so local development may prefer `AGENT_GRAPH=false`.
 - F3's Fixer joins the `audit` graph as a node between summarise and report, without touching the runner.

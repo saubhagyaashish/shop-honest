@@ -139,6 +139,17 @@ The deterministic Reporter (`backend/app/agents/reporter.py`) builds the report:
 
 Every decision is narrated in the audit trail, including the claims that were dropped and why. A model that times out or answers nonsense costs that screen its review, never the audit (`models/call.py`).
 
+**The agent graph (ADR-0014).** The audit runs as two ADK `Workflow` graphs:
+- **`audit`** (`runner/audit_graph.py`): navigate → collect reviews → summarise → report.
+- **`screen_review`** (`agents/review_graph.py`), one session per screen: prepare → analyse → ground → adjudicate. Routes skip the rest when there's nothing to judge.
+
+The Pattern Analyst and the Adjudicator run as child agents of their nodes, and model budgets are enforced inside the model (`models/metered.py`). Before ruling, the Adjudicator runs the one check that can settle the claim (`agents/tools.py`):
+- interface interference: `measure_elements`;
+- false urgency on the product page: `compare_reloads`;
+- nagging: `find_on_other_screens`.
+
+Wording claims are ruled on directly. Each tool call appears in the agent log with a chip. `AGENT_GRAPH=false` runs the same steps without the graphs.
+
 ## 5. One audit, end to end
 
 ```mermaid
@@ -234,7 +245,7 @@ One setting switches every agent ([ADR-0003](decisions/0003-model-providers.md))
 |---|---|---|---|
 | `replay` | No model: plays back a recorded run | UI work, infrastructure, CI, the public demo default | ₹0 |
 | `ollama` | Gemma 3 (4B by default) on the developer's machine, through ADK's LiteLLM connector | Building agents, prompts and schemas offline | ₹0 |
-| `gemini` | Gemini through **Vertex AI** on the global endpoint (`GEMINI_BACKEND=vertex`, the default; ADC locally, the service account on Cloud Run), or AI Studio with a key | Accuracy evals, "Run live", the deployed backend | about 17k input + 5k output tokens per Store A audit with `gemini-3.8-flash` |
+| `gemini` | Gemini through **Vertex AI** on the global endpoint (`GEMINI_BACKEND=vertex`, the default; ADC locally, the service account on Cloud Run), or AI Studio with a key | Accuracy evals, "Run live", the deployed backend | about 21k input + 5k output tokens per Store A audit with `gemini-3.6-flash` and the agent graph |
 
 - **Tiers:** a *fast* model (Flash class) for adjudication, and a *smart* model (Pro class) for the Pattern Analyst. Ollama serves both tiers with one model. Model IDs are configuration, not code (`GEMINI_MODEL_FAST`, `GEMINI_MODEL_SMART`).
 - **`replay` in a live audit** means no model: the audit is measured-only, exactly as in Phase 2.
@@ -278,19 +289,19 @@ A user-supplied URL makes **our** browser visit it, so every request goes throug
 - **Resumable stream:** events are persisted before they are sent, and SSE `id` is the sequence number. On reconnect the API replays everything after `Last-Event-ID`, so refreshes and flaky networks are harmless. Firebase Hosting turned out to buffer streams, so the browser reads the stream from Cloud Run directly ([ADR-0010](decisions/0010-event-stream-straight-to-cloud-run.md)). A client watchdog reopens a stream that has gone silent for 60 s.
 - **Several instances:** the instance running an audit owns it and writes a heartbeat every 10 s. If the owner goes quiet for 45 s (crash, scale-in), the next request or quiet stream to reach any instance claims the audit atomically. A replay continues from the last stored event; a live audit is closed as `failed`. "Skip to report" is a flag on the audit, so it works from any instance ([ADR-0011](decisions/0011-audit-ownership-and-takeover.md)). The cap of 2 live browsers is per instance, by design.
 - **Idempotency:** each audit has a single writer at a time, and events are create-only, so a takeover can't duplicate or overwrite them. Audits older than their time limit plus 2 minutes are closed as `failed` as a last resort.
-- **Gemini capacity:** retries with backoff, then `gemini-2.5-flash` as fallback; a screen whose review still fails is reported as such, and the audit completes on its measured findings.
+- **Gemini capacity:** retries with backoff, then `gemini-3.1-flash-lite` as fallback; a screen whose review still fails is reported as such, and the audit completes on its measured findings.
 - **Live-audit limits:** 100 per day site-wide (`429 rate_limited`). There is no per-visitor limit in production; `LIVE_PER_IP_PER_HOUR` can bring one back.
 - **Alerts** (`deploy/monitoring.py`, by email to the project owner): any ERROR log from the service, and more than 3 5xx responses in 5 minutes. Both are free while nothing goes wrong. An uptime probe on `/api/health` runs only in judging mode, because probing every few minutes would keep an instance awake all the time (about $3 a day with CPU always allocated).
 - **Judging days:** `deploy/judging.sh on` keeps one instance warm (no cold starts) and turns the uptime probe on; `off` puts both back. A warm instance costs money all day, so turn it off afterwards.
 - **Rollback:** Cloud Run keeps earlier revisions, and Artifact Registry keeps the 3 newest images (so rollback reaches two releases back). List revisions with `gcloud run revisions list --service shop-honest-api --region asia-south1`, then `gcloud run services update-traffic shop-honest-api --region asia-south1 --to-revisions REVISION=100`.
-- **Spend:** two billing budgets on the project: ₹2,000 a month after credits and ₹5,000 a month of usage before credits, alerting at 50/90/100%. They alert, they don't cap. Actual use so far: roughly ₹100 of the $300 credit, mostly the Gemini model comparison; a live audit with `gemini-3.8-flash` is about ₹1.5–2.
+- **Spend:** two billing budgets on the project: ₹2,000 a month after credits and ₹5,000 a month of usage before credits, alerting at 50/90/100%. They alert, they don't cap. Actual use so far: roughly ₹100 of the $300 credit, mostly the Gemini model comparison; a live audit with `gemini-3.8-flash` was about ₹1.5–2 (`gemini-3.6-flash`, the default since 15 Oct, hasn't been costed yet).
 
 ## 12. Quality and evaluation
 
 | Check | What it proves | Target |
 |---|---|---|
-| **Answer-key eval** (`backend/evals/answer_key.py --provider … --runs N`) | Live audits of stores A, B and C against `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`); recall spread over runs, false alarms, and whether claims meant for review went there | Target: A ≥ 8/9 with the borderline claim → `needs_review`, B 0 false alarms. **Gemini (2 runs per store, each of `gemini-3.8-flash`, `gemini-2.5-pro`, `gemini-3.1-pro-preview` as the analyst): A 9/9 · B 0 · C 6/6, review 2/2 every time**, so the cheapest (`gemini-3.8-flash`, both tiers) is the default. Measured only: A 6/9 · B 0 · C 4/6. Gemma 3 4B (local): A 8/9 · B 0 · C 5/6. Findings that are real but not what a trick was planted for (the popup's lopsided buttons, "Most customers choose Express") are listed in the answer key's `ALSO_ACCEPTABLE` and count as neither hits nor false alarms; Store B has none. |
-| **Dataset eval** (`backend/evals/dataset.py`) | The Pattern Analyst's judgement (same model and guidance) on the public ec-darkpattern texts: 2,356, half dark patterns, Mathur et al.'s categories | **Zero-shot, `gemini-3.8-flash`: accuracy 0.963, precision 0.998, recall 0.929, F1 0.962.** The paper's models trained on this dataset reach 0.960–0.975 F1. Recall per category: Scarcity 414/418, Social Proof 311/312, Urgency 204/210, Misdirection 142/195, Obstruction 15/27, Sneaking 7/12, Forced Action 1/4 |
+| **Answer-key eval** (`backend/evals/answer_key.py --provider … --runs N`) | Live audits of stores A, B and C against `shared/answer_key.json` (exported from `web/src/store/answerKey.ts`); recall spread over runs, false alarms, and whether claims meant for review went there | Target: A ≥ 8/9 with the borderline claim → `needs_review`, B 0 false alarms. **Gemini (2 runs per store, each of `gemini-3.8-flash`, `gemini-2.5-pro`, `gemini-3.1-pro-preview` as the analyst): A 9/9 · B 0 · C 6/6, review 2/2 every time**, so the cheapest (`gemini-3.8-flash`, both tiers) became the default. **15 Oct, with the agent graph:** `gemini-3.8-flash` slowed to 20–50 s a call on Vertex; `gemini-3.6-flash` scored the same (A 9/9 · B 0 · C 6/6, review 2/2, 2 runs) in 27 s per Store A audit and is now the default, with `gemini-3.1-flash-lite` (also A 9/9 · B 0 · C 6/6) as the fallback. Measured only: A 6/9 · B 0 · C 4/6. Gemma 3 4B (local): A 8/9 · B 0 · C 5/6. Findings that are real but not what a trick was planted for (the popup's lopsided buttons, "Most customers choose Express") are listed in the answer key's `ALSO_ACCEPTABLE` and count as neither hits nor false alarms; Store B has none. |
+| **Dataset eval** (`backend/evals/dataset.py`) | The Pattern Analyst's judgement (same model and guidance) on the public ec-darkpattern texts: 2,356, half dark patterns, Mathur et al.'s categories | **Zero-shot, `gemini-3.6-flash`: accuracy 0.961, precision 0.997, recall 0.924, F1 0.959** (`gemini-3.8-flash`: F1 0.962). The paper's models trained on this dataset reach 0.960–0.975 F1. Recall per category (3.6 Flash): Scarcity 409/418, Social Proof 308/312, Urgency 205/210, Misdirection 143/195, Obstruction 15/27, Sneaking 7/12, Forced Action 2/4 |
 | **Contract tests** | Every event the backend emits validates against `shared/contract.schema.json` | 100% |
 | **Unit tests** | URL guard, request guard, every check (positive, and honest variants that must not trigger), price drift, report, exposure | — |
 | **Browser tests** | Real live audits of the built web app (`pytest -m browser`): steps, findings, prices, every event against the schema, record → replay | — |
@@ -314,7 +325,7 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 
 **Cloud Run settings:** 2 vCPU, 2 GiB, CPU always allocated (audits run after the POST returns), concurrency 20 (streams are mostly idle; live browsers are capped by `MAX_LIVE_AUDITS=2` per instance), max 3 instances, min 0 (set `--min-instances 1` on judging days), request timeout 15 min, gen2.
 
-**Gemini resilience:** each model retries 408/429/5xx answers with backoff (2, 4, 8 s plus jitter). If the main model is still out of capacity, `gemini-2.5-flash` answers instead (`GEMINI_MODEL_FALLBACK`). Live audits are capped at 3 per visitor per hour and 100 per day across the site.
+**Gemini resilience:** each model retries 408/429/5xx answers with backoff (2, 4, 8 s plus jitter). If the main model is still out of capacity, `gemini-3.1-flash-lite` answers instead (`GEMINI_MODEL_FALLBACK`). Live audits are capped at 3 per visitor per hour and 100 per day across the site.
 
 **Configuration** (environment variables):
 
@@ -324,7 +335,8 @@ The eval numbers go in the README and the pitch: real numbers instead of claims.
 | `GEMINI_BACKEND` | `vertex` · `ai_studio` | Gemini through Vertex AI (no key; ADC or the service account) or AI Studio |
 | `GOOGLE_API_KEY` | (only with `ai_studio`) | AI Studio key |
 | `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | `shop-honest-72fd8` / `global` | Project; Gemini's endpoint (Mumbai only serves two Flash models) |
-| `GEMINI_MODEL_FAST` / `GEMINI_MODEL_SMART` | `gemini-3.8-flash` / `gemini-3.8-flash` | Model tiers (chosen by the eval) |
+| `GEMINI_MODEL_FAST` / `GEMINI_MODEL_SMART` | `gemini-3.6-flash` / `gemini-3.6-flash` | Model tiers (chosen by the eval) |
+| `AGENT_GRAPH` | `true` | Run the audit as ADK agent graphs ([ADR-0014](decisions/0014-audit-as-adk-workflow.md)); `false` runs the same steps in plain Python |
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | `http://localhost:11434` / `gemma3:4b` | Local models |
 | `STORE_BACKEND` | `memory` · `gcp` | In-process log + local frames, or Firestore + Cloud Storage |
 | `PRICE_HISTORY_BACKEND` / `BQ_DATASET` | `json` · `bigquery` / `shop_honest` | Price history from the demo catalog file, or BigQuery (deployed) |

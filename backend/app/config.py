@@ -79,10 +79,10 @@ class Settings(BaseSettings):
     gemini_backend: Literal["vertex", "ai_studio"] = "vertex"
     google_cloud_project: str = "shop-honest-72fd8"
     google_cloud_location: str = "global"
-    gemini_model_fast: str = "gemini-3.8-flash"
-    gemini_model_smart: str = "gemini-3.8-flash"
+    gemini_model_fast: str = "gemini-3.6-flash"
+    gemini_model_smart: str = "gemini-3.6-flash"
     # Asked when the main model is out of capacity (429/503) even after retries; empty = no fallback.
-    gemini_model_fallback: str = "gemini-2.5-flash"
+    gemini_model_fallback: str = "gemini-3.1-flash-lite"
     google_api_key: SecretStr | None = None
     model_timeout_s: float = 90.0
     audit_max_model_calls: int = 40
@@ -93,8 +93,9 @@ class Settings(BaseSettings):
     adjudicator_verify: bool = True
     # Claims the verifier agrees with less than this are dropped.
     reject_below: float = 0.35
-    # Run model judgement as an ADK agent graph, with an Adjudicator that checks evidence through tools.
-    agent_graph: bool = False
+    # Run the live audit as ADK agent graphs, with an Adjudicator that checks evidence through tools (ADR-0014).
+    # Off: the same steps run one after another in plain Python.
+    agent_graph: bool = True
     # Evidence tools the Adjudicator may call per claim before it rules.
     adjudicator_max_tool_calls: int = 2
 

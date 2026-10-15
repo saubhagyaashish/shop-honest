@@ -26,7 +26,7 @@ flowchart LR
   hosting -- /api --> run[Cloud Run · FastAPI<br/>audit runner]
   user -. live event stream .-> run
   run --> browser[Headless Chromium<br/>Playwright]
-  run --> agents[ADK agents]
+  run --> agents[ADK agent graph]
   agents --> gemini[Gemini on Vertex AI]
   run --> fs[(Firestore<br/>audits + event log)]
   run --> gcs[(Cloud Storage<br/>screenshots)]
@@ -41,7 +41,8 @@ flowchart LR
   - pre-ticked paid subscriptions;
   - fees that first appear at payment.
 - **Price Historian** looks the product up in **BigQuery** and flags an MRP it never actually sold at. Every audit adds the prices it saw.
-- **Pattern Analyst** (Gemini) judges wording and design: shaming opt-outs, lopsided buttons, unverifiable claims. It can only cite elements measured on the page. The evidence rules and the **Adjudicator** (a second Gemini call, on a crop of the evidence) drop anything the measurements contradict. Claims nobody can check go to a **human review** queue instead of being asserted.
+- **Pattern Analyst** (Gemini) judges wording and design: shaming opt-outs, lopsided buttons, unverifiable claims. It can only cite elements measured on the page. The evidence rules and the **Adjudicator** (a second Gemini agent, on a crop of the evidence) drop anything the measurements contradict. Before it rules on a claim it can check, the Adjudicator calls a measurement tool, for example how many times larger the preferred button is, and the agent log shows the call. Claims nobody can check go to a **human review** queue instead of being asserted.
+- The whole audit runs as **ADK agent graphs** (`Workflow`): navigate → review each screen (analyse → ground → adjudicate) → summarise → report ([ADR-0014](docs/decisions/0014-audit-as-adk-workflow.md)).
 - **Reporter** builds the trust score, the money breakdown and the legal exposure.
 
 Details: [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Decision records](docs/decisions/README.md) · [Judging runbook](docs/JUDGING.md)
@@ -50,10 +51,10 @@ Details: [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Decision
 | Evaluation | Result |
 |---|---|
 | **Planted tricks** (`evals/answer_key.py`, live runs, 2 per store) | Store A **9/9**, with the borderline claim in review · Store B **0 false alarms** · Store C **6/6** before its wall |
-| **Public dataset** (`evals/dataset.py`): 2,356 shopping texts, [Yada et al. 2022](https://github.com/yamanalab/ec-darkpattern) on Mathur et al. 2019 | **Zero-shot**: accuracy **0.963**, precision **0.998**, recall 0.929, F1 **0.962**. For reference, models *trained on this dataset* reach 0.960–0.975 F1 |
+| **Public dataset** (`evals/dataset.py`): 2,356 shopping texts, [Yada et al. 2022](https://github.com/yamanalab/ec-darkpattern) on Mathur et al. 2019 | **Zero-shot**: accuracy **0.961**, precision **0.997**, recall 0.924, F1 **0.959**. For reference, models *trained on this dataset* reach 0.960–0.975 F1 |
 | **Real stores, logged out** | AutomationExercise: product → cart → stops at the sign-in wall. Flipkart: reaches the cart page, which then refuses automated browsers; reported honestly |
 
-All numbers come from `gemini-3.8-flash`. Equally accurate on our eval, it beat `gemini-2.5-pro` and `gemini-3.1-pro-preview` on cost. A live audit uses about 17k input and 5k output tokens.
+All numbers come from `gemini-3.6-flash` with the agent graph on. It was as accurate as `gemini-3.8-flash` (F1 0.962) on both evals and far quicker the day we compared them: a Store A audit took 27 s, against 62–255 s. A live audit of Store A uses about 21k input and 5k output tokens.
 
 ## Built on Google Cloud
 - **Gemini on Vertex AI**, via the **Agent Development Kit (ADK)**.
