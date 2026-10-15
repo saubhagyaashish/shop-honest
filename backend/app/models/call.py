@@ -8,7 +8,7 @@ import asyncio
 import json
 import logging
 import re
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
@@ -17,6 +17,9 @@ from pydantic import BaseModel, ValidationError
 
 from app.config import Settings
 from app.models import Model
+
+if TYPE_CHECKING:
+    from google.adk.models.base_llm import BaseLlm
 
 log = logging.getLogger(__name__)
 
@@ -44,15 +47,38 @@ class ModelCaller:
     def budget_left(self) -> int:
         return self._settings.audit_max_model_calls - self.calls
 
+    @property
+    def slots(self) -> asyncio.Semaphore:
+        return self._slots
+
+    @property
+    def timeout_s(self) -> float:
+        return self._settings.model_timeout_s
+
+    def claim(self) -> None:
+        """Count one more model call, or raise ModelError when the audit's budget is spent."""
+        if self.budget_left <= 0:
+            raise ModelError("the audit's model-call budget is used up")
+        if self.tokens_in + self.tokens_out >= self._settings.audit_max_tokens:
+            raise ModelError("the audit's token budget is used up")
+        self.calls += 1
+
+    def add_usage(self, usage: types.GenerateContentResponseUsageMetadata | None) -> None:
+        if usage:
+            self.tokens_in += usage.prompt_token_count or 0
+            self.tokens_out += (usage.candidates_token_count or 0) + (usage.thoughts_token_count or 0)
+
+    def metered(self, model: Model) -> "BaseLlm":
+        """The model, counted against this audit's budgets (for agents that run inside an ADK graph)."""
+        from app.models.metered import MeteredLlm
+
+        return MeteredLlm.wrap(model, self)
+
     async def ask(self, *, name: str, model: Model, instruction: str, schema: type[T], parts: list[types.Part]) -> T:
         """Ask once, retry once on an unusable answer; raises ModelError when there's still none."""
         last: Exception | None = None
         for _ in range(2):
-            if self.budget_left <= 0:
-                raise ModelError("the audit's model-call budget is used up")
-            if self.tokens_in + self.tokens_out >= self._settings.audit_max_tokens:
-                raise ModelError("the audit's token budget is used up")
-            self.calls += 1
+            self.claim()
             try:
                 async with self._slots:
                     async with asyncio.timeout(self._settings.model_timeout_s):
@@ -85,11 +111,7 @@ async def _run(
     async for event in runner.run_async(
         user_id="audit", session_id=session.id, new_message=types.Content(role="user", parts=parts)
     ):
-        if event.usage_metadata:
-            usage.tokens_in += event.usage_metadata.prompt_token_count or 0
-            usage.tokens_out += (event.usage_metadata.candidates_token_count or 0) + (
-                event.usage_metadata.thoughts_token_count or 0
-            )
+        usage.add_usage(event.usage_metadata)
         if event.is_final_response() and event.content and event.content.parts:
             text = "".join(p.text or "" for p in event.content.parts)
     if not text:
