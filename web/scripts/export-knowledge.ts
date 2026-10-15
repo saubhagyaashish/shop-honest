@@ -4,6 +4,7 @@
 //   patterns.json       names, severities, primary rules and fixes
 //   price_history.json  stand-in for BigQuery until Phase 4 (store/catalog.ts)
 //   answer_key.json     ground truth per store instance, for the evals
+//   store_settings.json the demo stores' settings and current values, for the Fixer (store/settings.ts)
 //
 //   npm run knowledge
 
@@ -17,6 +18,7 @@ import { FIXES } from '../src/auditor/mock/fixes'
 import { EXPOSURE_DISCLAIMER, JURISDICTIONS, STRICTEST } from '../src/auditor/mock/legal'
 import { ALSO_ACCEPTABLE, ANSWER_KEY } from '../src/store/answerKey'
 import { PRODUCTS } from '../src/store/catalog'
+import { currentSettings, SETTINGS } from '../src/store/settings'
 import { ALL_STORES, storePath } from '../src/store/variants'
 
 const SHARED = join(dirname(fileURLToPath(import.meta.url)), '../../shared')
@@ -73,6 +75,10 @@ async function main() {
       ]),
     ),
   )
+  await write('store_settings.json', {
+    settings: SETTINGS,
+    stores: Object.fromEntries(ALL_STORES.map((setup) => [setup.key, currentSettings(setup)])),
+  })
 }
 
 main().catch((err) => {

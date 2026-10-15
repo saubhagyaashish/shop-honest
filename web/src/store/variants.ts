@@ -1,5 +1,5 @@
 import type { JourneyStep } from '../shared/contract'
-import type { StoreId } from './catalog'
+import type { Product, StoreId } from './catalog'
 
 /**
  * Which behaviours a store instance has switched on. Store A turns on every
@@ -36,6 +36,8 @@ export interface StoreSetup {
   upfrontPlatformFee: number
   /** Only applied when feesAtPaymentOnly is on. */
   paymentStepFees: { label: string; amount: number }[]
+  /** M.R.P. per product slug, when a settings change replaced the catalog's (settings.ts). */
+  mrpOverride?: Record<string, number>
 }
 
 export const STORES: Record<StoreId, StoreSetup> = {
@@ -89,6 +91,12 @@ export const ALL_STORES: StoreSetup[] = [STORES.a, STORES.b, STORE_C]
 
 export function storeForKey(key: string | undefined): StoreSetup | undefined {
   return ALL_STORES.find((s) => s.key === key)
+}
+
+/** A product's selling price and M.R.P. in this store. */
+export function pricingOf(product: Product, setup: StoreSetup): { price: number; mrp: number } {
+  const { price, mrp } = product.pricing[setup.id]
+  return { price, mrp: setup.mrpOverride?.[product.slug] ?? mrp }
 }
 
 export function storePath(setup: StoreSetup, path = ''): string {

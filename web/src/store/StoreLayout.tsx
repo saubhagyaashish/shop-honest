@@ -1,11 +1,17 @@
+import { useMemo } from 'react'
 import { Link, Outlet, ScrollRestoration, useParams } from 'react-router'
+import { applySettings, readPatch } from './settings'
 import { StoreProvider } from './StoreContext'
 import { useStore } from './useStore'
 import { storeForKey, storePath } from './variants'
 
 export function StoreLayout() {
   const { storeKey } = useParams()
-  const setup = storeForKey(storeKey)
+  // A settings patch from the auditor's own browser turns this into a fixed copy (settings.ts); shoppers never have one.
+  const setup = useMemo(() => {
+    const base = storeForKey(storeKey)
+    return base && applySettings(base, readPatch())
+  }, [storeKey])
   if (!setup) {
     return (
       <div className="grid min-h-screen place-items-center font-store text-gray-600">

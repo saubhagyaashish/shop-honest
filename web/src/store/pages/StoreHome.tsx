@@ -3,7 +3,7 @@ import { useDocumentTitle } from '../../shared/useDocumentTitle'
 import { discountPercent, formatINR, PRODUCTS } from '../catalog'
 import { ProductArt } from '../components/ProductArt'
 import { useStore } from '../useStore'
-import { storePath } from '../variants'
+import { pricingOf, storePath } from '../variants'
 
 export function StoreHome() {
   const { setup } = useStore()
@@ -19,7 +19,7 @@ export function StoreHome() {
         <h2 className="text-lg font-semibold">Best of Electronics</h2>
         <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-4">
           {PRODUCTS.map((p) => {
-            const { price, mrp } = p.pricing[setup.id]
+            const { price, mrp } = pricingOf(p, setup)
             return (
               <Link key={p.slug} to={storePath(setup, `/p/${p.slug}`)} className="group rounded border border-transparent p-2 hover:border-gray-200 hover:shadow">
                 <ProductArt kind={p.kind} hex={p.colours[0].hex} className="aspect-square w-full" />

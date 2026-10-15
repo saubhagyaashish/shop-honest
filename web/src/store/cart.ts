@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { EXPRESS_DELIVERY_PRICE, PLUS_MEMBERSHIP, PROTECTION_PLAN } from './catalog'
 import type { Colour, Product } from './catalog'
+import { pricingOf } from './variants'
 import type { StoreSetup } from './variants'
 
 export interface CartLine {
@@ -65,7 +66,7 @@ export function useShopState(setup: StoreSetup) {
     (product: Product, colour: Colour) => {
       setState((s) => {
         const id = `${product.slug}-${colour.id}`
-        const { price, mrp } = product.pricing[setup.id]
+        const { price, mrp } = pricingOf(product, setup)
         const existing = s.lines.find((l) => l.id === id)
         let lines = existing
           ? s.lines.map((l) => (l.id === id ? { ...l, qty: l.qty + 1 } : l))

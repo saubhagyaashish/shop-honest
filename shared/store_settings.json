@@ -1,0 +1,116 @@
+{
+  "settings": [
+    {
+      "key": "behaviour.resettingTimer",
+      "type": "boolean",
+      "description": "On: the deal countdown restarts from 10:00 on every page load. Off: it counts down to a fixed end time."
+    },
+    {
+      "key": "behaviour.frozenStock",
+      "type": "boolean",
+      "description": "On: \"Only 2 left!\" is shown whatever happens. Off: the stock shown comes from live inventory."
+    },
+    {
+      "key": "behaviour.autoAddProtection",
+      "type": "boolean",
+      "description": "On: a ₹199 protection plan is put in the cart along with the product. Off: it is offered in the cart as an unticked option."
+    },
+    {
+      "key": "behaviour.feesAtPaymentOnly",
+      "type": "boolean",
+      "description": "On: platform, handling and convenience fees (₹97 in all) are first added at the payment step. Off: those fees are not added at payment."
+    },
+    {
+      "key": "behaviour.guiltDeclinePopup",
+      "type": "boolean",
+      "description": "On: an offer popup whose decline link guilt-trips the shopper. Off: no such popup."
+    },
+    {
+      "key": "behaviour.membershipTickedByDefault",
+      "type": "boolean",
+      "description": "On: the paid BazaarNest Plus membership (₹99/month) is ticked at checkout, its terms in fine print. Off: it starts unticked."
+    },
+    {
+      "key": "behaviour.lopsidedDeliveryChoice",
+      "type": "boolean",
+      "description": "On: express delivery is a big orange button and standard delivery a tiny grey link. Off: both are shown as equal options."
+    },
+    {
+      "key": "behaviour.buyersClaim",
+      "type": "boolean",
+      "description": "On: shows \"120+ bought in the last 24 hours\" with no data behind it. Off: no such claim."
+    },
+    {
+      "key": "upfrontPlatformFee",
+      "type": "number",
+      "description": "A fee (₹) charged on every order and shown from the product page onwards (\"+ ₹9 platform fee per order\"). 0 shows none."
+    },
+    {
+      "key": "mrp.sonicbuds-pro",
+      "type": "number",
+      "description": "The M.R.P. (₹) shown crossed out next to the selling price of SonicBuds Pro ANC Wireless Earbuds."
+    },
+    {
+      "key": "mrp.pulsefit-2",
+      "type": "number",
+      "description": "The M.R.P. (₹) shown crossed out next to the selling price of PulseFit 2 Smartwatch, 1.8\" AMOLED."
+    },
+    {
+      "key": "mrp.chargecube-10k",
+      "type": "number",
+      "description": "The M.R.P. (₹) shown crossed out next to the selling price of ChargeCube 10000 mAh Power Bank, 22.5W."
+    },
+    {
+      "key": "mrp.bassloop-neckband",
+      "type": "number",
+      "description": "The M.R.P. (₹) shown crossed out next to the selling price of BassLoop Wireless Neckband."
+    }
+  ],
+  "stores": {
+    "store-a": {
+      "behaviour.resettingTimer": true,
+      "behaviour.frozenStock": true,
+      "behaviour.autoAddProtection": true,
+      "behaviour.feesAtPaymentOnly": true,
+      "behaviour.guiltDeclinePopup": true,
+      "behaviour.membershipTickedByDefault": true,
+      "behaviour.lopsidedDeliveryChoice": true,
+      "behaviour.buyersClaim": true,
+      "upfrontPlatformFee": 0,
+      "mrp.sonicbuds-pro": 3999,
+      "mrp.pulsefit-2": 5999,
+      "mrp.chargecube-10k": 2499,
+      "mrp.bassloop-neckband": 2999
+    },
+    "store-b": {
+      "behaviour.resettingTimer": false,
+      "behaviour.frozenStock": false,
+      "behaviour.autoAddProtection": false,
+      "behaviour.feesAtPaymentOnly": false,
+      "behaviour.guiltDeclinePopup": false,
+      "behaviour.membershipTickedByDefault": false,
+      "behaviour.lopsidedDeliveryChoice": false,
+      "behaviour.buyersClaim": false,
+      "upfrontPlatformFee": 9,
+      "mrp.sonicbuds-pro": 1999,
+      "mrp.pulsefit-2": 2799,
+      "mrp.chargecube-10k": 1199,
+      "mrp.bassloop-neckband": 999
+    },
+    "store-c": {
+      "behaviour.resettingTimer": true,
+      "behaviour.frozenStock": true,
+      "behaviour.autoAddProtection": true,
+      "behaviour.feesAtPaymentOnly": true,
+      "behaviour.guiltDeclinePopup": true,
+      "behaviour.membershipTickedByDefault": true,
+      "behaviour.lopsidedDeliveryChoice": true,
+      "behaviour.buyersClaim": true,
+      "upfrontPlatformFee": 0,
+      "mrp.sonicbuds-pro": 3999,
+      "mrp.pulsefit-2": 5999,
+      "mrp.chargecube-10k": 2499,
+      "mrp.bassloop-neckband": 2999
+    }
+  }
+}

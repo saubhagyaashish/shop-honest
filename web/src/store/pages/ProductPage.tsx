@@ -6,7 +6,7 @@ import { deliveryDateLabel } from '../dates'
 import { OfferModal } from '../components/OfferModal'
 import { ProductArt } from '../components/ProductArt'
 import { useStore } from '../useStore'
-import { storePath } from '../variants'
+import { pricingOf, storePath } from '../variants'
 
 export function ProductPage() {
   const { slug } = useParams()
@@ -25,7 +25,7 @@ export function ProductPage() {
   }
 
   const colour = product.colours.find((c) => c.id === params.get('colour')) ?? product.colours[0]
-  const { price, mrp } = product.pricing[setup.id]
+  const { price, mrp } = pricingOf(product, setup)
 
   function addAndGo(to: '/cart' | '/checkout') {
     addProduct(product!, colour)
