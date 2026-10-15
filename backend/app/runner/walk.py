@@ -27,6 +27,7 @@ from app.stores.frames import FrameStore
 
 if TYPE_CHECKING:
     from app.agents.judge import Judge
+    from app.agents.review_graph import ReviewGraph
 
 log = logging.getLogger(__name__)
 
@@ -73,6 +74,8 @@ class Walk:
         # A site we didn't build: structural checks were validated only on our stores (see add_finding).
         self.third_party = False
         self._reviews: set[asyncio.Task[None]] = set()
+        # The screen_review agent graph (settings.agent_graph), built on the first screen it reviews.
+        self._graph: ReviewGraph | None = None
 
     async def log(self, agent: str, message: str) -> None:
         await self._emit({"type": "agent.log", "agent": agent, "message": message})
@@ -227,7 +230,14 @@ class Walk:
     async def _review(self, capture: Capture) -> None:
         assert self.judge is not None
         try:
-            await self.judge.review(self, capture)
+            if self.settings.agent_graph:
+                if self._graph is None:
+                    from app.agents.review_graph import ReviewGraph
+
+                    self._graph = ReviewGraph(self, self.judge)
+                await self._graph.review(capture)
+            else:
+                await self.judge.review(self, capture)
         except asyncio.CancelledError:
             raise
         except Exception:

@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     adjudicator_verify: bool = True
     # Claims the verifier agrees with less than this are dropped.
     reject_below: float = 0.35
+    # Run model judgement as an ADK agent graph, with an Adjudicator that checks evidence through tools.
+    agent_graph: bool = False
+    # Evidence tools the Adjudicator may call per claim before it rules.
+    adjudicator_max_tool_calls: int = 2
 
     @field_validator("allowed_hosts", "cors_origins", mode="before")
     @classmethod

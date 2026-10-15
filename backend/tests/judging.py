@@ -11,6 +11,7 @@ from app.models import ModelSet
 from app.models.scripted import ScriptedLlm
 
 LINE = re.compile(r'^(e\d+) · ([a-z ]+?)(?: \(.*?\))?: "(.*?)"', re.M)
+CITED = re.compile(r"^Cited elements: (.+)$", re.M)
 
 
 def elements_in(user_text: str) -> list[tuple[str, str, str]]:
@@ -52,9 +53,12 @@ def demo_store_analyst(user_text: str) -> list[dict]:
 def scripted_models(
     analyst: Callable[[str], list[dict]] = demo_store_analyst, agreement: float = 0.9, delay: float = 0
 ) -> ModelSet:
-    def respond(system: str, user: str, images: int) -> str:
+    def respond(system: str, user: str, images: int) -> str | dict:
         if "Pattern Analyst" in system:
             return json.dumps({"candidates": analyst(user)})
+        # In the agent graph the adjudicator has tools: measure the cited elements first, then rule.
+        if "measure_elements" in system and "[measure_elements]" not in user and (cited := CITED.search(user)):
+            return {"tool": "measure_elements", "args": {"refs": cited.group(1).split(", ")}}
         return json.dumps({"reason": "The measured facts support it.", "agreement": agreement})
 
     model = ScriptedLlm(responder=respond, delay=delay)

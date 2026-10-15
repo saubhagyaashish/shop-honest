@@ -1,15 +1,18 @@
 """A stand-in model for tests: answers from a Python function instead of a network call."""
 
 import asyncio
+import json
 from collections.abc import AsyncGenerator, Callable
+from typing import Any
 
 from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
-# (system instruction, user text, number of images) -> the model's reply text
-Responder = Callable[[str, str, int], str]
+# (system instruction, user text, number of images) -> the model's reply text, or a tool call
+# {"tool": name, "args": {...}}. Tool answers already given reach the responder as "[name] {json}" lines.
+Responder = Callable[[str, str, int], str | dict[str, Any]]
 
 
 class ScriptedLlm(BaseLlm):
@@ -25,9 +28,16 @@ class ScriptedLlm(BaseLlm):
             await asyncio.sleep(self.delay)
         system = _text(llm_request.config.system_instruction) if llm_request.config else ""
         parts = [p for c in llm_request.contents for p in (c.parts or [])]
-        user = "\n".join(p.text for p in parts if p.text)
+        user = "\n".join(
+            [p.text for p in parts if p.text]
+            + [f"[{p.function_response.name}] {json.dumps(p.function_response.response)}" for p in parts if p.function_response]
+        )
         images = sum(1 for p in parts if p.inline_data)
         reply = self.responder(system, user, images)
+        if isinstance(reply, dict):
+            call = types.FunctionCall(name=reply["tool"], args=reply.get("args", {}))
+            yield LlmResponse(content=types.Content(role="model", parts=[types.Part(function_call=call)]))
+            return
         yield LlmResponse(content=types.Content(role="model", parts=[types.Part(text=reply)]), turn_complete=True)
 
 

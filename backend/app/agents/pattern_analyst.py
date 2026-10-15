@@ -69,12 +69,17 @@ def instruction(knowledge: Knowledge) -> str:
     return (PROMPTS / "pattern_analyst.md").read_text(encoding="utf-8").replace("{{PATTERNS}}", patterns)
 
 
+def request_parts(capture: Capture, screen: str, elements: list[Element], jpeg: bytes) -> list[types.Part]:
+    """What the analyst is shown: the element list, then the screenshot."""
+    listing = "\n".join(e.line() for e in elements)
+    text = f"Screen: the {screen} ({capture.step} step of the journey)\n\nElements on this screen:\n{listing}"
+    return [types.Part(text=text), types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=jpeg))]
+
+
 async def analyse(
     caller: ModelCaller, model: Model, knowledge: Knowledge, capture: Capture, screen: str, elements: list[Element], jpeg: bytes
 ) -> list[Candidate]:
-    listing = "\n".join(e.line() for e in elements)
-    text = f"Screen: the {screen} ({capture.step} step of the journey)\n\nElements on this screen:\n{listing}"
-    parts = [types.Part(text=text), types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=jpeg))]
+    parts = request_parts(capture, screen, elements, jpeg)
     analysis = await caller.ask(
         name="pattern_analyst", model=model, instruction=instruction(knowledge), schema=Analysis, parts=parts
     )

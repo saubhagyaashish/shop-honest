@@ -123,7 +123,8 @@ def describe(name: str, args: dict[str, Any], result: dict[str, Any]) -> tuple[s
         return call, f"Couldn't use {name}: {result['error']}."
     if name == "measure_elements":
         if "areaRatio" not in result:
-            return call, "Measured the cited element."
+            looks = [f'"{e["text"]}": {e["look"]}' for e in result["elements"] if e["look"]]
+            return call, f"Measured {'; '.join(looks)}." if looks else "Measured the cited element."
         by_ref = {e["ref"]: e["text"] for e in result["elements"]}
         line = f'"{by_ref[result["largest"]]}" takes up {result["areaRatio"]:g}× the space of "{by_ref[result["smallest"]]}"'
         if "fontRatio" in result and result["fontRatio"] != 1:

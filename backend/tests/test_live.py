@@ -32,9 +32,9 @@ def web_base() -> Iterator[str]:
 
 
 async def live_audit(
-    web_base: str, store: str, tmp_path: Path, models: ModelSet | None = None
+    web_base: str, store: str, tmp_path: Path, models: ModelSet | None = None, agent_graph: bool = False
 ) -> tuple[list[dict], httpx.Response | None]:
-    settings = make_settings(enable_live=True, nav_linger_s=2, frames_dir=tmp_path)
+    settings = make_settings(enable_live=True, nav_linger_s=2, frames_dir=tmp_path, agent_graph=agent_graph)
     app = create_app(settings, resolver=fake_resolver, models=models)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=120) as client:
         res = await client.post("/api/audits", json={"targetUrl": f"{web_base}/demo/{store}/p/sonicbuds-pro", "mode": "live"})
@@ -122,8 +122,13 @@ def by_pattern_and_step(findings: list[dict]) -> list[tuple[str, str]]:
     return sorted((f["patternId"], f["step"]) for f in findings)
 
 
-async def test_judged_store_a_finds_every_planted_pattern(web_base: str, tmp_path: Path):
-    events, _ = await live_audit(web_base, "store-a", tmp_path, models=scripted_models())
+# Both ways of judging: the pipeline (Judge.review) and the screen_review agent graph.
+GRAPH = pytest.mark.parametrize("agent_graph", [False, True], ids=["pipeline", "graph"])
+
+
+@GRAPH
+async def test_judged_store_a_finds_every_planted_pattern(web_base: str, tmp_path: Path, agent_graph: bool):
+    events, _ = await live_audit(web_base, "store-a", tmp_path, models=scripted_models(), agent_graph=agent_graph)
     report = events[-1]["report"]
     assert by_pattern_and_step(report["findings"]) == by_pattern_and_step(ANSWER_KEY["store-a"]["findings"])
     status = {(f["patternId"], f["step"], f["status"]) for f in report["findings"]}
@@ -139,16 +144,20 @@ async def test_judged_store_a_finds_every_planted_pattern(web_base: str, tmp_pat
     assert "reviewed all 5 screens" in [e for e in logs if e["agent"] == "adjudicator"][-1]["message"]
 
 
-async def test_judged_store_b_still_has_no_false_alarms(web_base: str, tmp_path: Path):
-    events, _ = await live_audit(web_base, "store-b", tmp_path, models=scripted_models())
+@GRAPH
+async def test_judged_store_b_still_has_no_false_alarms(web_base: str, tmp_path: Path, agent_graph: bool):
+    events, _ = await live_audit(web_base, "store-b", tmp_path, models=scripted_models(), agent_graph=agent_graph)
     report = events[-1]["report"]
     assert report["findings"] == [] and report["trustScore"] == 100
     dropped = [e["message"] for e in events if e["type"] == "agent.log" and e["agent"] == "evidence"]
     assert any("Delivery options steer the shopper" in m and "similar" in m for m in dropped)
 
 
-async def test_a_slow_model_cannot_hold_the_audit_past_its_time_limit(web_base: str, tmp_path: Path):
-    settings = make_settings(enable_live=True, nav_linger_s=2, frames_dir=tmp_path, audit_timeout_s=20, model_timeout_s=60)
+@GRAPH
+async def test_a_slow_model_cannot_hold_the_audit_past_its_time_limit(web_base: str, tmp_path: Path, agent_graph: bool):
+    settings = make_settings(
+        enable_live=True, nav_linger_s=2, frames_dir=tmp_path, audit_timeout_s=20, model_timeout_s=60, agent_graph=agent_graph
+    )
     app = create_app(settings, resolver=fake_resolver, models=scripted_models(delay=45))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=120) as client:
         res = await client.post("/api/audits", json={"targetUrl": f"{web_base}/demo/store-c/p/sonicbuds-pro", "mode": "live"})

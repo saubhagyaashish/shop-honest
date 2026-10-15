@@ -61,7 +61,8 @@ def needs_verifying(candidate: Candidate) -> bool:
     return candidate.verifiable
 
 
-async def verify(caller: ModelCaller, model: Model, knowledge: Knowledge, finding: Finding, jpeg: bytes) -> Verdict:
+def request_parts(knowledge: Knowledge, finding: Finding, jpeg: bytes, refs: list[str] | None = None) -> list[types.Part]:
+    """What the adjudicator is shown: the claim, the measured facts, then the crop. `refs` name the cited elements for tools."""
     pattern_id = finding["patternId"]
     facts = "\n".join(f"- {o}" for o in finding["evidence"]["observations"])
     text = (
@@ -70,7 +71,13 @@ async def verify(caller: ModelCaller, model: Model, knowledge: Knowledge, findin
         f"Claim: {finding['title']}\n{finding['explanation']}\n\n"
         f"Measured on the page:\n{facts}"
     )
-    parts = [types.Part(text=text), types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=jpeg))]
+    if refs:
+        text += f"\n\nCited elements: {', '.join(refs)}"
+    return [types.Part(text=text), types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=jpeg))]
+
+
+async def verify(caller: ModelCaller, model: Model, knowledge: Knowledge, finding: Finding, jpeg: bytes) -> Verdict:
+    parts = request_parts(knowledge, finding, jpeg)
     return await caller.ask(name="adjudicator", model=model, instruction=instruction(), schema=Verdict, parts=parts)
 
 
