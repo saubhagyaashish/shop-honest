@@ -184,4 +184,4 @@ shophonest/
 - Dark-pattern taxonomy and research: Mathur et al., "Dark Patterns at Scale" (CSCW 2019).
 - Evaluation dataset: Yada et al., "Dark patterns in e-commerce: a dataset and its baseline evaluations" (IEEE BigData 2022), Apache-2.0. It's downloaded at evaluation time, not redistributed here.
 - Regulation: Central Consumer Protection Authority, *Guidelines for Prevention and Regulation of Dark Patterns, 2023*.
-- Team **Zero Context**: Saubhagya Ashish (lead).
+- Team **Zero Context**: Saubhagya Ashish (lead) and Suvojit Konar.
