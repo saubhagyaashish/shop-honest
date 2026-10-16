@@ -274,4 +274,4 @@ A full audit lists all five steps (or the reachable ones plus one `blocked` step
 - `web/src/auditor/source/sseSource.ts` implements this API. `npm run dev:live` (or `VITE_AUDIT_SOURCE=live`) uses it; in development Vite proxies `/api` to the backend on `127.0.0.1:8080`.
 - `EventSource` reconnects on its own and resumes via `Last-Event-ID`; the client only reports `audit.failed` after 3 consecutive errors with no event in between.
 - Error messages from the API (e.g. the allowlist message) are shown to the user as they are.
-- In live-API mode each sample card also has **Run live**, which sends `mode: "live"`; **Scan it** sends `auto` and gets the recording.
+- All landing-page launches request `mode: "live"`: **Scan it** beside the URL input and **Run live** on each sample card. Demo URLs also start fresh live audits. Errors are shown without falling back to a recording; offline builds require a connected live backend to start new audits. The API's replay modes remain available for internal tools and existing reports.

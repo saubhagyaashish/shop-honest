@@ -18,7 +18,7 @@ Built for the Google Cloud AI Builder Cup 2026 · Retail & Commerce · Team Zero
 > In November 2025, 26 Indian e-commerce platforms declared themselves free of dark patterns. In August 2026 the CCPA fined nine platforms, including Zepto, one of the 26, for a handling fee added during checkout and a membership put in the cart (Zepto says the fees were disclosed). A self-declaration isn't an audit. Shop Honest is the audit: it checks the whole journey the way a shopper meets it, measures what it can, and proves each fix.
 
 ## Judges: start here (3 minutes)
-1. **See an audit.** Open the site and press **Scan it** on **Store A** (a replay of a real run by the agents: instant, free). Press **Skip to report**. You'll see:
+1. **See an audit.** Open the site and press **Run live** on **Store A**, or paste its product URL and press **Scan it**. Both start a fresh audit by the agents. When it finishes, you'll see:
    - **9 dark patterns**, each with its screenshot and the rule it breaks;
    - the bill growing from **₹1,499 to ₹1,894**;
    - "they said you save ₹2,500, you really save ₹100".
@@ -56,7 +56,7 @@ Every number below was measured, on the date shown; the raw results are in [`doc
   - **Store A** plants the kinds of tricks the CCPA fined in 2026: fees added late in the journey and an add-on put in the cart (Zepto), pre-selected extras (Physics Wallah, BookMyShow), and shaming opt-out wording (IndiGo).
   - **Store B** is the same store with none of them.
   - **Store C** is Store A behind a sign-in wall.
-- **"Scan it" replays are recordings of real live runs** by the agents on Gemini, not mock-ups, with the Fixer's plan recorded too. "Run live" runs the agents for real.
+- **Every landing-page audit runs live**, including demo-store URLs submitted with **Scan it**. Sample cards offer **Run live** and **Peek store**. Recorded runs remain available to internal tools and existing reports; a failed live launch shows an error instead of a replay.
 - **The demo catalog's 26-week price history is seeded** (SYNTHETIC), so the M.R.P. check has history to compare with. Real products build their own history in BigQuery from each audit.
 - **Fix it changes only our own demo stores, and only a copy in the auditor's browser.** The store reads the patch before it renders, and nobody else sees it. On any other site nothing is ever changed: you get the fix list and **Re-audit this page**.
 - **Real sites are audited logged out, as a shopper who hasn't signed in.** Findings there are automated observations for review, not legal findings.
@@ -120,7 +120,7 @@ Details: [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Decision
 **What it costs to run:** about ₹2 per live audit (estimate); replays are free, and Cloud Run scales to zero when idle.
 
 **Fair-use limits:**
-- 100 live audits a day across the whole site; "Scan it" replays are unlimited.
+- 100 live audits a day across the whole site, including demo-store audits started from the landing page.
 - Each audit has a cap of 40 model calls, 400k tokens and 6 minutes.
 - Billing budgets alert at ₹2,000 a month.
 

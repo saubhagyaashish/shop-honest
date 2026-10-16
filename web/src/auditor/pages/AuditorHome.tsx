@@ -96,11 +96,14 @@ export function AuditorHome() {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [hash])
 
-  async function run(target: string, live = false) {
+  async function run(target: string) {
     setError(null)
     setStarting(true)
     try {
-      const auditId = await auditSource.start(target, { live })
+      if (auditSource.mode !== 'live') {
+        throw new Error('Live auditing requires the backend. Start the live build with the audit service connected.')
+      }
+      const auditId = await auditSource.start(target, { live: true })
       navigate(`/audit/${auditId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start the audit.')
@@ -251,7 +254,6 @@ export function AuditorHome() {
                 index={i}
                 disabled={starting}
                 onRun={() => run(window.location.origin + s.path)}
-                onRunLive={auditSource.mode === 'live' ? () => run(window.location.origin + s.path, true) : undefined}
               />
             </Reveal>
           ))}
@@ -371,7 +373,7 @@ export function AuditorHome() {
             <Sticker className="self-start">Google Cloud AI Builder Cup 2026 · Retail &amp; Commerce</Sticker>
             <p className="max-w-3xl text-xs leading-relaxed text-ink/60">
               Findings cite the CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023, and the Consumer Protection Act, 2019. Reports support a compliance review; they are not legal advice.
-              {auditSource.mode === 'mock' && ' This demo build replays real captures of the two sample stores through the same event stream the live agents will use.'}
+              {auditSource.mode === 'mock' && ' Live auditing requires a connected backend; new audits are unavailable in this offline build.'}
             </p>
           </div>
         </div>
@@ -409,13 +411,11 @@ function SampleCard({
   sample,
   index,
   onRun,
-  onRunLive,
   disabled,
 }: {
   sample: Sample
   index: number
   onRun: () => void
-  onRunLive?: () => void
   disabled: boolean
 }) {
   const tilt = index % 2 === 0 ? -0.8 : 0.8
@@ -444,14 +444,9 @@ function SampleCard({
           ))}
         </ul>
         <div className="mt-auto flex flex-wrap items-center gap-3 pt-6">
-          <button type="button" disabled={disabled} onClick={onRun} className={buttonClass('ink', 'md')}>
-            Scan it <Zap size={16} strokeWidth={2.6} aria-hidden="true" />
+          <button type="button" disabled={disabled} onClick={onRun} className={buttonClass('lime', 'md')} title="A fresh audit by the agents, not a recording">
+            Run live <Radio size={16} strokeWidth={2.6} aria-hidden="true" />
           </button>
-          {onRunLive && (
-            <button type="button" disabled={disabled} onClick={onRunLive} className={buttonClass('lime', 'md')} title="A fresh audit by the agents, not a recording">
-              Run live <Radio size={16} strokeWidth={2.6} aria-hidden="true" />
-            </button>
-          )}
           <a href={sample.path} target="_blank" rel="noreferrer" className={buttonClass('white', 'md')}>
             Peek store <ArrowUpRight size={16} strokeWidth={2.6} aria-hidden="true" />
           </a>

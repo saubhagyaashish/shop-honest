@@ -17,7 +17,7 @@ The pre-flight should end with `6/6 checks passed`. If you redeploy after this, 
 
 ## The demo (3–5 minutes)
 1. **The problem (30 s).** Indian shoppers meet countdowns that restart, "only 2 left" that never moves, insurance sneaked into the cart and fees that appear at payment. Since 2023 the CCPA lists 13 such dark patterns as unfair trade practices. Nobody checks a whole journey the way a shopper meets it.
-2. **Scan it on Store A (45 s).** It replays a recorded real run. Press **Skip to report**, then show:
+2. **Run live on Store A.** Use the sample card, or paste its product URL and press **Scan it**. Both start a fresh live audit. Watch the journey, then show:
    - the 9 findings with screenshots;
    - "they said you save ₹2,500, you really save ₹100" (the Price Historian, BigQuery);
    - the bill growing from ₹1,499 to ₹1,894;
@@ -37,9 +37,9 @@ The pre-flight should end with `6/6 checks passed`. If you redeploy after this, 
 ## If something goes wrong
 | Problem | What you see | What to do |
 |---|---|---|
-| The API is down or slow | The audit page says "The live audit service can't be reached right now", and the scan falls back to the built-in demo replay | Keep demoing on the replay: it's the same store and findings. Check `curl https://shop-honest-ai.web.app/api/health`. |
+| The API is down or slow | The landing page shows an error; new audits never fall back to a recording | Check `curl https://shop-honest-ai.web.app/api/health`, then retry. Existing saved reports remain available. |
 | Gemini is busy (429) | "Couldn't read the … page" in the narration | The measured findings still stand. Retry in a minute; the SDK retries and falls back to `gemini-3.1-flash-lite`. |
-| The daily live limit is reached (100 a day, site-wide) | "Live audits are paused for today" | Use **Scan it** (unlimited). Or raise the cap for the day: `gcloud run services update shop-honest-api --region asia-south1 --update-env-vars LIVE_PER_DAY=200`. |
+| The daily live limit is reached (100 a day, site-wide) | "Live audits are paused for today" | Show an existing saved report, or wait for the limit to reset. **Scan it** and sample-store audits both use the live budget. |
 | The real store blocks us | The report is blocked at a step with "bot protection" or "the site showed an error" | That's the honest path: show it. We never get around bot protection. |
 | AutomationExercise is down | The audit fails to open the page | Skip step 4, or show Tata 1mg. |
 | Stuck on "SCANNING" | No events for a minute | The stream reconnects by itself within 60 s. Otherwise reload the page: audits resume from their event log. |
