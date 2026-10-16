@@ -289,7 +289,26 @@ export function AuditorHome() {
             shop honest
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-8 text-sm font-semibold">
-            <span>Team Zero Context: Saubhagya Ashish and Suvojit Konar</span>
+            <span>
+              Team Zero Context:{' '}
+              <a
+                href="https://www.linkedin.com/in/saubhagya-ashish"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-ink/70"
+              >
+                Saubhagya Ashish
+              </a>
+              {' '}and{' '}
+              <a
+                href="https://www.linkedin.com/in/suvojitkonar/"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-ink/70"
+              >
+                Suvojit Konar
+              </a>
+            </span>
             {[
               ['GitHub', REPO_URL],
               ['Slide deck', DECK_URL],
