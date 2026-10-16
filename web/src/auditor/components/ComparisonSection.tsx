@@ -27,7 +27,7 @@ export function ComparisonSection({ comparison, applied }: { comparison: Compari
         <SectionHead
           kicker="re-audit 🔁"
           title={`${gone(() => true)} of ${comparison.results.length} earlier findings are gone`}
-          note={`The same page, audited again and compared with the audit of ${when}. A finding counts as gone when the same check, or the same kind of dark pattern on the same screen, no longer turns up.`}
+          note={`The same page, audited again and compared with the audit of ${when}. A finding counts as gone when the same check, or a model's finding of the same kind of dark pattern at the same step, no longer turns up.`}
         />
       )}
       <BeforeAfter v={comparison} />

@@ -25,7 +25,6 @@ PROMPTS = Path(__file__).parent / "prompts"
 # Where the auditor's browser leaves the patch for the copy it audits (PATCH_STORAGE_KEY in store/settings.ts).
 PATCH_STORAGE_KEY = "shophonest:settings"
 STORE_PATH = re.compile(r"^/demo/([a-z0-9-]+)/")
-MODEL_FINDING_N = re.compile(r"^(m-.+)-\d+$")
 
 
 class Change(BaseModel):
@@ -169,8 +168,11 @@ def verify(
 
 def same_finding(finding: dict[str, Any]) -> str:
     """What makes two audits' findings the same one: a measured check's id (e.g. "f-frozen-stock"), or for a model's
-    finding the screen it was seen on and its pattern (ids are "m-<screen>-<pattern>-<n>")."""
-    return MODEL_FINDING_N.sub(r"\1", finding["id"])
+    finding (ids "m-…") its step and pattern. Not its screen: the same claim may be read in a popup one time and on the
+    page behind it the next."""
+    if finding["id"].startswith("m-"):
+        return f"m:{finding['step']}:{finding['patternId']}"
+    return finding["id"]
 
 
 def outcome_line(verification: dict[str, Any], fixed: set[str]) -> str:

@@ -23,7 +23,9 @@ A first version ran the fix automatically inside every demo-store audit: the Fix
   - a live audit runs, with the auditor's browser writing the patch to sessionStorage before the page loads (`page.add_init_script`), and the store applying exactly that patch, in that browser only;
   - its prices are looked up but never recorded (`ReadOnlyPrices`), so BigQuery keeps only real observations;
   - its report gets `appliedFixes` and a `comparison` with the earlier audit.
-- **How a later finding counts as the same one** (`fixer.same_finding`): a measured finding by its check's id; a model's finding by the screen it was seen on and its pattern. So fixing the frozen stock counter doesn't hide that the timer still restarts, though both are false urgency on the product page.
+- **How a later finding counts as the same one** (`fixer.same_finding`):
+  - A measured finding matches by its check's id. So fixing the frozen stock counter doesn't hide that the timer still restarts, though both are false urgency on the product page.
+  - A model's finding matches by its step and pattern, not its screen. In testing, an unfixed "120+ bought" claim was read in a popup the first time and on the page behind it the second, and matching by screen counted it as fixed.
 - **Real sites are never changed.** Every fix there is `code` or `review`. The viewer can switch fixes on as planned, to see what they'd change, copy the fix list for the developers, and use "Re-audit this page" (`compareTo` alone) once they've shipped.
 
 ## Consequences

@@ -80,12 +80,15 @@ def test_a_re_audit_finds_the_same_finding_by_check_or_by_screen_and_pattern():
         {"id": "f-frozen-stock", "title": "Stock", "patternId": "false_urgency", "step": "product"},
         {"id": "m-product-popup-confirm_shaming-1", "title": "Shame", "patternId": "confirm_shaming", "step": "product"},
         {"id": "m-checkout-false_urgency-2", "title": "Bought", "patternId": "false_urgency", "step": "checkout"},
+        {"id": "m-product-popup-nagging-1", "title": "Nag", "patternId": "nagging", "step": "product"},
     ]
     after = [
         # The stock counter is fixed, the timer isn't: one doesn't hide the other.
         {"id": "f-restarting-timer", "title": "Timer", "patternId": "false_urgency", "step": "product"},
         # A model numbers its findings per screen, so the same one may come back with another number.
         {"id": "m-checkout-false_urgency-1", "title": "Bought again", "patternId": "false_urgency", "step": "checkout"},
+        # ...and read on another screen of the same step (the page behind a popup).
+        {"id": "m-product-nagging-3", "title": "Nag again", "patternId": "nagging", "step": "product"},
         {"id": "m-cart-nagging-1", "title": "New nag", "patternId": "nagging", "step": "cart"},
     ]
     v = fixer.verify(before, after, trust_before=70, trust_after=82, payable_before=None, payable_after=None)
@@ -94,6 +97,7 @@ def test_a_re_audit_finds_the_same_finding_by_check_or_by_screen_and_pattern():
         ("f-frozen-stock", "resolved"),
         ("m-product-popup-confirm_shaming-1", "resolved"),
         ("m-checkout-false_urgency-2", "still_present"),
+        ("m-product-popup-nagging-1", "still_present"),
     ]
     assert v["newFindings"] == [{"title": "New nag", "patternId": "nagging", "step": "cart"}]
     line = fixer.outcome_line(v, fixed={"f-restarting-timer", "f-frozen-stock"})
