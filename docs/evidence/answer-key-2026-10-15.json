@@ -1,0 +1,105 @@
+{
+  "provider": "gemini",
+  "model": "Gemini (gemini-3.6-flash)",
+  "runs": 2,
+  "at": "2026-10-15T18:08:43.367072+00:00",
+  "results": {
+    "store-a": [
+      {
+        "expected": 9,
+        "found": 10,
+        "hits": 9,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [
+          "interface_interference@product (confirmed)"
+        ],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": null,
+        "seconds": 53.7,
+        "tokens_in": 21043,
+        "tokens_out": 4832
+      },
+      {
+        "expected": 9,
+        "found": 11,
+        "hits": 9,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [
+          "false_urgency@checkout (needs_review)",
+          "interface_interference@product (confirmed)"
+        ],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": null,
+        "seconds": 69.1,
+        "tokens_in": 21036,
+        "tokens_out": 4902
+      }
+    ],
+    "store-b": [
+      {
+        "expected": 0,
+        "found": 0,
+        "hits": 0,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 0,
+        "review_agreed": 0,
+        "blocked": null,
+        "seconds": 30.8,
+        "tokens_in": 9737,
+        "tokens_out": 1211
+      },
+      {
+        "expected": 0,
+        "found": 0,
+        "hits": 0,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 0,
+        "review_agreed": 0,
+        "blocked": null,
+        "seconds": 14.0,
+        "tokens_in": 9737,
+        "tokens_out": 1138
+      }
+    ],
+    "store-c": [
+      {
+        "expected": 6,
+        "found": 7,
+        "hits": 6,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [
+          "interface_interference@product (confirmed)"
+        ],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": "checkout",
+        "seconds": 73.2,
+        "tokens_in": 12529,
+        "tokens_out": 2624
+      },
+      {
+        "expected": 6,
+        "found": 6,
+        "hits": 6,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": "checkout",
+        "seconds": 20.2,
+        "tokens_in": 8944,
+        "tokens_out": 2228
+      }
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "model": "Gemini (gemini-3.6-flash)",
+  "limit": null,
+  "texts": 2356,
+  "answered": 2356,
+  "accuracy": 0.9609507640067911,
+  "precision": 0.9972527472527473,
+  "recall": 0.9244482173174873,
+  "f1": 0.9594713656387666,
+  "confusion": {
+    "tp": 1089,
+    "fp": 3,
+    "fn": 89,
+    "tn": 1175
+  },
+  "recall_by_category": {
+    "Forced Action": [
+      2,
+      4
+    ],
+    "Misdirection": [
+      143,
+      195
+    ],
+    "Obstruction": [
+      15,
+      27
+    ],
+    "Scarcity": [
+      409,
+      418
+    ],
+    "Sneaking": [
+      7,
+      12
+    ],
+    "Social Proof": [
+      308,
+      312
+    ],
+    "Urgency": [
+      205,
+      210
+    ]
+  },
+  "pattern_agreement_by_category": {
+    "Forced Action": [
+      2,
+      2
+    ],
+    "Misdirection": [
+      136,
+      143
+    ],
+    "Obstruction": [
+      14,
+      15
+    ],
+    "Scarcity": [
+      409,
+      409
+    ],
+    "Sneaking": [
+      7,
+      7
+    ],
+    "Social Proof": [
+      308,
+      308
+    ],
+    "Urgency": [
+      205,
+      205
+    ]
+  },
+  "tokens_in": 124768,
+  "tokens_out": 228558,
+  "calls": 95,
+  "seconds": 316
+}
