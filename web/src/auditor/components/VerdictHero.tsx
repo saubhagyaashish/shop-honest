@@ -1,11 +1,11 @@
-import { ArrowDown, FileDown, Flag as FlagIcon, LoaderCircle, ReceiptText, RotateCcw, Scale, Wrench } from 'lucide-react'
+import { ArrowDown, FileDown, Flag as FlagIcon, LoaderCircle, ReceiptText, Scale, Wrench } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import type { AuditReport, FixChange } from '../../shared/contract'
 import { coverageOf } from '../coverage'
 import { buildHeadline, summariseRisk } from '../headline'
 import { STEP_LABEL } from '../labels'
-import { formatMoney, percentUp } from '../money'
+import { formatMoney, formatMoneyCompact, percentUp } from '../money'
 import { verdictOf } from '../score'
 import { Confetti } from '../ui/Confetti'
 import { CountUp } from '../ui/CountUp'
@@ -22,14 +22,10 @@ interface Props {
   onSeeFixes: () => void
   /** Open "Fix it" (live backends only). */
   onFix?: () => void
-  /** Re-audit this page and compare (live backends only). */
-  onReaudit?: () => void
-  reauditBusy?: boolean
-  reauditError?: string
 }
 
 /** Above-the-fold verdict: score, one-line takeaway and the three numbers that matter. */
-export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix, onReaudit, reauditBusy = false, reauditError }: Props) {
+export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix }: Props) {
   const { lead, punch } = buildHeadline(report)
   const risk = summariseRisk(report)
   const confirmed = report.findings.filter((f) => f.status === 'confirmed').length
@@ -43,6 +39,9 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
   const checked = coverage.audited.length > 0
   const lastAudited = coverage.audited[coverage.audited.length - 1]
   const reached = coverage.complete ? 'charged' : `by ${lastAudited ? STEP_LABEL[lastAudited] : 'the last step'}`
+  // A higher price with no confirmed finding behind it is for a human to check, not an overcharge.
+  const unexplained = confirmed === 0 && extra > 0
+  const fixable = onFix !== undefined && !clean
 
   return (
     <motion.section
@@ -66,7 +65,7 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
           </div>
           <h1 className="mt-3 font-display text-[28px] leading-[1.15] font-extrabold tracking-tight sm:text-[34px]">
             {lead}{' '}
-            <span className={`box-decoration-clone px-1.5 ${!checked ? 'bg-sun' : clean ? 'bg-lime' : 'bg-pink'}`}>{punch}</span>
+            <span className={`box-decoration-clone px-1.5 ${!checked || (!clean && confirmed === 0) ? 'bg-sun' : clean ? 'bg-lime' : 'bg-pink'}`}>{punch}</span>
           </h1>
 
           {!checked ? (
@@ -77,16 +76,16 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
           ) : (
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             <ImpactTile
-              tone={confirmed ? 'white' : 'lime'}
+              tone={clean ? 'lime' : 'white'}
               icon={<FlagIcon size={16} strokeWidth={2.6} />}
               label="Tricks caught"
               value={<CountUp value={confirmed} />}
               sub={review ? `+${review} waiting for your review` : clean ? 'Every check passed' : 'All confirmed by the agents'}
             />
             <ImpactTile
-              tone={extra > 0 ? 'pink' : 'lime'}
+              tone={unexplained ? 'sun' : extra > 0 ? 'pink' : 'lime'}
               icon={<ReceiptText size={16} strokeWidth={2.6} />}
-              label={coverage.complete ? 'Overcharge per order' : 'Overcharge so far'}
+              label={unexplained ? 'Price gap to check' : coverage.complete ? 'Overcharge per order' : 'Overcharge so far'}
               value={extra > 0 && drift ? `+${formatMoney({ amount: extra, currency: drift.payable.currency })}` : '₹0'}
               sub={
                 drift
@@ -100,12 +99,22 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
               tone={risk.focus ? 'ink' : 'lime'}
               icon={<Scale size={16} strokeWidth={2.6} />}
               label="Fine risk"
-              value={risk.focus ? risk.focus.penaltyHeadline : '0 rules broken'}
-              valueSize="text-[19px] leading-snug"
+              value={risk.ceiling ? `Up to ${formatMoneyCompact(risk.ceiling)}` : risk.focus ? risk.focus.penaltyHeadline : '0 rules broken'}
+              valueSize={risk.ceiling ? 'text-[30px] leading-none' : 'text-[19px] leading-snug'}
               sub={
                 risk.focus ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Flag code={risk.focus.code} className="h-3.5 w-[21px]" /> {risk.focus.name} · rules broken in {risk.regionsBroken} of {risk.regionsChecked} regions
+                  <span className="flex flex-col gap-1">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Flag code={risk.focus.code} className="h-3.5 w-[21px] shrink-0" />
+                      {risk.ceiling && risk.perContravention
+                        ? `${risk.focus.name} · ${risk.rulesBroken} rule${risk.rulesBroken === 1 ? '' : 's'} × ${formatMoneyCompact(risk.perContravention)}`
+                        : `${risk.focus.name} · rules broken in ${risk.regionsBroken} of ${risk.regionsChecked} regions`}
+                    </span>
+                    {risk.strictest && (
+                      <span className="inline-flex items-center gap-1.5 font-medium opacity-80">
+                        <Flag code={risk.strictest.code} className="h-3.5 w-[21px] shrink-0" /> Strictest: {risk.strictest.name}, {lowerFirst(risk.strictest.penaltyHeadline)}
+                      </span>
+                    )}
                   </span>
                 ) : (
                   `Checked against ${risk.regionsChecked} regions’ laws`
@@ -116,33 +125,20 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
           )}
 
           <div className="mt-6 flex flex-wrap items-center gap-3 print:hidden">
-            {onFix && !clean && (
+            {fixable && (
               <button type="button" onClick={onFix} className={buttonClass('pink', 'md')}>
                 <Wrench size={18} strokeWidth={2.6} /> Fix it
               </button>
             )}
-            <button type="button" onClick={onDownloadPdf} disabled={pdfBusy} className={buttonClass('lime', 'md')}>
+            <button type="button" onClick={onDownloadPdf} disabled={pdfBusy} className={buttonClass(fixable ? 'white' : 'lime', 'md')}>
               {pdfBusy ? <LoaderCircle size={18} strokeWidth={2.6} className="animate-spin" /> : <FileDown size={18} strokeWidth={2.6} />}
               {pdfBusy ? 'Building PDF…' : 'Download PDF report'}
             </button>
-            {!clean && (
+            {!clean && !fixable && (
               <button type="button" onClick={onSeeFixes} className={buttonClass('white', 'md')}>
                 See what to fix <ArrowDown size={16} strokeWidth={2.6} />
               </button>
             )}
-            {onReaudit && (
-              <button
-                type="button"
-                onClick={onReaudit}
-                disabled={reauditBusy}
-                className={buttonClass('white', 'md')}
-                title="Audit this page again and compare with this audit"
-              >
-                {reauditBusy ? <LoaderCircle size={18} strokeWidth={2.6} className="animate-spin" /> : <RotateCcw size={18} strokeWidth={2.6} />}
-                {reauditBusy ? 'Starting…' : 'Re-audit this page'}
-              </button>
-            )}
-            {reauditError && <p className="basis-full text-sm font-semibold text-[#d6336c]">{reauditError}</p>}
           </div>
         </div>
       </div>
@@ -171,6 +167,10 @@ function ImpactTile({ tone, icon, label, value, sub, valueSize = 'text-[34px] le
       <div className={`mt-auto pt-2 text-[13px] leading-snug font-semibold ${dark ? 'text-cream/80' : 'text-ink/75'}`}>{sub}</div>
     </div>
   )
+}
+
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1)
 }
 
 function targetLabel(url: string): string {

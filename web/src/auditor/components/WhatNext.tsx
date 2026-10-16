@@ -13,10 +13,11 @@ interface Props {
   onFix?: () => void
   onReaudit?: () => void
   reauditBusy?: boolean
+  reauditError?: string
 }
 
 /** The report's last word: what to do with it, starting with fixing what it found. */
-export function WhatNext({ report, pdfBusy, onDownloadPdf, selfAuditBusy, onDownloadSelfAudit, onFix, onReaudit, reauditBusy = false }: Props) {
+export function WhatNext({ report, pdfBusy, onDownloadPdf, selfAuditBusy, onDownloadSelfAudit, onFix, onReaudit, reauditBusy = false, reauditError }: Props) {
   const unchecked = nothingChecked(report.steps)
   const verified = report.appliedFixes !== undefined
   const fixable = !unchecked && !verified && report.findings.length > 0 && onFix !== undefined
@@ -67,6 +68,7 @@ export function WhatNext({ report, pdfBusy, onDownloadPdf, selfAuditBusy, onDown
             <Search size={18} strokeWidth={2.6} aria-hidden="true" /> Audit another store
           </Link>
         </div>
+        {reauditError && <p className="mt-3 text-sm font-semibold text-pink">{reauditError}</p>}
       </div>
     </section>
   )

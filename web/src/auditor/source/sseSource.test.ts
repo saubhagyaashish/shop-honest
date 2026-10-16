@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AuditEvent } from '../../shared/contract'
-import { createSseSource } from './sseSource'
+import { AUDIT_NOT_FOUND, createSseSource } from './sseSource'
 
 /** A stand-in EventSource the test drives by hand. */
 class FakeEventSource {
@@ -60,5 +60,32 @@ describe('sseSource stream watchdog', () => {
     const opened = FakeEventSource.opened.length
     vi.advanceTimersByTime(60_000 * 5)
     expect(FakeEventSource.opened.length).toBe(opened)
+  })
+
+  it('says an audit doesn’t exist when its stream fails before any event and the API answers 404', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{"error":"not found"}', { status: 404 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const events: AuditEvent[] = []
+    createSseSource('https://api.example').subscribe('aud_missing', (e) => events.push(e))
+    const stream = FakeEventSource.opened[0]
+    stream.readyState = FakeEventSource.CLOSED
+    stream.onerror?.()
+    await vi.waitFor(() => expect(events).toHaveLength(1))
+    expect(fetchMock).toHaveBeenCalledWith('https://api.example/api/audits/aud_missing')
+    expect(events[0]).toEqual({ type: 'audit.failed', error: AUDIT_NOT_FOUND })
+  })
+
+  it('reports a lost stream, without asking the API, once events have arrived', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const events: AuditEvent[] = []
+    createSseSource('https://api.example').subscribe('aud_3', (e) => events.push(e))
+    const stream = FakeEventSource.opened[0]
+    stream.send(1, { type: 'agent.log', agent: 'navigator', message: 'hi' })
+    stream.readyState = FakeEventSource.CLOSED
+    stream.onerror?.()
+    await vi.waitFor(() => expect(events).toHaveLength(2))
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(events[1]).toEqual({ type: 'audit.failed', error: 'Lost the connection to the audit stream.' })
   })
 })

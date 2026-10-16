@@ -1,6 +1,6 @@
 import { ArrowUpRight, Check } from 'lucide-react'
 import { motion } from 'motion/react'
-import type { Exposure, Finding, JurisdictionCode } from '../../shared/contract'
+import type { Exposure, Finding, JurisdictionCode, RuleCitation } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { PATTERN_ICON } from '../patternIcons'
 import { Flag } from '../ui/Flag'
@@ -101,24 +101,31 @@ export function ExposureSection({
             {confirmed.length ? `Rules your site breaks here (${confirmed.length})` : 'Rules checked'}
           </div>
           {confirmed.length ? (
-            <ul className="mt-2 space-y-2">
-              {confirmed.map((f) => {
-                const c = j.citations[f.id]
-                const Icon = PATTERN_ICON[f.patternId]
-                return (
-                  <li key={f.id} className="flex gap-2.5 text-[13px] leading-snug">
-                    <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-ink bg-pink">
-                      <Icon size={13} strokeWidth={2.6} aria-hidden="true" />
-                    </span>
-                    <span>
-                      <b>{PATTERNS[f.patternId].name}</b> · {c?.clause}
-                      <span className="text-ink/50"> ({c?.source})</span>
-                      {c?.verified === false && <span className="ml-1 text-[11px] font-semibold text-ink/50">clause to confirm</span>}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
+            <div className="mt-2 space-y-4">
+              {groupByLaw(confirmed, j.citations).map((law) => (
+                <div key={law.source}>
+                  <div className="text-[12px] leading-snug font-semibold text-ink/55">{law.source}</div>
+                  <ul className="mt-1.5 space-y-2">
+                    {law.rules.map((rule) => {
+                      const Icon = PATTERN_ICON[rule.patternId]
+                      return (
+                        <li key={`${rule.patternId}|${rule.clause}`} className="flex items-start gap-2.5 text-[13px] leading-snug">
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-ink bg-pink">
+                            <Icon size={13} strokeWidth={2.6} aria-hidden="true" />
+                          </span>
+                          <span className="pt-0.5">
+                            <b>{PATTERNS[rule.patternId].name}</b>
+                            {rule.clause && ` · ${rule.clause}`}
+                            {rule.count > 1 && <span className="ml-1.5 rounded-md border-2 border-ink bg-cream px-1 text-[11px] font-extrabold">×{rule.count}</span>}
+                            {rule.unverified && <span className="ml-1.5 text-[11px] font-semibold text-ink/50">clause to confirm</span>}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="mt-2 flex items-center gap-2 text-[15px] font-bold">
               <Check size={18} strokeWidth={3} /> Nothing broken under {j.name} rules
@@ -165,4 +172,29 @@ export function ExposureSection({
       <p className="mt-3 text-xs text-ink/55">{exposure.disclaimer}</p>
     </section>
   )
+}
+
+interface RuleRow {
+  patternId: Finding['patternId']
+  clause: string
+  count: number
+  unverified: boolean
+}
+
+/** Confirmed findings as one row per pattern and clause, under the law each comes from, so a law is named once. */
+function groupByLaw(findings: Finding[], citations: Record<string, RuleCitation>): { source: string; rules: RuleRow[] }[] {
+  const laws = new Map<string, Map<string, RuleRow>>()
+  for (const f of findings) {
+    const c = citations[f.id]
+    const source = c?.source ?? 'No matching rule on file for this region'
+    const clause = c?.clause ?? ''
+    const rules = laws.get(source) ?? new Map<string, RuleRow>()
+    laws.set(source, rules)
+    const key = `${f.patternId}|${clause}`
+    const row = rules.get(key) ?? { patternId: f.patternId, clause, count: 0, unverified: false }
+    row.count += 1
+    row.unverified ||= c?.verified === false
+    rules.set(key, row)
+  }
+  return [...laws].map(([source, rules]) => ({ source, rules: [...rules.values()] }))
 }

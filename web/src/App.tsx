@@ -1,7 +1,8 @@
-import { createBrowserRouter, Link, RouterProvider } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import { AuditorLayout } from './auditor/AuditorLayout'
 import { AuditPage } from './auditor/pages/AuditPage'
 import { AuditorHome } from './auditor/pages/AuditorHome'
+import { NotFound } from './auditor/pages/NotFound'
 import { StoreLayout } from './store/StoreLayout'
 import { CartPage } from './store/pages/CartPage'
 import { CheckoutPage } from './store/pages/CheckoutPage'
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <AuditorHome /> },
       { path: 'audit/:auditId', element: <AuditPage /> },
+      { path: '*', element: <NotFound /> },
     ],
   },
   {
@@ -29,16 +31,6 @@ const router = createBrowserRouter([
       { path: 'payment', element: <PaymentPage /> },
       { path: 'order-placed', element: <OrderPlacedPage /> },
     ],
-  },
-  {
-    path: '*',
-    element: (
-      <div className="grid min-h-screen place-items-center text-gray-600">
-        <p>
-          Page not found. <Link className="underline" to="/">Go to the auditor</Link>
-        </p>
-      </div>
-    ),
   },
 ])
 
