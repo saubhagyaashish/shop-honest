@@ -27,7 +27,7 @@ The pre-flight should end with `6/6 checks passed`. If you redeploy after this, 
    - the narration;
    - the Adjudicator dropping or sending claims to review;
    - the stop at the sign-in wall. The report says what it couldn't reach instead of guessing.
-4. **A real store (60 s).** Use the **AutomationExercise** chip under the URL box, then **Scan it**. The general navigator finds "Add to cart" on a site we didn't build, opens the cart and stops at the login wall. The report carries the "automated observations, not a legal finding" note. Optionally try the **Flipkart** chip: it either reaches the cart or reports that the site refused an automated browser. Both are honest outcomes.
+4. **A real store (60 s).** Use the **AutomationExercise** chip under the URL box, then **Scan it**. The general navigator finds "Add to cart" on a site we didn't build, opens the cart and stops at the login wall. The report carries the "automated observations, not a legal finding" note. Optionally try the **Tata 1mg** chip: a real pharmacy, where the agent reaches the cart, presses its "Continue" and stops at the sign-in popup, with a ₹12 handling charge first shown in the cart sent for review.
 5. **How it's built and how accurate it is (45 s):**
    - The README's diagram.
    - **9/9** on the rigged store and **0 false alarms** on the honest one.
@@ -41,7 +41,7 @@ The pre-flight should end with `6/6 checks passed`. If you redeploy after this, 
 | Gemini is busy (429) | "Couldn't read the … page" in the narration | The measured findings still stand. Retry in a minute; the SDK retries and falls back to `gemini-3.1-flash-lite`. |
 | The daily live limit is reached (100 a day, site-wide) | "Live audits are paused for today" | Use **Scan it** (unlimited). Or raise the cap for the day: `gcloud run services update shop-honest-api --region asia-south1 --update-env-vars LIVE_PER_DAY=200`. |
 | The real store blocks us | The report is blocked at a step with "bot protection" or "the site showed an error" | That's the honest path: show it. We never get around bot protection. |
-| AutomationExercise is down | The audit fails to open the page | Skip step 4, or show Flipkart. |
+| AutomationExercise is down | The audit fails to open the page | Skip step 4, or show Tata 1mg. |
 | Stuck on "SCANNING" | No events for a minute | The stream reconnects by itself within 60 s. Otherwise reload the page: audits resume from their event log. |
 
 ## Afterwards

@@ -65,6 +65,17 @@ EMPTY_STOP = "The site showed an empty page (it may be blocking automated browse
 REFUSED_STOP = "The site refused the connection (it may be blocking automated browsers)"
 NOT_FOUND_STOP = "The site's address couldn't be found"
 NO_CART_STOP = "Couldn't open the cart"
+EMPTY_CART_STOP = "The cart was empty after adding the product"
+EMPTY_CART = re.compile(r"\b(your )?(shopping )?(cart|bag|basket) is (currently )?empty\b", re.I)
+# What a page shows once an add has gone through: a popup ("Added! View Cart"), the cart itself, or a link to it.
+ADDED_JS = """() => {
+  const shown = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el)
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0 }
+  if (/(view_?cart|\\/cart|\\/basket|\\/bag)/i.test(location.href)) return true
+  if ([...document.querySelectorAll('[role=dialog], [aria-modal=true], dialog[open], .modal')].some(shown)) return true
+  return [...document.querySelectorAll('a, button')].some((el) =>
+    shown(el) && /^(view|go to|open) (my )?(cart|bag|basket)$|^checkout$/i.test((el.innerText || '').trim()))
+}"""
 STUCK_STOP = "Checkout didn't open"
 PINCODE_STOP = "Checkout needs a delivery pincode first"
 
@@ -204,6 +215,7 @@ class GenericJourney:
         await self._click(walk, add)
         walk.evidence.added_items.append(product)
         await page.wait_for_timeout(2500)
+        await _added(page)
         if not CART_URL.search(page.url):
             to_cart = await self._find(walk, VIEW_CART, "opens the shopping cart", href=CART_HREF)
             if to_cart is not None:
@@ -212,6 +224,11 @@ class GenericJourney:
         await walk.start_step("cart")
         cart = await walk.capture("cart", primary=False, check=False)
         if await _stop_page(walk, cart):
+            return
+        if EMPTY_CART.search(await _page_text(page)) and not cart.signals.get("cartLines"):
+            walk.evidence.captures.pop("cart", None)
+            await walk.log("navigator", "The cart is empty: the product I added isn't in it, so the walk stops here.")
+            await walk.blocked(EMPTY_CART_STOP, cart)
             return
         # Only a page that shows a cart counts as one: a cart address, its lines or its bill.
         if not (CART_URL.search(cart.url) or cart.signals.get("cartLines") or cart.signals.get("summary")):
@@ -417,6 +434,14 @@ async def _other_variant(page: Page) -> str | None:
                 await _settle(page)
                 return options[index].strip()
     return None
+
+
+async def _added(page: Page) -> None:
+    """Wait, a few seconds at most, for the page to show the add went through. A slow site registers the item only after
+    its request returns; opening the cart before then finds it empty."""
+    with contextlib.suppress(Exception):
+        await page.wait_for_function(ADDED_JS, timeout=8000)
+        await page.wait_for_timeout(500)
 
 
 async def _page_text(page: Page) -> str:

@@ -19,6 +19,7 @@ import { ReportNav } from './ReportNav'
 import type { NavItem } from './ReportNav'
 import { SelfAuditSection } from './SelfAuditSection'
 import { VerdictHero } from './VerdictHero'
+import { WhatNext } from './WhatNext'
 
 export type Decision = 'approved' | 'dismissed'
 
@@ -288,6 +289,17 @@ export function Report({
             </div>
           </details>
         </section>
+
+        <WhatNext
+          report={report}
+          pdfBusy={pdfBusy}
+          onDownloadPdf={onDownloadPdf}
+          selfAuditBusy={selfAuditBusy}
+          onDownloadSelfAudit={onDownloadSelfAudit}
+          onFix={onFix}
+          onReaudit={onReaudit}
+          reauditBusy={reauditBusy}
+        />
       </div>
 
       {viewing && <EvidenceViewer finding={viewing} onClose={() => setViewing(null)} />}

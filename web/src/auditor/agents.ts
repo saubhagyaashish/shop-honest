@@ -58,7 +58,7 @@ export const AGENTS: Record<AgentName, AgentInfo> = {
   },
   fixer: {
     label: 'Fixer',
-    job: 'Writes a fix for each finding, applies it to a copy of the store and re-audits it.',
+    job: 'Proposes a fix for each finding; on our demo stores, applies it to a copy and re-audits it.',
     vibe: 'Found it? Fixed it. Proved it.',
     tone: 'lime',
     icon: Wrench,
@@ -72,5 +72,5 @@ export const AGENTS: Record<AgentName, AgentInfo> = {
   },
 }
 
-/** The pipeline shown on the home page, in order. Seller Trust is a later phase. */
-export const PIPELINE: AgentName[] = ['navigator', 'pattern_analyst', 'price_historian', 'evidence', 'adjudicator', 'fixer', 'reporter']
+/** The pipeline shown on the home page, in order: Fix it runs on the finished report. Seller Trust is a later phase. */
+export const PIPELINE: AgentName[] = ['navigator', 'pattern_analyst', 'price_historian', 'evidence', 'adjudicator', 'reporter', 'fixer']

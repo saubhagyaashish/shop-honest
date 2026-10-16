@@ -6,6 +6,7 @@ import { coverageOf } from '../coverage'
 import { buildHeadline, summariseRisk } from '../headline'
 import { STEP_LABEL } from '../labels'
 import { formatMoney, percentUp } from '../money'
+import { verdictOf } from '../score'
 import { Confetti } from '../ui/Confetti'
 import { CountUp } from '../ui/CountUp'
 import { Flag } from '../ui/Flag'
@@ -50,9 +51,9 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      {clean && checked && <Confetti />}
+      {clean && coverage.complete && <Confetti />}
       <div className="grid items-center gap-8 lg:grid-cols-[200px_minmax(0,1fr)]">
-        <TrustScore score={checked ? report.trustScore : null} size="sm" />
+        <TrustScore score={checked ? report.trustScore : null} size="sm" verdict={verdictOf(report)} />
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink/60">

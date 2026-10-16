@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { BAND_LABEL, BAND_VIBE, scoreBand } from '../score'
-import type { ScoreBand } from '../score'
+import type { ScoreBand, Verdict } from '../score'
 import { CountUp } from '../ui/CountUp'
 import { Sticker } from '../ui/Sticker'
 import type { Tone } from '../ui/styles'
@@ -9,9 +9,14 @@ const BAND_STROKE: Record<ScoreBand, string> = { trustworthy: '#c6f432', concern
 const BAND_TONE: Record<ScoreBand, Tone> = { trustworthy: 'lime', concerns: 'sun', deceptive: 'pink' }
 const ARC = 'M24 112 A88 88 0 0 1 200 112'
 
-/** Chunky half-ring gauge, 0–100, with the verdict sticker. `null`: nothing could be checked, so no score. */
-export function TrustScore({ score, size = 'md' }: { score: number | null; size?: 'sm' | 'md' }) {
+/**
+ * Chunky half-ring gauge, 0–100, with the verdict sticker. `null`: nothing could be checked, so no score. `verdict`
+ * replaces the band's sticker and label when the score alone would say more than the audit saw (see verdictOf).
+ */
+export function TrustScore({ score, size = 'md', verdict }: { score: number | null; size?: 'sm' | 'md'; verdict?: Verdict }) {
   const band = scoreBand(score ?? 0)
+  const vibe = verdict?.vibe ?? BAND_VIBE[band]
+  const label = verdict?.label ?? BAND_LABEL[band]
   const sm = size === 'sm'
   return (
     <div className="flex flex-col items-center">
@@ -20,7 +25,7 @@ export function TrustScore({ score, size = 'md' }: { score: number | null; size?
           viewBox="0 0 224 128"
           className="w-full"
           role="img"
-          aria-label={score === null ? 'Not rated: nothing could be checked' : `Trust score ${score} out of 100: ${BAND_LABEL[band]}`}
+          aria-label={score === null ? 'Not rated: nothing could be checked' : `Trust score ${score} out of 100: ${label}`}
         >
           <path d={ARC} fill="none" stroke="#111" strokeWidth="30" strokeLinecap="round" />
           <path d={ARC} fill="none" stroke="#fff8ec" strokeWidth="22" strokeLinecap="round" />
@@ -53,15 +58,15 @@ export function TrustScore({ score, size = 'md' }: { score: number | null; size?
         transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.9 }}
       >
         <Sticker
-          tone={score === null ? 'white' : BAND_TONE[band]}
+          tone={score === null ? 'white' : (verdict?.tone ?? BAND_TONE[band])}
           rotate={-5}
           className={`font-display ${sm ? '!px-4 !py-1.5 !text-xl' : '!px-5 !py-2 !text-2xl'}`}
         >
-          {score === null ? 'NOT CHECKED 🤷' : BAND_VIBE[band]}
+          {score === null ? 'NOT CHECKED 🤷' : vibe}
         </Sticker>
       </motion.div>
       <div className={`${sm ? 'mt-2' : 'mt-3'} text-xs font-bold tracking-wider text-ink/60 uppercase`}>
-        {score === null ? 'Couldn’t check' : BAND_LABEL[band]}
+        {score === null ? 'Couldn’t check' : label}
       </div>
     </div>
   )

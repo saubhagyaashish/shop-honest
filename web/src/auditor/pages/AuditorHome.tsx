@@ -1,9 +1,9 @@
-import { ArrowUpRight, Radio, Zap } from 'lucide-react'
+import { ArrowUpRight, Radio, User, Zap } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import type { PatternId } from '../../shared/contract'
+import type { AgentName, PatternId } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { useDocumentTitle } from '../../shared/useDocumentTitle'
 import { ANSWER_KEY } from '../../store/answerKey'
@@ -28,6 +28,12 @@ const RECEIPTS = ['screenshot evidence', 'rule citations', 'confidence scores', 
 const CCPA_IDS = (Object.keys(PATTERNS) as PatternId[]).filter((id) => id !== 'misleading_price')
 const IN_DEMO = new Set(ANSWER_KEY.a.map((f) => f.patternId))
 const TILE_TONES: Tone[] = ['lime', 'pink', 'sun', 'lilac', 'mint', 'peach', 'blue']
+// The squad in the order it works, then the person who reviews and decides: two even rows of four.
+const SQUAD_ROWS: (AgentName | 'you')[][] = [PIPELINE.slice(0, 4), [...PIPELINE.slice(4), 'you']]
+
+const REPO_URL = 'https://github.com/saubhagyaashish/shop-honest'
+const DECK_URL = `${REPO_URL}/blob/main/Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx`
+const EVIDENCE_URL = `${REPO_URL}/blob/main/docs/evidence/README.md`
 
 function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   return (
@@ -51,9 +57,9 @@ const REAL_STORES = [
     note: 'A real store built for automation practice; checkout needs a login, so the audit stops there.',
   },
   {
-    label: 'Flipkart · boAt Airdopes (best effort)',
-    url: 'https://www.flipkart.com/boat-airdopes-71-40-h-battery-enx-tech-low-latency-stream-ad-free-music-via-app-bluetooth/p/itm63134e79353d1',
-    note: 'A real retailer. It may refuse automated browsers; the audit says so instead of getting around it.',
+    label: 'Tata 1mg · Vitamin C tablets',
+    url: 'https://www.1mg.com/otc/new-celin-500-vitamin-c-tablet-otc32913',
+    note: 'A real pharmacy: the agent reaches the cart and stops at its sign-in popup.',
   },
 ]
 
@@ -93,9 +99,9 @@ export function AuditorHome() {
             variants={{ show: { transition: { staggerChildren: 0.08 } } }}
           >
             {[
-              <Sticker key="a" tone="white" rotate={-3}><IndiaFlag /> CCPA-ready</Sticker>,
-              <Sticker key="b" tone="lilac" rotate={2}>🤖 multi-agent AI</Sticker>,
-              <Sticker key="c" tone="mint" rotate={-1}>🧾 receipts included</Sticker>,
+              <Sticker key="a" tone="white" rotate={-3}><IndiaFlag /> For e-commerce platforms</Sticker>,
+              <Sticker key="b" tone="lilac" rotate={2}>🛡️ compliance teams</Sticker>,
+              <Sticker key="c" tone="mint" rotate={-1}>⚖️ regulators</Sticker>,
             ].map((s) => (
               <motion.span key={s.key} variants={{ hidden: { opacity: 0, y: 10, scale: 0.8 }, show: { opacity: 1, y: 0, scale: 1 } }}>
                 {s}
@@ -124,7 +130,7 @@ export function AuditorHome() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
           >
-            Shop Honest sends AI agents shopping. They walk product → cart → checkout → payment like a real customer and hand you the receipts: a screenshot, the rule broken and a confidence score for every trick.
+            Your store, audited the way your customers see it. Every dark pattern found, fixed and proven, before it costs you a CCPA fine.
           </motion.p>
 
           <motion.form
@@ -142,7 +148,7 @@ export function AuditorHome() {
               required
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="paste a product URL…"
+              placeholder="paste your product page…"
               className="brutal h-14 w-full rounded-2xl bg-white px-5 font-mono text-sm outline-none placeholder:text-ink/40 focus:shadow-brutal-lg sm:flex-1"
             />
             <button type="submit" disabled={starting} className={buttonClass('lime', 'lg')}>
@@ -218,7 +224,7 @@ export function AuditorHome() {
             <SectionHeading
               kicker="the rulebook"
               title="The 13 banned patterns"
-              note="India’s CCPA named them in 2023 and told platforms to self-audit. Hover a card to flip it. The demo store hides the ones marked “in demo”."
+              note="India’s CCPA named them in 2023. In 2025, 26 platforms declared themselves free of them; in 2026 the CCPA fined one of them. Hover a card to flip it; the demo store hides the ones marked “in demo”."
             />
           </Reveal>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
@@ -234,39 +240,22 @@ export function AuditorHome() {
       {/* Squad */}
       <section className="mx-auto max-w-[1240px] px-4 py-16 sm:px-6">
         <Reveal>
-          <SectionHeading kicker="how it works" title="Meet the squad 🫡" note="Six specialist agents, one audit. Each does one job and hands off to the next." />
+          <SectionHeading
+            kicker="how it works"
+            title="Meet the squad 🫡"
+            note="Seven agents and you, one audit. Each does one job and hands off to the next."
+          />
         </Reveal>
-        <div className="relative mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
-          <motion.svg
-            className="pointer-events-none absolute top-12 left-[6%] hidden h-6 w-[88%] lg:block"
-            viewBox="0 0 1000 24"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <motion.path
-              d="M0 12 H1000"
-              stroke="#111"
-              strokeWidth="3"
-              strokeDasharray="10 10"
-              fill="none"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.4, ease: 'easeInOut' }}
-            />
-          </motion.svg>
-          {PIPELINE.map((agent, i) => (
-            <Reveal key={agent} delay={i * 0.08} className="relative">
-              <article className="brutal h-full rounded-2xl bg-white p-4">
-                <div className="flex items-center justify-between">
-                  <AgentAvatar agent={agent} size="lg" />
-                  <span className="font-display text-3xl font-extrabold text-ink/15">0{i + 1}</span>
-                </div>
-                <div className="mt-3 font-display text-lg font-extrabold">{AGENTS[agent].label}</div>
-                <p className="mt-1 text-[15px] leading-snug font-semibold">{AGENTS[agent].vibe}</p>
-                <p className="mt-2 text-[13px] leading-snug text-ink/60">{AGENTS[agent].job}</p>
-              </article>
-            </Reveal>
+        <div className="mt-10 space-y-5">
+          {SQUAD_ROWS.map((row, r) => (
+            <div key={r} className="relative grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <SquadLine />
+              {row.map((member, i) => (
+                <Reveal key={member} delay={i * 0.08} className="relative">
+                  <SquadCard member={member} n={r * 4 + i + 1} />
+                </Reveal>
+              ))}
+            </div>
           ))}
         </div>
       </section>
@@ -274,11 +263,21 @@ export function AuditorHome() {
       {/* Stats */}
       <section className="mx-auto max-w-[1240px] px-4 pb-16 sm:px-6">
         <Reveal>
-          <div className="brutal grid gap-6 rounded-3xl bg-ink p-8 text-cream sm:grid-cols-2 lg:grid-cols-4">
-            <Stat value={13} label="banned patterns covered by the rulebook" />
-            <Stat value={5} label="journey steps walked, like a real shopper" />
-            <Stat value={100} suffix="%" label="of findings ship with a screenshot + rule" />
-            <Stat value={0} label="accusations without receipts" />
+          <div className="brutal rounded-3xl bg-ink p-8 text-cream">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <Stat value={9} suffix="/9" label="planted tricks caught on the rigged store" />
+              <Stat value={0} label="false alarms on the honest store" />
+              <Stat value={9} suffix="/9" label="fixes verified on a fixed copy of the store" />
+              <Stat value={0.959} decimals={3} label="F1, zero-shot, on 2,356 public shopping texts" />
+            </div>
+            <a
+              href={EVIDENCE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-lime underline decoration-2 underline-offset-4"
+            >
+              How we measured these <ArrowUpRight size={14} strokeWidth={2.6} aria-hidden="true" />
+            </a>
           </div>
         </Reveal>
       </section>
@@ -289,7 +288,19 @@ export function AuditorHome() {
           <div className="font-display text-[15vw] leading-[0.85] font-extrabold tracking-[-0.04em] whitespace-nowrap text-outline select-none lg:text-[185px]" aria-hidden="true">
             shop honest
           </div>
-          <p className="max-w-3xl py-8 text-xs leading-relaxed text-ink/60">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-8 text-sm font-semibold">
+            <span>Team Zero Context: Saubhagya Ashish and Suvojit Konar</span>
+            {[
+              ['GitHub', REPO_URL],
+              ['Slide deck', DECK_URL],
+              ['How we measured', EVIDENCE_URL],
+            ].map(([label, href]) => (
+              <a key={label} href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-pink decoration-2 underline-offset-4">
+                {label} <ArrowUpRight size={14} strokeWidth={2.6} aria-hidden="true" />
+              </a>
+            ))}
+          </div>
+          <p className="max-w-3xl pt-3 pb-8 text-xs leading-relaxed text-ink/60">
             Findings cite the CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023, and the Consumer Protection Act, 2019. Reports support a compliance review; they are not legal advice.
             {auditSource.mode === 'mock' && ' This demo build replays real captures of the two sample stores through the same event stream the live agents will use.'}{' '}
             Built for the Google Cloud AI Builder Cup 2026.
@@ -410,11 +421,60 @@ function PatternTile({ id, index }: { id: PatternId; index: number }) {
   )
 }
 
-function Stat({ value, label, suffix = '' }: { value: number; label: string; suffix?: string }) {
+function Stat({ value, label, suffix = '', decimals = 0 }: { value: number; label: string; suffix?: string; decimals?: number }) {
   return (
     <div>
-      <CountUp value={value} suffix={suffix} className="font-display text-6xl font-extrabold text-lime" />
+      <CountUp value={value} suffix={suffix} decimals={decimals} className="font-display text-6xl font-extrabold text-lime" />
       <p className="mt-1 text-sm leading-snug text-cream/75">{label}</p>
     </div>
+  )
+}
+
+/** The dashed line a row of the squad hands off along. */
+function SquadLine() {
+  return (
+    <motion.svg
+      className="pointer-events-none absolute top-12 left-[6%] hidden h-6 w-[88%] lg:block"
+      viewBox="0 0 1000 24"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <motion.path
+        d="M0 12 H1000"
+        stroke="#111"
+        strokeWidth="3"
+        strokeDasharray="10 10"
+        fill="none"
+        initial={{ pathLength: 0 }}
+        whileInView={{ pathLength: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.4, ease: 'easeInOut' }}
+      />
+    </motion.svg>
+  )
+}
+
+/** One member of the squad: an agent, or you, who reviews what nobody can check and decides which fixes to apply. */
+function SquadCard({ member, n }: { member: AgentName | 'you'; n: number }) {
+  const you = member === 'you'
+  const card = you
+    ? { label: 'You', vibe: 'You make the call.', job: 'Claims nobody can check come to you, and you choose which fixes to apply.' }
+    : AGENTS[member]
+  return (
+    <article className="brutal h-full rounded-2xl bg-white p-4">
+      <div className="flex items-center justify-between">
+        {you ? (
+          <span className={`brutal-sm inline-grid h-16 w-16 shrink-0 place-items-center rounded-2xl ${TONE_BG.sun}`} title="You">
+            <User size={30} strokeWidth={2.4} aria-hidden="true" />
+          </span>
+        ) : (
+          <AgentAvatar agent={member} size="lg" />
+        )}
+        <span className="font-display text-3xl font-extrabold text-ink/15">0{n}</span>
+      </div>
+      <div className="mt-3 font-display text-lg font-extrabold">{card.label}</div>
+      <p className="mt-1 text-[15px] leading-snug font-semibold">{card.vibe}</p>
+      <p className="mt-2 text-[13px] leading-snug text-ink/60">{card.job}</p>
+    </article>
   )
 }
