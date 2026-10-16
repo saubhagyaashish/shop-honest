@@ -1,6 +1,6 @@
-import { ArrowUpRight, Radio, User, Zap } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, FlaskConical, Presentation, Radio, Sparkles, User, Zap } from 'lucide-react'
 import { motion } from 'motion/react'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import type { AgentName, PatternId } from '../../shared/contract'
@@ -34,6 +34,19 @@ const SQUAD_ROWS: (AgentName | 'you')[][] = [PIPELINE.slice(0, 4), [...PIPELINE.
 const REPO_URL = 'https://github.com/saubhagyaashish/shop-honest'
 const DECK_URL = `${REPO_URL}/blob/main/Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx`
 const EVIDENCE_URL = `${REPO_URL}/blob/main/docs/evidence/README.md`
+const TEAM: [string, string][] = [
+  ['Saubhagya Ashish', 'https://www.linkedin.com/in/saubhagya-ashish'],
+  ['Suvojit Konar', 'https://www.linkedin.com/in/suvojitkonar/'],
+]
+
+/** Back to the URL box at the top of the page, ready to paste into. */
+function focusUrlBox() {
+  const input = document.getElementById('target-url')
+  if (!input) return
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  input.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'center' })
+  input.focus({ preventScroll: true })
+}
 
 function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   return (
@@ -284,49 +297,67 @@ export function AuditorHome() {
 
       {/* Footer */}
       <footer className="overflow-hidden border-t-2 border-ink bg-white">
-        <div className="mx-auto max-w-[1240px] px-4 pt-10 sm:px-6">
-          <div className="font-display text-[15vw] leading-[0.85] font-extrabold tracking-[-0.04em] whitespace-nowrap text-outline select-none lg:text-[185px]" aria-hidden="true">
+        <div className="mx-auto max-w-[1240px] px-4 pt-12 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <p className="font-display text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em] sm:text-[40px]">
+              Found, fixed and proven,
+              <br />
+              <span className="bg-lime px-1 [box-decoration-break:clone] sm:whitespace-nowrap">before it costs you a CCPA&nbsp;fine.</span>
+            </p>
+            <button type="button" onClick={focusUrlBox} className={buttonClass('pink', 'md')}>
+              Audit a store <ArrowUp size={18} strokeWidth={2.6} aria-hidden="true" />
+            </button>
+          </div>
+          <div className="pt-10 font-display text-[15vw] leading-[0.85] font-extrabold tracking-[-0.04em] whitespace-nowrap text-outline select-none lg:text-[185px]" aria-hidden="true">
             shop honest
           </div>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-8 text-sm font-semibold">
-            <span>
-              Team Zero Context:{' '}
-              <a
-                href="https://www.linkedin.com/in/saubhagya-ashish"
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2 hover:text-ink/70"
-              >
-                Saubhagya Ashish
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-5 pt-9">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[15px] font-semibold">
+              <span className="sticker shine bg-lime !px-3.5 !py-1 !text-sm" style={{ rotate: '-2deg' }}>
+                <Sparkles size={14} strokeWidth={2.6} aria-hidden="true" /> Team Zero Context
+              </span>
+              <span>
+                {TEAM.map(([name, href], i) => (
+                  <Fragment key={name}>
+                    {i > 0 && ' and '}
+                    <a href={href} target="_blank" rel="noreferrer" className="whitespace-nowrap underline underline-offset-2 hover:text-ink/70">
+                      {name}
+                    </a>
+                  </Fragment>
+                ))}
+              </span>
+            </div>
+            <nav aria-label="Project links" className="flex flex-wrap gap-3">
+              <a href={REPO_URL} target="_blank" rel="noreferrer" className={buttonClass('white', 'sm')}>
+                <GithubMark /> GitHub
               </a>
-              {' '}and{' '}
-              <a
-                href="https://www.linkedin.com/in/suvojitkonar/"
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2 hover:text-ink/70"
-              >
-                Suvojit Konar
+              <a href={DECK_URL} target="_blank" rel="noreferrer" className={buttonClass('white', 'sm')}>
+                <Presentation size={16} strokeWidth={2.6} aria-hidden="true" /> Slide deck
               </a>
-            </span>
-            {[
-              ['GitHub', REPO_URL],
-              ['Slide deck', DECK_URL],
-              ['How we measured', EVIDENCE_URL],
-            ].map(([label, href]) => (
-              <a key={label} href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-pink decoration-2 underline-offset-4">
-                {label} <ArrowUpRight size={14} strokeWidth={2.6} aria-hidden="true" />
+              <a href={EVIDENCE_URL} target="_blank" rel="noreferrer" className={buttonClass('white', 'sm')}>
+                <FlaskConical size={16} strokeWidth={2.6} aria-hidden="true" /> How we measured
               </a>
-            ))}
+            </nav>
           </div>
-          <p className="max-w-3xl pt-3 pb-8 text-xs leading-relaxed text-ink/60">
-            Findings cite the CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023, and the Consumer Protection Act, 2019. Reports support a compliance review; they are not legal advice.
-            {auditSource.mode === 'mock' && ' This demo build replays real captures of the two sample stores through the same event stream the live agents will use.'}{' '}
-            Built for the Google Cloud AI Builder Cup 2026.
-          </p>
+          <div className="mt-9 flex flex-col gap-3 border-t-2 border-ink/10 pt-5 pb-8 sm:flex-row sm:items-start sm:gap-6">
+            <Sticker className="self-start">Google Cloud AI Builder Cup 2026 · Retail &amp; Commerce</Sticker>
+            <p className="max-w-3xl text-xs leading-relaxed text-ink/60">
+              Findings cite the CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023, and the Consumer Protection Act, 2019. Reports support a compliance review; they are not legal advice.
+              {auditSource.mode === 'mock' && ' This demo build replays real captures of the two sample stores through the same event stream the live agents will use.'}
+            </p>
+          </div>
         </div>
       </footer>
     </main>
+  )
+}
+
+/** GitHub's mark (lucide no longer ships brand icons). */
+function GithubMark() {
+  return (
+    <svg viewBox="0 0 16 16" width={16} height={16} fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+    </svg>
   )
 }
 
