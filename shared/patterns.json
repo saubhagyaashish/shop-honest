@@ -8,7 +8,13 @@
       "clause": "Annexure 1, item 1",
       "verified": true
     },
-    "fix": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory."
+    "fix": "Show a real end time that does not move, or remove the countdown. Show stock levels only when they come from live inventory.",
+    "check": {
+      "measured": [
+        "product"
+      ],
+      "judged": true
+    }
   },
   "basket_sneaking": {
     "name": "Basket sneaking",
@@ -19,7 +25,12 @@
       "clause": "Annexure 1, item 2",
       "verified": true
     },
-    "fix": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it."
+    "fix": "Never add items to the cart for the shopper. Offer add-ons as an unticked option with the price shown next to it.",
+    "check": {
+      "measured": [
+        "cart"
+      ]
+    }
   },
   "confirm_shaming": {
     "name": "Confirm shaming",
@@ -30,7 +41,10 @@
       "clause": "Annexure 1, item 3",
       "verified": true
     },
-    "fix": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button."
+    "fix": "Use neutral decline wording such as “No thanks”, and give the popup a visible close button.",
+    "check": {
+      "judged": true
+    }
   },
   "forced_action": {
     "name": "Forced action",
@@ -41,7 +55,10 @@
       "clause": "Annexure 1, item 4",
       "verified": true
     },
-    "fix": "Let shoppers finish the purchase without signing up, downloading an app or buying something unrelated."
+    "fix": "Let shoppers finish the purchase without signing up, downloading an app or buying something unrelated.",
+    "check": {
+      "judged": true
+    }
   },
   "subscription_trap": {
     "name": "Subscription trap",
@@ -52,7 +69,13 @@
       "clause": "Annexure 1, item 5",
       "verified": true
     },
-    "fix": "Leave memberships unticked by default, show the recurring price in normal type, and allow one-click online cancellation."
+    "fix": "Leave memberships unticked by default, show the recurring price in normal type, and allow one-click online cancellation.",
+    "check": {
+      "measured": [
+        "checkout"
+      ],
+      "limits": "Cancelling a subscription needs an account, so only sign-up is checked."
+    }
   },
   "interface_interference": {
     "name": "Interface interference",
@@ -63,7 +86,10 @@
       "clause": "Annexure 1, item 6",
       "verified": true
     },
-    "fix": "Give paid and free choices equal visual weight, for example two equally styled options."
+    "fix": "Give paid and free choices equal visual weight, for example two equally styled options.",
+    "check": {
+      "judged": true
+    }
   },
   "bait_and_switch": {
     "name": "Bait and switch",
@@ -74,7 +100,10 @@
       "clause": "Annexure 1, item 7",
       "verified": true
     },
-    "fix": "Only advertise variants and prices that are actually available to buy."
+    "fix": "Only advertise variants and prices that are actually available to buy.",
+    "check": {
+      "limits": "Needs what was advertised compared with what is delivered after ordering."
+    }
   },
   "drip_pricing": {
     "name": "Drip pricing",
@@ -85,7 +114,12 @@
       "clause": "Annexure 1, item 8",
       "verified": true
     },
-    "fix": "Include every unavoidable fee in the price shown on the product page, or show it clearly beside that price."
+    "fix": "Include every unavoidable fee in the price shown on the product page, or show it clearly beside that price.",
+    "check": {
+      "measured": [
+        "payment"
+      ]
+    }
   },
   "disguised_advertisement": {
     "name": "Disguised advertisement",
@@ -96,7 +130,10 @@
       "clause": "Annexure 1, item 9",
       "verified": true
     },
-    "fix": "Label paid placements clearly as ads or sponsored content."
+    "fix": "Label paid placements clearly as ads or sponsored content.",
+    "check": {
+      "judged": true
+    }
   },
   "nagging": {
     "name": "Nagging",
@@ -107,7 +144,10 @@
       "clause": "Annexure 1, item 10",
       "verified": true
     },
-    "fix": "Ask once, respect the answer, and do not repeat the prompt during the same visit."
+    "fix": "Ask once, respect the answer, and do not repeat the prompt during the same visit.",
+    "check": {
+      "judged": true
+    }
   },
   "trick_question": {
     "name": "Trick question",
@@ -118,7 +158,10 @@
       "clause": "Annexure 1, item 11",
       "verified": true
     },
-    "fix": "Write consent choices as plain, positive statements, without double negatives."
+    "fix": "Write consent choices as plain, positive statements, without double negatives.",
+    "check": {
+      "judged": true
+    }
   },
   "saas_billing": {
     "name": "SaaS billing",
@@ -129,7 +172,10 @@
       "clause": "Annexure 1, item 12",
       "verified": true
     },
-    "fix": "Remind users before a trial converts to paid, and charge only with clear consent."
+    "fix": "Remind users before a trial converts to paid, and charge only with clear consent.",
+    "check": {
+      "limits": "Needs a paid account, billed over time."
+    }
   },
   "rogue_malware": {
     "name": "Rogue malware",
@@ -140,7 +186,10 @@
       "clause": "Annexure 1, item 13",
       "verified": true
     },
-    "fix": "Remove any software that misleads users into paying or installing it."
+    "fix": "Remove any software that misleads users into paying or installing it.",
+    "check": {
+      "limits": "Concerns software installed on a device, outside a shopping journey."
+    }
   },
   "misleading_price": {
     "name": "Inflated reference price",
@@ -151,6 +200,12 @@
       "clause": "Sec. 2(28) misleading advertisement; Sec. 2(47) unfair trade practice",
       "verified": true
     },
-    "fix": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP."
+    "fix": "Compare against a price the product was genuinely sold at recently (for example the lowest price of the last 30 days), not an inflated MRP.",
+    "check": {
+      "measured": [
+        "product"
+      ],
+      "limits": "Needs at least 8 weeks of price history for the product."
+    }
   }
 }

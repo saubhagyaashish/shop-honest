@@ -16,6 +16,17 @@ describe('headline', () => {
   it('reassures for a clean store', () => {
     expect(buildHeadline(report('b'))).toEqual({ lead: 'No dark patterns found.', punch: 'What shoppers see is what they pay.' })
   })
+
+  it('never reassures about a page it could not check', () => {
+    const blocked = {
+      ...report('b'),
+      steps: [{ step: 'product' as const, url: 'https://shop.example/p/1', status: 'blocked' as const, blockedReason: 'The site showed an empty page (it may be blocking automated browsers)' }],
+    }
+    expect(buildHeadline(blocked)).toEqual({
+      lead: 'Couldn’t check this page.',
+      punch: 'The site showed an empty page (it may be blocking automated browsers).',
+    })
+  })
 })
 
 describe('risk summary', () => {

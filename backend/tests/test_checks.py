@@ -135,6 +135,14 @@ def test_a_cart_holding_only_what_was_added_is_clean():
     assert "f-sneaked-item" not in run_checks(ev)
 
 
+def test_one_item_added_and_one_line_in_the_cart_is_never_sneaking():
+    # Big marketplaces label the line with a deal badge ("Limited time"), not the product's name.
+    ev = store_a()
+    cart = ev.captures["cart"].signals
+    cart["cartLines"] = [{**cart["cartLines"][0], "name": "Limited time", "text": "Limited time ₹1,899.00 Quantity is 1"}]
+    assert "f-sneaked-item" not in run_checks(ev)
+
+
 @pytest.mark.parametrize("change", ["unticked", "one_off"])
 def test_membership_needs_to_be_ticked_and_recurring(change: str):
     ev = store_a()
@@ -156,10 +164,16 @@ def test_fees_disclosed_on_the_product_page_are_not_drip_pricing():
     assert "f-late-fees" not in run_checks(ev)
 
 
-def test_fees_already_shown_in_the_cart_are_not_drip_pricing():
+def test_fees_the_product_page_never_mentioned_are_flagged_where_they_first_appear():
     ev = store_a()
-    payment_rows = ev.captures["payment"].signals["summary"]["rows"]
-    ev.captures["cart"].signals["summary"]["rows"] += [r for r in payment_rows if "fee" in r["label"].lower()]
+    fees = [r for r in ev.captures["payment"].signals["summary"]["rows"] if "fee" in r["label"].lower()]
+    ev.captures["cart"].signals["summary"]["rows"] += fees
+    late = run_checks(ev)["f-late-fees"]
+    # Flipkart's "Platform Fee ₹10": in the cart, before payment, but not on the product page.
+    assert (late["step"], late["title"]) == ("cart", "₹97 in fees first shown in the cart, not on the product page")
+    assert "not at the cart" in late["remediation"]
+    # Disclosed on the product page ("+ ₹29 platform fee per order"): not drip pricing.
+    ev.captures["product-first"].signals["feeDisclosures"] = [{"label": r["label"].lower(), "amount": r["amount"]} for r in fees]
     assert "f-late-fees" not in run_checks(ev)
 
 

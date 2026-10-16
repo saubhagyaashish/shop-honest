@@ -17,5 +17,7 @@ Short notes on the decisions that shape Shop Honest: what we chose, why, and wha
 | [0011](0011-audit-ownership-and-takeover.md) | Audits have an owner with a heartbeat; other instances can take over | Accepted |
 | [0012](0012-price-history-in-bigquery.md) | Price history lives in BigQuery, grows with every audit, and the MRP rule doesn't depend on recency | Accepted |
 | [0013](0013-general-navigator-on-third-party-stores.md) | A general navigator for stores we didn't build, with stricter rules there | Accepted |
+| [0014](0014-audit-as-adk-workflow.md) | The live audit runs as an ADK agent graph, with an Adjudicator that checks evidence through tools | Accepted |
+| [0015](0015-fix-and-verify.md) | "Fix it": a fix per finding, the numbers it would change, and proof on a copy of the store | Accepted |
 
 Back to [Architecture](../ARCHITECTURE.md).

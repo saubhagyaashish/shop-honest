@@ -15,6 +15,7 @@ interface JurisdictionSource {
   status: JurisdictionExposure['status']
   maxPenalty: string
   penaltyHeadline: string
+  perContraventionMax?: JurisdictionExposure['perContraventionMax']
   upcoming?: JurisdictionExposure['upcoming']
   rules: Partial<Record<PatternId, RuleCitation>>
   /** Used for patterns without a more specific rule. */
@@ -43,6 +44,7 @@ export const JURISDICTIONS: JurisdictionSource[] = [
     maxPenalty:
       'Up to ₹10 lakh per contravention, ₹50 lakh for each later one (s 21). Criminal: up to 2 years and ₹10 lakh, or 5 years and ₹50 lakh for repeat offences (s 89).',
     penaltyHeadline: 'Up to ₹50 lakh + jail for repeat offences',
+    perContraventionMax: { amount: 1_000_000, currency: 'INR' },
     rules: CCPA_RULES,
     general: { source: 'Consumer Protection Act, 2019', clause: 'Sec. 2(47) unfair trade practice', verified: true },
     precedents: [

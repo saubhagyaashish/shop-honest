@@ -1,64 +1,25 @@
-import { Circle, Document, Image, Link, Page, Path, Rect, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
+import { Circle, Document, Image, Link, Page, Path, Rect, Svg, Text, View } from '@react-pdf/renderer'
 import type { ReactNode } from 'react'
 import type { AuditReport, Finding, JurisdictionCode, JurisdictionExposure, Severity } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { AGENTS } from '../agents'
-import { coverageOf } from '../coverage'
 import { JOURNEY_STEPS } from '../../shared/contract'
 import { STEP_LABEL } from '../labels'
 import { formatMoney, percentUp } from '../money'
+import { nothingChecked } from '../coverage'
 import { buildHeadline } from '../headline'
 import { BAND_LABEL, scoreBand } from '../score'
 import type { Decision } from '../components/Report'
 import type { LogEntry } from '../useAudit'
-import { BODY_FONT, DISPLAY_FONT, registerPdfFonts } from './fonts'
+import { DISPLAY_FONT, registerPdfFonts } from './fonts'
+import { C, coverageLine, s, safeHost } from './shared'
 import { pdfText as t } from './text'
 
 registerPdfFonts()
 
-const C = {
-  ink: '#111111',
-  muted: '#5f5a52',
-  faint: '#8c867b',
-  line: '#e4ddd0',
-  cream: '#fff8ec',
-  lime: '#c6f432',
-  pink: '#ff5ca8',
-  sun: '#ffd23f',
-  red: '#d6336c',
-  white: '#ffffff',
-}
-
 const SEVERITY_ORDER: Severity[] = ['high', 'medium', 'low']
 const SEVERITY_COLOUR: Record<Severity, string> = { high: C.pink, medium: C.sun, low: C.line }
 const BAND_COLOUR = { deceptive: C.pink, concerns: C.sun, trustworthy: C.lime }
-
-const s = StyleSheet.create({
-  page: { fontFamily: BODY_FONT, fontSize: 9.5, color: C.ink, paddingTop: 60, paddingBottom: 52, paddingHorizontal: 44, lineHeight: 1.45 },
-  cover: { fontFamily: BODY_FONT, fontSize: 10, color: C.ink, padding: 0 },
-  header: { position: 'absolute', top: 22, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: C.line, paddingBottom: 8 },
-  headerRight: { fontSize: 8, color: C.muted },
-  footer: { position: 'absolute', bottom: 24, left: 44, right: 44, flexDirection: 'row', justifyContent: 'space-between', fontSize: 7.5, color: C.faint, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 6 },
-  kicker: { fontSize: 8, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: 'uppercase' },
-  h1: { fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 20, lineHeight: 1.18, marginTop: 2, marginBottom: 8 },
-  h2: { fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 14, lineHeight: 1.2, marginTop: 14, marginBottom: 6 },
-  h3: { fontWeight: 700, fontSize: 10.5, marginTop: 8, marginBottom: 3 },
-  p: { marginBottom: 6 },
-  muted: { color: C.muted },
-  small: { fontSize: 8, color: C.muted },
-  box: { borderWidth: 1.2, borderColor: C.ink, borderRadius: 6, padding: 10 },
-  row: { flexDirection: 'row' },
-  chip: { fontSize: 7.5, fontWeight: 700, borderWidth: 1, borderColor: C.ink, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1.5, marginRight: 4, marginBottom: 4 },
-  bullet: { flexDirection: 'row', marginBottom: 3 },
-  bulletDot: { width: 10 },
-  table: { borderWidth: 1, borderColor: C.ink, borderRadius: 4 },
-  th: { flexDirection: 'row', backgroundColor: C.ink, color: C.white, fontWeight: 700, fontSize: 8 },
-  tr: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.line, fontSize: 8.5 },
-  td: { padding: 5 },
-  ruleRow: { flexDirection: 'row', fontSize: 7.8, lineHeight: 1.3 },
-  ruleTd: { paddingHorizontal: 5, paddingVertical: 2.5 },
-  link: { color: C.ink, textDecoration: 'underline' },
-})
 
 export interface AuditPdfProps {
   report: AuditReport
@@ -82,10 +43,9 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
   const abs = (src: string) => new URL(src, origin).href
   const meta = { host, auditId: report.auditId }
   const headline = buildHeadline(report)
-  const coverage = coverageOf(report.steps)
-  const coverageText = coverage.complete
-    ? `Full journey, ${coverage.total} of ${coverage.total} steps (${coverage.audited.map((st) => STEP_LABEL[st]).join(' › ')})`
-    : `Partial: ${coverage.audited.length} of ${coverage.total} steps (${coverage.audited.map((st) => STEP_LABEL[st]).join(' › ') || 'none'}). Stopped at ${coverage.blocked ? `${STEP_LABEL[coverage.blocked.step]}: ${coverage.blocked.reason}` : 'an unreachable step'}.`
+  const coverageText = coverageLine(report)
+  // Blocked on the first page: no score and no verdict.
+  const unchecked = nothingChecked(report.steps)
 
   return (
     <Document title={`Shop Honest audit · ${host}`} author="Shop Honest" subject="Dark-pattern audit report" creator="Shop Honest" producer="Shop Honest">
@@ -100,10 +60,10 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
           <View style={[s.row, { gap: 18 }]}>
             <View style={[s.box, { width: 170, alignItems: 'center', paddingVertical: 16 }]}>
               <Text style={s.kicker}>Trust score</Text>
-              <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 46, lineHeight: 1.1 }}>{report.trustScore}</Text>
-              <Text style={s.small}>out of 100</Text>
-              <Text style={{ marginTop: 8, fontWeight: 700, fontSize: 9, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: C.ink, backgroundColor: BAND_COLOUR[scoreBand(report.trustScore)] }}>
-                {BAND_LABEL[scoreBand(report.trustScore)]}
+              <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 46, lineHeight: 1.1 }}>{unchecked ? '–' : report.trustScore}</Text>
+              <Text style={s.small}>{unchecked ? 'not rated' : 'out of 100'}</Text>
+              <Text style={{ marginTop: 8, fontWeight: 700, fontSize: 9, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: C.ink, backgroundColor: unchecked ? C.white : BAND_COLOUR[scoreBand(report.trustScore)] }}>
+                {unchecked ? 'Nothing could be checked' : BAND_LABEL[scoreBand(report.trustScore)]}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -185,7 +145,12 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
         <Text style={s.h2} break={false}>
           Findings overview
         </Text>
-        {ordered.length === 0 ? (
+        {unchecked ? (
+          <View style={s.box}>
+            <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 14 }}>Nothing could be checked.</Text>
+            <Text>The agent stopped on the first page (see Coverage), so this report makes no finding either way.</Text>
+          </View>
+        ) : ordered.length === 0 ? (
           <View style={[s.box, { backgroundColor: C.lime }]}>
             <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 14 }}>No dark patterns found.</Text>
             <Text>Every urgency claim, price, cart line, consent box and fee matched what the shopper was shown.</Text>
@@ -422,12 +387,14 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
   )
 }
 
-function Chrome({ host, auditId }: { host: string; auditId: string }) {
+export function Chrome({ host, auditId, title = 'Dark-pattern audit' }: { host: string; auditId: string; title?: string }) {
   return (
     <>
       <View style={s.header} fixed>
         <Brand size={13} />
-        <Text style={s.headerRight}>Dark-pattern audit · {host}</Text>
+        <Text style={s.headerRight}>
+          {title} · {host}
+        </Text>
       </View>
       <View style={s.footer} fixed>
         <Text>Audit {auditId} · Confidential · Not legal advice</Text>
@@ -437,7 +404,7 @@ function Chrome({ host, auditId }: { host: string; auditId: string }) {
   )
 }
 
-function Brand({ size }: { size: number }) {
+export function Brand({ size }: { size: number }) {
   return (
     <View style={[s.row, { alignItems: 'center' }]}>
       <Svg viewBox="0 0 48 48" style={{ width: size * 1.35, height: size * 1.35 }}>
@@ -461,7 +428,7 @@ function Metric({ label, value, colour }: { label: string; value: string; colour
   )
 }
 
-function KeyValue({ label, value, compact = false }: { label: string; value: string; compact?: boolean }) {
+export function KeyValue({ label, value, compact = false }: { label: string; value: string; compact?: boolean }) {
   return (
     <View style={[s.row, { marginBottom: compact ? 2 : 4 }]}>
       <Text style={{ width: compact ? 90 : 110, fontWeight: 700, fontSize: compact ? 8.5 : 9.5 }}>{label}</Text>
@@ -470,7 +437,7 @@ function KeyValue({ label, value, compact = false }: { label: string; value: str
   )
 }
 
-function Bullet({ children, small = false }: { children: ReactNode; small?: boolean }) {
+export function Bullet({ children, small = false }: { children: ReactNode; small?: boolean }) {
   return (
     <View style={[s.bullet, small ? { marginBottom: 2 } : {}]}>
       <Text style={s.bulletDot}>•</Text>
@@ -494,14 +461,6 @@ function driftLabel(report: AuditReport): string {
   if (!d) return '-'
   const extra = d.payable.amount - d.advertised.amount
   return extra > 0 ? `+${formatMoney({ amount: extra, currency: d.payable.currency })} (+${percentUp(d.advertised.amount, d.payable.amount)}%)` : 'None'
-}
-
-function safeHost(url: string): string {
-  try {
-    return new URL(url).host
-  } catch {
-    return url
-  }
 }
 
 function fmtDate(iso: string): string {

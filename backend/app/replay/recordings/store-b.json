@@ -3,7 +3,7 @@
   "store": "store-b",
   "pathPrefix": "/demo/store-b/",
   "source": "live",
-  "recordedAt": "2026-10-11T12:40:10.401527Z",
+  "recordedAt": "2026-10-16T00:30:59.143573Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "startedAt": "2026-10-11T12:39:12.187Z"
+        "startedAt": "2026-10-16T00:30:37.847Z"
       }
     },
     {
-      "delayMs": 270,
+      "delayMs": 248,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -35,7 +35,7 @@
       }
     },
     {
-      "delayMs": 2536,
+      "delayMs": 2533,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -51,7 +51,7 @@
       }
     },
     {
-      "delayMs": 8317,
+      "delayMs": 8342,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -76,19 +76,11 @@
       "event": {
         "type": "agent.log",
         "agent": "price_historian",
-        "message": "Looking up this product's price history in BigQuery…"
+        "message": "Looking up this product's price history in the demo catalog…"
       }
     },
     {
-      "delayMs": 1,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Reading the product page with Gemini (gemini-3.8-flash)…"
-      }
-    },
-    {
-      "delayMs": 2128,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "price_historian",
@@ -96,7 +88,7 @@
       }
     },
     {
-      "delayMs": 150,
+      "delayMs": 0,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -104,15 +96,15 @@
       }
     },
     {
-      "delayMs": 2158,
+      "delayMs": 8,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Nothing on the product page needs flagging beyond what was measured."
+        "message": "Reading the product page with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 686,
+      "delayMs": 2881,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -121,7 +113,7 @@
       }
     },
     {
-      "delayMs": 36,
+      "delayMs": 37,
       "event": {
         "type": "step.started",
         "step": "variant",
@@ -137,7 +129,7 @@
       }
     },
     {
-      "delayMs": 337,
+      "delayMs": 341,
       "event": {
         "type": "step.captured",
         "step": "variant",
@@ -146,7 +138,7 @@
       }
     },
     {
-      "delayMs": 40,
+      "delayMs": 36,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -162,7 +154,7 @@
       }
     },
     {
-      "delayMs": 282,
+      "delayMs": 280,
       "event": {
         "type": "step.captured",
         "step": "cart",
@@ -183,15 +175,15 @@
       }
     },
     {
-      "delayMs": 1,
+      "delayMs": 4,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the cart with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the cart with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 59,
+      "delayMs": 55,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -199,7 +191,15 @@
       }
     },
     {
-      "delayMs": 288,
+      "delayMs": 108,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the product page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 187,
       "event": {
         "type": "step.captured",
         "step": "checkout",
@@ -228,15 +228,15 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 3,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the checkout page with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the checkout page with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 35,
+      "delayMs": 29,
       "event": {
         "type": "step.started",
         "step": "payment",
@@ -244,7 +244,7 @@
       }
     },
     {
-      "delayMs": 280,
+      "delayMs": 282,
       "event": {
         "type": "step.captured",
         "step": "payment",
@@ -273,15 +273,15 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 6,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
-        "message": "Reading the payment page with Gemini (gemini-3.8-flash)…"
+        "message": "Reading the payment page with Gemini (gemini-3.6-flash)…"
       }
     },
     {
-      "delayMs": 3026,
+      "delayMs": 3151,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -289,7 +289,7 @@
       }
     },
     {
-      "delayMs": 2045,
+      "delayMs": 131,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -297,7 +297,7 @@
       }
     },
     {
-      "delayMs": 35530,
+      "delayMs": 2617,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -305,15 +305,15 @@
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 5,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
-        "message": "Every check passed: nothing to confirm. Gemini (gemini-3.8-flash) reviewed all 4 screens and its claims were checked against their evidence."
+        "message": "Every check passed: nothing to confirm. Gemini (gemini-3.6-flash) reviewed all 4 screens and its claims were checked against their evidence."
       }
     },
     {
-      "delayMs": 0,
+      "delayMs": 1,
       "event": {
         "type": "agent.log",
         "agent": "reporter",
@@ -327,8 +327,8 @@
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-          "startedAt": "2026-10-11T12:39:12.187Z",
-          "completedAt": "2026-10-11T12:40:10.394Z",
+          "startedAt": "2026-10-16T00:30:37.847Z",
+          "completedAt": "2026-10-16T00:30:59.132Z",
           "trustScore": 100.0,
           "steps": [
             {
@@ -393,6 +393,10 @@
                 "status": "in_force",
                 "maxPenalty": "Up to ₹10 lakh per contravention, ₹50 lakh for each later one (s 21). Criminal: up to 2 years and ₹10 lakh, or 5 years and ₹50 lakh for repeat offences (s 89).",
                 "penaltyHeadline": "Up to ₹50 lakh + jail for repeat offences",
+                "perContraventionMax": {
+                  "amount": 1000000.0,
+                  "currency": "INR"
+                },
                 "citations": {},
                 "precedents": [
                   {
@@ -608,7 +612,13 @@
             ],
             "strictest": "GB",
             "disclaimer": "Shop Honest maps findings to laws and public enforcement outcomes to show exposure. It is not legal advice. Penalties shown are statutory maximums or past outcomes, not a prediction for this business."
-          }
+          },
+          "reviewedSteps": [
+            "product",
+            "cart",
+            "checkout",
+            "payment"
+          ]
         }
       }
     }

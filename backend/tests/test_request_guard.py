@@ -1,4 +1,5 @@
-"""The in-browser request guard: navigation stays on the allowlist; nothing reaches internal or metadata addresses."""
+"""The in-browser request guard: navigation stays on the allowlist ("*": any public site); nothing reaches internal or
+metadata addresses."""
 
 from app.browser.session import RequestGuard
 from tests.conftest import make_settings
@@ -15,12 +16,20 @@ async def resolver(host: str) -> list[str]:
     }[host]
 
 
-async def test_navigation_stays_on_the_allowlist():
-    guard = RequestGuard(make_settings(), resolver)
+async def test_navigation_stays_on_an_explicit_allowlist():
+    guard = RequestGuard(make_settings(allowed_hosts=["shop-honest-ai.web.app", "localhost"]), resolver)
     assert await guard.allows("https://shop-honest-ai.web.app/demo/store-a/cart", navigation=True)
     assert await guard.allows("http://localhost:5173/demo/store-a/cart", navigation=True)
     assert not await guard.allows("https://evil.example/phish", navigation=True)
     assert not await guard.allows("file:///etc/passwd", navigation=True)
+
+
+async def test_any_public_site_but_never_a_private_one_by_default():
+    guard = RequestGuard(make_settings(), resolver)
+    assert await guard.allows("https://evil.example/product", navigation=True)
+    assert await guard.allows("http://localhost:5173/demo/store-a/cart", navigation=True)
+    assert not await guard.allows("http://rebind.example/admin", navigation=True)
+    assert not await guard.allows("http://meta.example/computeMetadata/v1/", navigation=True)
 
 
 async def test_subresources_may_be_public_but_never_internal():

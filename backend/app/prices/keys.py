@@ -8,6 +8,12 @@ DEMO_HOSTS = ("localhost", "127.0.0.1")
 DEMO_DOMAINS = (".web.app", ".firebaseapp.com")
 
 
+def on_demo_host(url: str) -> bool:
+    """Served by us: the dev server, a preview channel or the live site."""
+    host = (urlsplit(url).hostname or "").lower()
+    return host in DEMO_HOSTS or host.endswith(DEMO_DOMAINS)
+
+
 def product_key(url: str) -> str:
     """The demo stores share one history wherever they're served (laptop, preview, live); other sites are host + path."""
     parts = urlsplit(url)

@@ -9,6 +9,7 @@ fallback model instead, so a busy minute costs a little quality, not a screen.
 import logging
 from collections.abc import AsyncGenerator
 
+from google.adk.models import LlmCapabilities
 from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.llm_response import LlmResponse
@@ -24,6 +25,12 @@ def out_of_capacity(err: BaseException) -> bool:
 class FallbackLlm(BaseLlm):
     primary: BaseLlm
     fallback: BaseLlm
+
+    @property
+    def capabilities(self) -> LlmCapabilities:
+        # What both models can do: a request built for the primary must also suit the fallback.
+        primary, fallback = self.primary.capabilities, self.fallback.capabilities
+        return LlmCapabilities(output_schema_and_tools=primary.output_schema_and_tools and fallback.output_schema_and_tools)
 
     async def generate_content_async(self, llm_request: LlmRequest, stream: bool = False) -> AsyncGenerator[LlmResponse, None]:
         backup = llm_request.model_copy(deep=True)

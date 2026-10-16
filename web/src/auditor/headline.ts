@@ -1,4 +1,5 @@
 import type { AuditReport, JurisdictionExposure } from '../shared/contract'
+import { coverageOf } from './coverage'
 import { percentUp } from './money'
 
 export interface Headline {
@@ -14,6 +15,12 @@ export function buildHeadline(report: AuditReport): Headline {
   const review = report.findings.length - confirmed
   const drift = report.exposure?.priceDrift
   const pct = drift ? percentUp(drift.advertised.amount, drift.payable.amount) : 0
+  const coverage = coverageOf(report.steps)
+
+  if (!coverage.audited.length) {
+    const reason = coverage.blocked?.reason ?? 'The agent reached no step of the journey'
+    return { lead: 'Couldn’t check this page.', punch: /[.!?]$/.test(reason) ? reason : `${reason}.` }
+  }
 
   if (confirmed === 0) {
     const lead = review > 0 ? `No confirmed dark patterns, ${review} claim${review === 1 ? '' : 's'} to check.` : 'No dark patterns found.'

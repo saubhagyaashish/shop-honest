@@ -1,4 +1,4 @@
-import type { AuditEvent } from '../../shared/contract'
+import type { AuditEvent, FixProposal } from '../../shared/contract'
 import { ApiUnreachableError } from './AuditSource'
 import type { AuditSource } from './AuditSource'
 
@@ -32,6 +32,7 @@ function rememberLive(auditId: string) {
  *   POST /api/audits {targetUrl}            → {auditId}
  *   GET  /api/audits/:id/events             → text/event-stream of AuditEvent JSON, resumable
  *   POST /api/audits/:id/fast-forward       → replays only: skip the remaining delays
+ *   POST /api/audits/:id/fixes              → the Fixer's proposal for a finished audit
  */
 /**
  * `streamBase` can point the event stream at a different origin than the rest of the API:
@@ -48,7 +49,12 @@ export function createSseSource(baseUrl = '', streamBase = baseUrl): AuditSource
         res = await fetch(`${baseUrl}/api/audits`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ targetUrl, mode: options?.live ? 'live' : 'auto' }),
+          body: JSON.stringify({
+            targetUrl,
+            mode: options?.live || options?.compareTo ? 'live' : 'auto',
+            ...(options?.compareTo ? { compareTo: options.compareTo } : {}),
+            ...(options?.applyFixes ? { applyFixes: options.applyFixes } : {}),
+          }),
         })
       } catch {
         throw new ApiUnreachableError()
@@ -131,15 +137,29 @@ export function createSseSource(baseUrl = '', streamBase = baseUrl): AuditSource
     canSkipAhead(auditId) {
       return !liveAudits().includes(auditId)
     },
+
+    async proposeFixes(auditId) {
+      let res: Response
+      try {
+        res = await fetch(`${baseUrl}/api/audits/${encodeURIComponent(auditId)}/fixes`, { method: 'POST' })
+      } catch {
+        throw new ApiUnreachableError()
+      }
+      if (!res.ok) {
+        if (!res.headers.get('content-type')?.includes('application/json')) throw new ApiUnreachableError()
+        throw new Error(await errorMessage(res, 'Could not write the fixes'))
+      }
+      return (await res.json()) as FixProposal
+    },
   }
 }
 
-async function errorMessage(res: Response): Promise<string> {
+async function errorMessage(res: Response, failed = 'Could not start the audit'): Promise<string> {
   try {
     const body = (await res.json()) as { error?: { message?: string } }
     if (body.error?.message) return body.error.message
   } catch {
     // not JSON; fall through
   }
-  return `Could not start the audit (${res.status}).`
+  return `${failed} (${res.status}).`
 }

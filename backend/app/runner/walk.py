@@ -27,13 +27,15 @@ from app.stores.frames import FrameStore
 
 if TYPE_CHECKING:
     from app.agents.judge import Judge
+    from app.agents.review_graph import ReviewGraph
 
 log = logging.getLogger(__name__)
 
 Emit = Callable[[dict[str, Any]], Awaitable[None]]
 
-# Measured findings that depend on reading a page's structure (cart rows, checkboxes, summary rows).
-STRUCTURAL = {"f-sneaked-item", "f-pre-ticked-subscription", "f-late-fees"}
+# Measured findings that rest on checks validated only on stores we built: reading a page's structure (cart rows,
+# checkboxes, summary rows), or assuming each variant has its own stock. On other sites a person confirms them.
+REVIEW_ON_THIRD_PARTY = {"f-sneaked-item", "f-pre-ticked-subscription", "f-late-fees", "f-frozen-stock"}
 
 
 def inr(amount: float) -> dict[str, Any]:
@@ -73,9 +75,15 @@ class Walk:
         # A site we didn't build: structural checks were validated only on our stores (see add_finding).
         self.third_party = False
         self._reviews: set[asyncio.Task[None]] = set()
+        # The screen_review agent graph (settings.agent_graph), built on the first screen it reviews.
+        self._graph: ReviewGraph | None = None
 
-    async def log(self, agent: str, message: str) -> None:
-        await self._emit({"type": "agent.log", "agent": agent, "message": message})
+    async def log(self, agent: str, message: str, tool: dict[str, str] | None = None) -> None:
+        """A line of narration; `tool` is the tool call it reports, {"name", "input"}."""
+        event: dict[str, Any] = {"type": "agent.log", "agent": agent, "message": message}
+        if tool:
+            event["tool"] = tool
+        await self._emit(event)
 
     async def start_step(self, step: JourneyStep, url: str | None = None) -> None:
         self.step = step
@@ -192,11 +200,12 @@ class Walk:
                 await self.add_finding(finding)
 
     async def add_finding(self, finding: dict[str, Any]) -> None:
-        if self.third_party and finding["id"] in STRUCTURAL and finding["status"] == "confirmed":
-            # Generic page parsing can misread a site we haven't validated; a person confirms these.
+        if self.third_party and finding["id"] in REVIEW_ON_THIRD_PARTY and finding["status"] == "confirmed":
             finding = {**finding, "status": "needs_review"}
             title = finding["title"]
-            await self.log("adjudicator", f'"{title}" rests on how this site lays out its page, so it goes to human review.')
+            await self.log(
+                "adjudicator", f'"{title}" relies on a check validated only on stores we built, so it goes to human review.'
+            )
         self.findings.append(finding)
         await self._emit({"type": "finding", "finding": finding})
 
@@ -227,7 +236,14 @@ class Walk:
     async def _review(self, capture: Capture) -> None:
         assert self.judge is not None
         try:
-            await self.judge.review(self, capture)
+            if self.settings.agent_graph:
+                if self._graph is None:
+                    from app.agents.review_graph import ReviewGraph
+
+                    self._graph = ReviewGraph(self, self.judge)
+                await self._graph.review(capture)
+            else:
+                await self.judge.review(self, capture)
         except asyncio.CancelledError:
             raise
         except Exception:

@@ -1,4 +1,4 @@
-import { Camera, Compass, FileText, History, Scale, ScanEye, ShieldCheck } from 'lucide-react'
+import { Camera, Compass, FileText, History, Scale, ScanEye, ShieldCheck, Wrench } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { AgentName } from '../shared/contract'
 import type { Tone } from './ui/styles'
@@ -56,6 +56,13 @@ export const AGENTS: Record<AgentName, AgentInfo> = {
     tone: 'lilac',
     icon: Scale,
   },
+  fixer: {
+    label: 'Fixer',
+    job: 'Writes a fix for each finding, applies it to a copy of the store and re-audits it.',
+    vibe: 'Found it? Fixed it. Proved it.',
+    tone: 'lime',
+    icon: Wrench,
+  },
   reporter: {
     label: 'Reporter',
     job: 'Builds the audit with severity, rule citation and evidence.',
@@ -66,4 +73,4 @@ export const AGENTS: Record<AgentName, AgentInfo> = {
 }
 
 /** The pipeline shown on the home page, in order. Seller Trust is a later phase. */
-export const PIPELINE: AgentName[] = ['navigator', 'pattern_analyst', 'price_historian', 'evidence', 'adjudicator', 'reporter']
+export const PIPELINE: AgentName[] = ['navigator', 'pattern_analyst', 'price_historian', 'evidence', 'adjudicator', 'fixer', 'reporter']

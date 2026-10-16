@@ -3,7 +3,7 @@ import type { AuditReport, Finding, JourneyStep, JurisdictionCode, Severity } fr
 import { JOURNEY_STEPS } from '../../shared/contract'
 import { Lock } from 'lucide-react'
 import { STEP_LABEL } from '../labels'
-import { coverageOf } from '../coverage'
+import { coverageOf, nothingChecked } from '../coverage'
 import { formatMoney } from '../money'
 import { SectionHead } from '../ui/SectionHead'
 import { Sticker } from '../ui/Sticker'
@@ -14,8 +14,10 @@ import { DamageSection } from './DamageSection'
 import { EvidenceViewer } from './Evidence'
 import { ExposureSection } from './ExposureSection'
 import { FindingRow } from './FindingCard'
+import { ComparisonSection } from './ComparisonSection'
 import { ReportNav } from './ReportNav'
 import type { NavItem } from './ReportNav'
+import { SelfAuditSection } from './SelfAuditSection'
 import { VerdictHero } from './VerdictHero'
 
 export type Decision = 'approved' | 'dismissed'
@@ -31,9 +33,31 @@ interface ReportProps {
   onDecide: (findingId: string, decision: Decision | undefined) => void
   pdfBusy: boolean
   onDownloadPdf: () => void
+  selfAuditBusy: boolean
+  onDownloadSelfAudit: () => void
+  /** Open "Fix it" (needs the backend). */
+  onFix?: () => void
+  onReaudit?: () => void
+  reauditBusy?: boolean
+  reauditError?: string
 }
 
-export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, onDecide, pdfBusy, onDownloadPdf }: ReportProps) {
+export function Report({
+  report,
+  logs,
+  jurisdiction,
+  onJurisdiction,
+  decisions,
+  onDecide,
+  pdfBusy,
+  onDownloadPdf,
+  selfAuditBusy,
+  onDownloadSelfAudit,
+  onFix,
+  onReaudit,
+  reauditBusy,
+  reauditError,
+}: ReportProps) {
   const exposure = report.exposure
   const region = exposure?.jurisdictions.find((j) => j.code === jurisdiction)
   const confirmed = useMemo(
@@ -69,12 +93,14 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
   const navItems = useMemo<NavItem[]>(
     () => [
       { id: 'overview', label: 'Overview' },
+      ...(report.comparison ? [{ id: 'compared', label: report.appliedFixes ? 'Verified ✓' : 'Re-audit 🔁' }] : []),
       ...(exposure ? [{ id: 'money', label: 'Money 💸' }, { id: 'legal', label: 'Legal ⚖️' }] : []),
       { id: 'findings', label: 'Findings', count: confirmed.length },
       ...(review.length ? [{ id: 'review', label: 'Review', count: review.length }] : []),
+      { id: 'ccpa', label: 'CCPA self-audit' },
       { id: 'trail', label: 'Audit trail' },
     ],
-    [exposure, confirmed.length, review.length],
+    [exposure, confirmed.length, review.length, report.comparison, report.appliedFixes],
   )
 
   const toggle = (id: string) =>
@@ -118,10 +144,16 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
         pdfBusy={pdfBusy}
         onDownloadPdf={onDownloadPdf}
         onSeeFixes={() => document.getElementById('findings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        onFix={onFix}
+        onReaudit={onReaudit}
+        reauditBusy={reauditBusy}
+        reauditError={reauditError}
       />
       <ReportNav items={navItems} className="mt-3" />
 
       <div className="mt-6 space-y-16">
+        {report.comparison && <ComparisonSection comparison={report.comparison} applied={report.appliedFixes} />}
+
         {exposure && (
           <DamageSection drift={exposure.priceDrift} onJumpToFinding={jumpToFinding} stoppedAfter={!coverage.complete && lastAudited ? STEP_LABEL[lastAudited] : undefined} />
         )}
@@ -131,9 +163,15 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
         <section id="findings" className="scroll-mt-32">
           <SectionHead
             kicker="the receipts 🧾"
-            title={clean ? 'Nothing caught' : 'What we caught'}
+            title={nothingChecked(report.steps) ? 'Nothing checked' : clean ? 'Nothing caught' : 'What we caught'}
             count={confirmed.length}
-            note={clean ? undefined : 'Each row is one trick. Open it for the screenshot, the rule it breaks and the fix.'}
+            note={
+              nothingChecked(report.steps)
+                ? 'The agent stopped on the first page, so no step below was checked.'
+                : clean
+                  ? undefined
+                  : 'Each row is one trick. Open it for the screenshot, the rule it breaks and the fix.'
+            }
           />
 
           <ol className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -233,6 +271,9 @@ export function Report({ report, logs, jurisdiction, onJurisdiction, decisions, 
             </div>
           </section>
         )}
+
+
+        <SelfAuditSection report={report} pdfBusy={selfAuditBusy} onDownloadPdf={onDownloadSelfAudit} onJumpToFinding={jumpToFinding} />
 
         <section id="trail" className="scroll-mt-32 break-before-page">
           <details className="group brutal rounded-3xl bg-white" open={clean}>

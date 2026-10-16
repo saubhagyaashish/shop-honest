@@ -54,7 +54,7 @@ async def test_other_errors_are_not_masked_by_the_fallback():
 def test_gemini_models_retry_with_backoff_and_have_a_fallback():
     model = model_for("smart", Settings(_env_file=None, model_provider="gemini"))
     assert isinstance(model, FallbackLlm)
-    assert (model.primary.model, model.fallback.model) == ("gemini-3.8-flash", "gemini-2.5-flash")
+    assert (model.primary.model, model.fallback.model) == ("gemini-3.6-flash", "gemini-3.1-flash-lite")
     retry = model.primary.retry_options
     assert retry.attempts == 4 and 429 in retry.http_status_codes and 503 in retry.http_status_codes
     no_fallback = model_for("smart", Settings(_env_file=None, model_provider="gemini", gemini_model_fallback=""))

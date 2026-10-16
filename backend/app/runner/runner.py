@@ -16,12 +16,9 @@ import socket
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
-from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeout
 
 from app.agents.judge import Judge
-from app.agents.reporter import build_report
-from app.browser.session import browser_page
 from app.browser.url_guard import Resolver, system_resolver
 from app.config import Settings
 from app.contract.models import AUDIT_EVENT, TERMINAL_EVENTS, AuditReport, dump
@@ -29,11 +26,13 @@ from app.knowledge import load_knowledge
 from app.models import ModelSet, model_set
 from app.prices.history import PriceHistory, price_history_for
 from app.replay.player import Recording
-from app.runner.walk import Walk
+from app.runner.audit_graph import AuditGraph
+from app.runner.steps import LiveAudit
 from app.stores.events import AuditRecord, EventLog, now_iso
 from app.stores.frames import FrameStore, LocalFrameStore
 
 if TYPE_CHECKING:
+    from app.agents import fixer
     from app.journeys import Journey
 
 log = logging.getLogger(__name__)
@@ -82,9 +81,21 @@ class AuditRunner:
         self._tasks[record.audit_id] = task
         task.add_done_callback(lambda _: self._forget(record.audit_id))
 
-    async def start_live(self, record: AuditRecord, journey: "Journey") -> None:
+    @property
+    def models(self) -> ModelSet | None:
+        return self._models
+
+    async def start_live(
+        self,
+        record: AuditRecord,
+        journey: "Journey",
+        previous: dict[str, Any] | None = None,
+        applied: "fixer.Fix | None" = None,
+    ) -> None:
+        """`previous`: the report of an earlier audit of the same page, to compare this one with; `applied`: fixes
+        from that audit's proposal, applied to a copy of the store before auditing it."""
         self._live.add(record.audit_id)
-        task = asyncio.create_task(self._run_live(record, journey), name=f"audit-{record.audit_id}")
+        task = asyncio.create_task(self._run_live(record, journey, previous, applied), name=f"audit-{record.audit_id}")
         self._tasks[record.audit_id] = task
         task.add_done_callback(lambda _: self._forget(record.audit_id))
 
@@ -176,7 +187,13 @@ class AuditRunner:
             log.exception("audit %s crashed", audit_id)
             await self._emit(audit_id, {"type": "audit.failed", "error": "Something went wrong while running the audit."})
 
-    async def _run_live(self, record: AuditRecord, journey: "Journey") -> None:
+    async def _run_live(
+        self,
+        record: AuditRecord,
+        journey: "Journey",
+        previous: dict[str, Any] | None = None,
+        applied: "fixer.Fix | None" = None,
+    ) -> None:
         audit_id, settings = record.audit_id, self._settings
         started_at = now_iso()
         await self._events.update(audit_id, status="running", started_at=started_at)
@@ -185,67 +202,29 @@ class AuditRunner:
             # Live events are built here, so check every one against the contract before it goes out.
             await self._emit(audit_id, dump(AUDIT_EVENT.validate_python(event)))
 
-        walk: Walk | None = None
+        audit: LiveAudit | None = None
         deadline = asyncio.get_running_loop().time() + settings.audit_timeout_s
         beater = self._start_heartbeat(audit_id)
         try:
             await emit({"type": "audit.started", "auditId": audit_id, "targetUrl": record.target_url, "startedAt": started_at})
             knowledge = load_knowledge(settings.shared_dir)
-            judge = Judge(self._models, knowledge, settings) if self._models else None
-            async with asyncio.timeout_at(deadline):
-                async with browser_page(settings, self._resolver) as (page, guard):
-                    walk = Walk(
-                        audit_id=audit_id,
-                        target_url=record.target_url,
-                        page=page,
-                        guard=guard,
-                        frames=self._frames,
-                        knowledge=knowledge,
-                        settings=settings,
-                        emit=emit,
-                        judge=judge,
-                        prices=self._prices,
-                    )
-                    await walk.log("navigator", "Launching a fresh browser: 1280×800, no cookies, not signed in.")
-                    try:
-                        await journey.walk(walk)
-                    except PlaywrightError as err:
-                        if not walk.steps:
-                            raise
-                        # Keep what was audited: the report covers the steps reached.
-                        reason = "Left the approved site" if guard.blocked else "The page stopped responding"
-                        log.warning("audit %s stopped at %s: %s", audit_id, walk.step, err)
-                        await walk.log("navigator", f"Couldn't go further: {reason.lower()}. Reporting what I reached.")
-                        await walk.blocked(reason)
-
-            # The browser is closed; model reviews may still be running. They get what's left of the time limit.
-            try:
-                async with asyncio.timeout_at(deadline):
-                    await walk.drain()
-            except TimeoutError:
-                await walk.cancel_reviews()
-                await walk.log("adjudicator", "Ran out of time before every screen was reviewed. Reporting what was decided.")
-            await walk.log("adjudicator", closing_line(walk.findings, judge))
-            if judge is not None:
-                c = judge.caller
-                log.info(
-                    "audit %s model usage: %d calls, %d input tokens, %d output tokens",
-                    audit_id,
-                    c.calls,
-                    c.tokens_in,
-                    c.tokens_out,
-                )
-            await walk.log("reporter", "Building the audit report…")
-            report = build_report(
+            audit = LiveAudit(
                 audit_id=audit_id,
                 target_url=record.target_url,
                 started_at=started_at,
-                completed_at=now_iso(),
-                steps=walk.steps,
-                findings=walk.findings,
-                ev=walk.evidence,
+                journey=journey,
+                settings=settings,
                 knowledge=knowledge,
+                judge=Judge(self._models, knowledge, settings) if self._models else None,
+                frames=self._frames,
+                resolver=self._resolver,
+                prices=self._prices,
+                emit=emit,
+                deadline=deadline,
+                previous=previous,
+                applied=applied,
             )
+            report = await (AuditGraph(audit).run() if settings.agent_graph else audit.run())
             await emit({"type": "audit.completed", "report": dump(AuditReport.model_validate(report))})
         except asyncio.CancelledError:
             if audit_id in self._lost:
@@ -269,8 +248,8 @@ class AuditRunner:
         finally:
             beater.cancel()
             # Model reviews never outlive their audit.
-            if walk is not None:
-                await walk.cancel_reviews()
+            if audit is not None and audit.walk is not None:
+                await audit.walk.cancel_reviews()
 
     async def _emit(self, audit_id: str, event: dict[str, Any]) -> None:
         await self._events.append(audit_id, event)
@@ -296,33 +275,3 @@ class AuditRunner:
             if record is not None and record.skip_requested:
                 skip.set()
                 return
-
-
-def closing_line(findings: list[dict[str, Any]], judge: Judge | None) -> str:
-    """The adjudicator's summary of who decided what in this run."""
-    confirmed = sum(f["status"] == "confirmed" for f in findings)
-    review = len(findings) - confirmed
-    if judge is None:
-        verdict = (
-            f"{confirmed} finding{'s' if confirmed != 1 else ''} confirmed by measurement, "
-            "each with a screenshot and a rule citation."
-            if confirmed
-            else "Every measured check passed: nothing to confirm."
-        )
-        return f"{verdict} Wording and design checks need a model's judgement and aren't part of this run."
-    screens = judge.reviewed + judge.failed
-    if judge.reviewed == 0:
-        coverage = f"{judge.model_name} couldn't review any screen, so only the measured checks count in this run."
-    elif judge.failed:
-        coverage = (
-            f"{judge.model_name} reviewed {judge.reviewed} of {screens} screens; the others count on the measured checks only."
-        )
-    else:
-        reviewed = "the 1 screen" if screens == 1 else f"all {screens} screens"
-        coverage = f"{judge.model_name} reviewed {reviewed} and its claims were checked against their evidence."
-    if not findings:
-        return f"Every check passed: nothing to confirm. {coverage}"
-    counts = f"{confirmed} finding{'s' if confirmed != 1 else ''} confirmed"
-    if review:
-        counts += f", {review} sent to human review"
-    return f"{counts}, each with a screenshot and a rule citation. {coverage}"

@@ -38,7 +38,7 @@ The pre-flight should end with `6/6 checks passed`. If you redeploy after this, 
 | Problem | What you see | What to do |
 |---|---|---|
 | The API is down or slow | The audit page says "The live audit service can't be reached right now", and the scan falls back to the built-in demo replay | Keep demoing on the replay: it's the same store and findings. Check `curl https://shop-honest-ai.web.app/api/health`. |
-| Gemini is busy (429) | "Couldn't read the … page" in the narration | The measured findings still stand. Retry in a minute; the SDK retries and falls back to `gemini-2.5-flash`. |
+| Gemini is busy (429) | "Couldn't read the … page" in the narration | The measured findings still stand. Retry in a minute; the SDK retries and falls back to `gemini-3.1-flash-lite`. |
 | The daily live limit is reached (100 a day, site-wide) | "Live audits are paused for today" | Use **Scan it** (unlimited). Or raise the cap for the day: `gcloud run services update shop-honest-api --region asia-south1 --update-env-vars LIVE_PER_DAY=200`. |
 | The real store blocks us | The report is blocked at a step with "bot protection" or "the site showed an error" | That's the honest path: show it. We never get around bot protection. |
 | AutomationExercise is down | The audit fails to open the page | Skip step 4, or show Flipkart. |

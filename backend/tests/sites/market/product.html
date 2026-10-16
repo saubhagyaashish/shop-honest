@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Acme Buds T310 Wireless Earbuds : Marketplace</title>
+<!-- A big marketplace's product page: hundreds of menu links before the buy box, a screen-reader-only h1 first, the MRP
+     struck by a ::after line instead of line-through, and a row of other products (their own prices, MRPs and "Only 1
+     left", each card wrapped in a dozen layers) below the product under audit. -->
+<style>body{font-family:sans-serif;margin:0} header{background:#222;color:#fff;padding:8px;font-size:11px} header a{color:#fff;margin-right:4px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+main{padding:16px} h1{font-size:26px;font-weight:normal} .price{font-size:28px} .ok{color:green}
+[role=radio]{padding:8px;margin-right:6px} [aria-checked=true]{outline:2px solid #07c}
+#add{background:#fd0;padding:10px 24px;border:0;border-radius:20px}
+.mrp{position:relative;color:#555} .mrp::after{content:"";position:absolute;left:0;right:0;top:50%;height:0;border-top:1px solid #555}
+.row{display:flex;gap:16px;list-style:none;padding:0;margin-top:600px} .row li{width:180px} .row img{width:120px;height:120px;background:#ddd}</style></head>
+<body>
+<header id="nav"></header>
+<h1 class="sr-only">Product summary presents key product information</h1>
+<main>
+  <h1>Acme Buds T310 Wireless Earbuds</h1>
+  <p>10K+ shoppers rated it 4.2</p>
+  <div><span>-53%</span> <span class="price">₹1,899</span><div>M.R.P.: <span class="mrp">₹3,999</span></div></div>
+  <p class="ok">In stock</p>
+  <div role="radiogroup" aria-label="Colour">
+    <button role="radio" aria-checked="true" aria-label="Vibrant Black">Black</button>
+    <button role="radio" aria-checked="false" aria-label="Pearl White">White</button>
+  </div>
+  <p><button id="add">Add to cart</button></p>
+  <h2>Customers who viewed this item also viewed</h2>
+  <ul class="row">
+    <li><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><a href="#">Other Buds 3r</a><div>-10% ₹1,799</div><div>M.R.P.: <s>₹1,999</s></div></li>
+    <li><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><a href="#">Earbud Case</a><div>-73% ₹159</div><div>M.R.P.: <s>₹599</s></div><div>Only 1 left in stock.</div></li>
+    <li><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><a href="#">Buds T200</a><div>-43% ₹1,699</div><div>M.R.P.: <s>₹2,999</s></div></li>
+    <li><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><a href="#">Buds T500</a><div>-30% ₹2,990</div><div>M.R.P.: <s>₹4,299</s></div></li>
+  </ul>
+</main>
+<script>
+  const nav = document.getElementById('nav')
+  for (let i = 1; i <= 200; i++) { const a = document.createElement('a'); a.href = '#c' + i; a.textContent = 'Category ' + i; nav.appendChild(a) }
+  document.querySelectorAll('[role=radio]').forEach((r) => r.addEventListener('click', () => {
+    document.querySelectorAll('[role=radio]').forEach((o) => o.setAttribute('aria-checked', String(o === r)))
+  }))
+  document.getElementById('add').addEventListener('click', () => { location.href = 'cart.html' })
+  // Wrap each card's content in a dozen layers, as big marketplaces do.
+  document.querySelectorAll('.row li').forEach((li) => {
+    let inner = document.createElement('div'); inner.append(...li.childNodes)
+    for (let i = 0; i < 12; i++) { const d = document.createElement('div'); d.append(inner); inner = d }
+    li.append(inner)
+  })
+</script>
+</body></html>

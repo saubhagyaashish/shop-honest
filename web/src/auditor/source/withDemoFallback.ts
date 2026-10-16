@@ -21,12 +21,14 @@ export function withDemoFallback(live: AuditSource, demo: AuditSource): AuditSou
       try {
         return await live.start(targetUrl, options)
       } catch (err) {
-        if (err instanceof ApiUnreachableError && !options?.live && sampleForUrl(targetUrl)) return demo.start(targetUrl)
+        const fresh = options?.live || options?.compareTo
+        if (err instanceof ApiUnreachableError && !fresh && sampleForUrl(targetUrl)) return demo.start(targetUrl)
         throw err
       }
     },
     subscribe: (auditId, onEvent) => pick(auditId).subscribe(auditId, onEvent),
     skipAhead: (auditId) => pick(auditId).skipAhead?.(auditId),
     canSkipAhead: (auditId) => pick(auditId).canSkipAhead?.(auditId) ?? Boolean(pick(auditId).skipAhead),
+    ...(live.proposeFixes ? { proposeFixes: live.proposeFixes } : {}),
   }
 }

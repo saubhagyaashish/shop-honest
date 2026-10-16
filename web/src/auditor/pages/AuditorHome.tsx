@@ -43,7 +43,7 @@ function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; 
   )
 }
 
-/** Real stores the general navigator can audit (the API's allowlist). Fill the URL box; "Scan it" runs a live audit. */
+/** Real stores to try the general navigator on (any public site can be audited). Fill the URL box; "Scan it" runs a live audit. */
 const REAL_STORES = [
   {
     label: 'AutomationExercise · Blue Top',

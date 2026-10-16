@@ -1,3 +1,4 @@
+import { Wrench } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { AGENTS } from '../agents'
@@ -31,6 +32,17 @@ export function AgentLog({ logs, startedAt, follow = true, typing = false }: { l
                 <b className="font-bold">{AGENTS[l.agent].label}</b>
                 <span className="font-mono text-ink/40 tabular-nums">{formatOffset(l.at - t0)}</span>
               </div>
+              {l.tool && (
+                <div
+                  className="mt-1 flex w-fit max-w-full items-center gap-1 rounded-md border border-ink/20 bg-ink/5 px-1.5 py-0.5 font-mono text-[11px] text-ink/70"
+                  title="Tool call"
+                >
+                  <Wrench className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="truncate">
+                    {l.tool.name}({l.tool.input})
+                  </span>
+                </div>
+              )}
               <div className="brutal-sm mt-1 inline-block rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[13px] leading-snug">{l.message}</div>
             </div>
           </motion.li>

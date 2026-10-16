@@ -28,17 +28,9 @@ class Settings(BaseSettings):
     live_per_ip_per_hour: int = 0
     live_per_day: int = 0
 
-    # The demo stores, plus real stores for the general navigator: one built for automation practice,
-    # and one real retailer on a best-effort basis (it may block automated browsers; we never get around that).
-    allowed_hosts: CommaList = [
-        "localhost",
-        "127.0.0.1",
-        "shop-honest-ai.web.app",
-        "shop-honest-ai.firebaseapp.com",
-        "automationexercise.com",
-        "www.flipkart.com",
-        "flipkart.com",
-    ]
+    # Sites that can be audited: "*" is any public site (since 15 Oct 2026, ADR-0005); hosts listed by name
+    # may also resolve to private addresses when allow_private_targets is on (localhost in development).
+    allowed_hosts: CommaList = ["*", "localhost", "127.0.0.1"]
     # Lets allowlisted hosts resolve to private addresses (localhost in development). Off in production.
     allow_private_targets: bool = True
 
@@ -74,15 +66,17 @@ class Settings(BaseSettings):
     # Models (Phase 3). Ollama serves both tiers locally.
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "gemma3:4b"
+    # Context window asked of Ollama, in tokens (a real store's element list can run to several thousand).
+    ollama_num_ctx: int = 32768
     # Gemini through Vertex AI (credentials from ADC locally, the service account on Cloud Run),
     # or through Google AI Studio with GOOGLE_API_KEY. Models are served on the global endpoint.
     gemini_backend: Literal["vertex", "ai_studio"] = "vertex"
     google_cloud_project: str = "shop-honest-72fd8"
     google_cloud_location: str = "global"
-    gemini_model_fast: str = "gemini-3.8-flash"
-    gemini_model_smart: str = "gemini-3.8-flash"
+    gemini_model_fast: str = "gemini-3.6-flash"
+    gemini_model_smart: str = "gemini-3.6-flash"
     # Asked when the main model is out of capacity (429/503) even after retries; empty = no fallback.
-    gemini_model_fallback: str = "gemini-2.5-flash"
+    gemini_model_fallback: str = "gemini-3.1-flash-lite"
     google_api_key: SecretStr | None = None
     model_timeout_s: float = 90.0
     audit_max_model_calls: int = 40
@@ -93,6 +87,12 @@ class Settings(BaseSettings):
     adjudicator_verify: bool = True
     # Claims the verifier agrees with less than this are dropped.
     reject_below: float = 0.35
+    # Run the live audit as ADK agent graphs, with an Adjudicator that checks evidence through tools (ADR-0014).
+    # Off: the same steps run one after another in plain Python.
+    agent_graph: bool = True
+    # Evidence tools the Adjudicator may call per claim before it rules; 0 offers none, for models without
+    # tool support (Gemma 3 on Ollama).
+    adjudicator_max_tool_calls: int = 2
 
     @field_validator("allowed_hosts", "cors_origins", mode="before")
     @classmethod
