@@ -16,7 +16,7 @@ A first version ran the fix automatically inside every demo-store audit: the Fix
 - **Which settings exist.** They're exactly what the demo stores' admin panel offers: behaviours, the upfront fee and each product's M.R.P. (`web/src/store/settings.ts`, exported to `shared/store_settings.json`).
   - Each setting lists the dark patterns it can fix. A change that uses a setting for another kind of finding is dropped, as is one that names an unknown finding or setting or has a value of the wrong type. A local model was seen "fixing" an inflated M.R.P. by turning off the frozen stock counter.
   - The prompt asks the Fixer to fix the deception rather than hide information: fees revealed at payment move to the product page, and an inflated M.R.P. becomes one the product really sold at.
-- **Proposals are kept per instance**, by page and findings, so reopening the panel or replaying the same store doesn't ask the model again.
+- **Answering without a model where possible.** The recorder asks the Fixer once and stores its plan in each demo-store recording (`fixPlan`), so "Fix it" on a "Scan it" replay answers at once, with no model call, and is checked like any other plan. Proposals for live audits are kept per instance, by page and findings, so reopening the panel doesn't ask the model again.
 - **Projected numbers.** As the viewer switches fixes on, the panel recalculates the trust score, the hidden extras, the fine ceiling and the CCPA patterns found, from the audit's own evidence (`web/src/auditor/projection.ts`). They're labelled "projected".
   - The fine ceiling is the statutory maximum per contravention (India: ₹10 lakh the first time, CPA s 21; `perContraventionMax` in the legal data) times the confirmed findings left. It's labelled as a maximum, never a predicted fine.
 - **Verified by the same audit.** "Verify these fixes" is `POST /api/audits` with `compareTo` and `applyFixes`. The server checks the fixes again against that audit and the store's settings. Then:
@@ -29,6 +29,6 @@ A first version ran the fix automatically inside every demo-store audit: the Fix
 - **Real sites are never changed.** Every fix there is `code` or `review`. The viewer can switch fixes on as planned, to see what they'd change, copy the fix list for the developers, and use "Re-audit this page" (`compareTo` alone) once they've shipped.
 
 ## Consequences
-- Audits are back to about 30 s. Fixing costs one model call when the panel first opens, and a live audit only if the viewer verifies.
+- Audits no longer include fixing. "Fix it" costs nothing on a replay, one model call on a live audit, and a live audit only if the viewer verifies.
 - The projection is a calculation, and the verified numbers can disagree with it: a fix that doesn't work shows "Still there". The tests include a fix applied to one finding only, and a fix that's dropped as invalid.
-- Replays work too: their proposals come from the Fixer, and verifying runs live, within the site's daily live-audit cap.
+- Replays work too: their proposals were recorded with them, and verifying runs live, within the site's daily live-audit cap.

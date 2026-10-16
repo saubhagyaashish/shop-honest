@@ -21,6 +21,8 @@ class Recording:
     recorded_at: str
     placeholders: dict[str, str]
     events: list[dict[str, Any]]
+    # The Fixer's changes for this run's findings, written when it was recorded, so "Fix it" on a replay needs no model.
+    fix_plan: list[dict[str, Any]] | None = None
 
     def matches(self, url: str) -> bool:
         path = urlsplit(url).path
@@ -51,6 +53,7 @@ class RecordingLibrary:
                     recorded_at=data["recordedAt"],
                     placeholders=data["placeholders"],
                     events=data["events"],
+                    fix_plan=data.get("fixPlan"),
                 )
             )
         return cls(recordings)

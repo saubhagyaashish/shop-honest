@@ -3,7 +3,7 @@
   "store": "store-b",
   "pathPrefix": "/demo/store-b/",
   "source": "live",
-  "recordedAt": "2026-10-15T13:39:36.875094Z",
+  "recordedAt": "2026-10-16T00:30:59.143573Z",
   "placeholders": {
     "auditId": "__AUDIT_ID__",
     "origin": "__ORIGIN__"
@@ -15,11 +15,11 @@
         "type": "audit.started",
         "auditId": "__AUDIT_ID__",
         "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-        "startedAt": "2026-10-15T13:39:15.609Z"
+        "startedAt": "2026-10-16T00:30:37.847Z"
       }
     },
     {
-      "delayMs": 232,
+      "delayMs": 248,
       "event": {
         "type": "agent.log",
         "agent": "navigator",
@@ -51,7 +51,7 @@
       }
     },
     {
-      "delayMs": 8331,
+      "delayMs": 8342,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -96,7 +96,7 @@
       }
     },
     {
-      "delayMs": 7,
+      "delayMs": 8,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -104,7 +104,7 @@
       }
     },
     {
-      "delayMs": 2850,
+      "delayMs": 2881,
       "event": {
         "type": "step.captured",
         "step": "product",
@@ -113,7 +113,7 @@
       }
     },
     {
-      "delayMs": 35,
+      "delayMs": 37,
       "event": {
         "type": "step.started",
         "step": "variant",
@@ -129,7 +129,7 @@
       }
     },
     {
-      "delayMs": 340,
+      "delayMs": 341,
       "event": {
         "type": "step.captured",
         "step": "variant",
@@ -138,7 +138,7 @@
       }
     },
     {
-      "delayMs": 37,
+      "delayMs": 36,
       "event": {
         "type": "step.started",
         "step": "cart",
@@ -154,7 +154,7 @@
       }
     },
     {
-      "delayMs": 318,
+      "delayMs": 280,
       "event": {
         "type": "step.captured",
         "step": "cart",
@@ -175,7 +175,7 @@
       }
     },
     {
-      "delayMs": 2,
+      "delayMs": 4,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -183,7 +183,7 @@
       }
     },
     {
-      "delayMs": 50,
+      "delayMs": 55,
       "event": {
         "type": "step.started",
         "step": "checkout",
@@ -191,7 +191,15 @@
       }
     },
     {
-      "delayMs": 273,
+      "delayMs": 108,
+      "event": {
+        "type": "agent.log",
+        "agent": "pattern_analyst",
+        "message": "Nothing on the product page needs flagging beyond what was measured."
+      }
+    },
+    {
+      "delayMs": 187,
       "event": {
         "type": "step.captured",
         "step": "checkout",
@@ -228,7 +236,7 @@
       }
     },
     {
-      "delayMs": 37,
+      "delayMs": 29,
       "event": {
         "type": "step.started",
         "step": "payment",
@@ -236,7 +244,7 @@
       }
     },
     {
-      "delayMs": 284,
+      "delayMs": 282,
       "event": {
         "type": "step.captured",
         "step": "payment",
@@ -265,7 +273,7 @@
       }
     },
     {
-      "delayMs": 4,
+      "delayMs": 6,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -273,15 +281,7 @@
       }
     },
     {
-      "delayMs": 689,
-      "event": {
-        "type": "agent.log",
-        "agent": "pattern_analyst",
-        "message": "Nothing on the product page needs flagging beyond what was measured."
-      }
-    },
-    {
-      "delayMs": 1950,
+      "delayMs": 3151,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -289,7 +289,7 @@
       }
     },
     {
-      "delayMs": 1839,
+      "delayMs": 131,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -297,7 +297,7 @@
       }
     },
     {
-      "delayMs": 1436,
+      "delayMs": 2617,
       "event": {
         "type": "agent.log",
         "agent": "pattern_analyst",
@@ -305,7 +305,7 @@
       }
     },
     {
-      "delayMs": 4,
+      "delayMs": 5,
       "event": {
         "type": "agent.log",
         "agent": "adjudicator",
@@ -327,8 +327,8 @@
         "report": {
           "auditId": "__AUDIT_ID__",
           "targetUrl": "__ORIGIN__/demo/store-b/p/sonicbuds-pro",
-          "startedAt": "2026-10-15T13:39:15.609Z",
-          "completedAt": "2026-10-15T13:39:36.864Z",
+          "startedAt": "2026-10-16T00:30:37.847Z",
+          "completedAt": "2026-10-16T00:30:59.132Z",
           "trustScore": 100.0,
           "steps": [
             {
@@ -393,6 +393,10 @@
                 "status": "in_force",
                 "maxPenalty": "Up to ₹10 lakh per contravention, ₹50 lakh for each later one (s 21). Criminal: up to 2 years and ₹10 lakh, or 5 years and ₹50 lakh for repeat offences (s 89).",
                 "penaltyHeadline": "Up to ₹50 lakh + jail for repeat offences",
+                "perContraventionMax": {
+                  "amount": 1000000.0,
+                  "currency": "INR"
+                },
                 "citations": {},
                 "precedents": [
                   {
@@ -608,7 +612,13 @@
             ],
             "strictest": "GB",
             "disclaimer": "Shop Honest maps findings to laws and public enforcement outcomes to show exposure. It is not legal advice. Penalties shown are statutory maximums or past outcomes, not a prediction for this business."
-          }
+          },
+          "reviewedSteps": [
+            "product",
+            "cart",
+            "checkout",
+            "payment"
+          ]
         }
       }
     }

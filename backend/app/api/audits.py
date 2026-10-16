@@ -178,21 +178,20 @@ async def propose_fixes(audit_id: str, request: Request) -> FixProposal:
     knowledge = load_knowledge(settings.shared_dir)
     findings: list[dict[str, Any]] = record.report["findings"]
     current = fixer.current_settings(knowledge, record.target_url)
+    recording = _library(request).match(record.target_url) if record.mode == "replay" else None
     fix = None
     # Only a store whose settings we control can be fixed here; anywhere else every fix is for the site's developers.
-    if current is not None and models is not None and findings:
+    if current is not None and findings and recording is not None and recording.fix_plan is not None:
+        # A replay: the plan recorded with it, checked like any other.
+        plan = fixer.FixPlan.model_validate({"changes": recording.fix_plan})
+        fix = fixer.apply_plan(plan, findings, knowledge, current)
+    elif current is not None and findings and models is not None:
         kept: dict[str, fixer.Fix] = request.app.state.fix_proposals
         key = json.dumps([record.target_url, [(f["id"], f["status"], f["title"]) for f in findings]])
         fix = kept.get(key)
         if fix is None:
             try:
-                plan = await ModelCaller(settings).ask(
-                    name="fixer",
-                    model=models.fast,
-                    instruction=fixer.instruction(),
-                    schema=fixer.FixPlan,
-                    parts=fixer.request_parts(findings, knowledge, current),
-                )
+                plan = await fixer.write_plan(ModelCaller(settings), models, findings, knowledge, current)
             except ModelError as err:
                 log.warning("audit %s: the Fixer had no answer (%s)", audit_id, err)
                 message = "The Fixer couldn't write fixes just now. Try again in a moment."

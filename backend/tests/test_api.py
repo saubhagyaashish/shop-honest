@@ -1,7 +1,10 @@
 import asyncio
+import json
+from pathlib import Path
 
 import httpx
 
+from app.config import REPO_DIR
 from app.contract.models import JOURNEY_STEPS
 from evals.answer_key import score
 from tests.conftest import EVENT_VALIDATOR, STORE_A, STORE_B, fake_resolver, make_settings, parse_sse, run_audit
@@ -160,7 +163,41 @@ async def test_unknown_routes_use_the_same_error_shape(client: httpx.AsyncClient
 # "Fix it": the Fixer's proposal for a finished audit.
 
 
-async def test_fixes_are_proposed_for_a_finished_replay():
+def recordings_with(tmp_path: Path, fix_plan: list[dict] | None) -> Path:
+    """Store A's recording, with this Fixer plan recorded with it (None: none)."""
+    data = json.loads((REPO_DIR / "backend" / "app" / "replay" / "recordings" / "store-a.json").read_text())
+    data.pop("fixPlan", None)
+    if fix_plan is not None:
+        data["fixPlan"] = fix_plan
+    out = tmp_path / "recordings"
+    out.mkdir()
+    (out / "store-a.json").write_text(json.dumps(data))
+    return out
+
+
+async def test_a_replay_uses_the_fixer_plan_recorded_with_it(tmp_path: Path):
+    from app.main import create_app
+
+    plan = [
+        {"findingId": "f-sneaked-item", "setting": "behaviour.autoAddProtection", "value": "false", "why": "No add-on."},
+        {"findingId": "f-inflated-mrp", "setting": "behaviour.frozenStock", "value": "false", "why": "Wrong setting."},
+    ]
+    # No model at all: the recorded plan is enough.
+    app = create_app(make_settings(recordings_dir=recordings_with(tmp_path, plan)), resolver=fake_resolver)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        audit_id, events = await run_audit(client, STORE_A)
+        proposal = (await client.post(f"/api/audits/{audit_id}/fixes")).json()
+    await app.state.runner.shutdown()
+    report = events[-1][1]["report"]
+    items = {i["findingId"]: i for i in proposal["items"]}
+    assert list(items) == [f["id"] for f in report["findings"]]
+    assert items["f-sneaked-item"]["kind"] == "setting" and items["f-sneaked-item"]["changes"][0]["to"] == "off"
+    # Checked like any other plan: a setting for another kind of dark pattern is dropped.
+    assert items["f-inflated-mrp"]["kind"] == "code" and items["f-inflated-mrp"]["changes"] == []
+    assert proposal["canVerify"] is False  # this deployment has no live audits
+
+
+async def test_fixes_are_proposed_for_a_finished_audit(tmp_path: Path):
     from app.main import create_app
     from app.stores.events import AuditRecord
     from tests.judging import scripted_models
@@ -171,7 +208,8 @@ async def test_fixes_are_proposed_for_a_finished_replay():
         calls.append(user)
         return demo_store_fixer(user)
 
-    app = create_app(make_settings(), resolver=fake_resolver, models=scripted_models(fixer=fixer))
+    settings = make_settings(recordings_dir=recordings_with(tmp_path, None))
+    app = create_app(settings, resolver=fake_resolver, models=scripted_models(fixer=fixer))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         res = await client.post("/api/audits/aud_nope/fixes")
         assert (res.status_code, res.json()["error"]["code"]) == (404, "audit_not_found")
@@ -180,6 +218,7 @@ async def test_fixes_are_proposed_for_a_finished_replay():
         res = await client.post("/api/audits/aud_running/fixes")
         assert (res.status_code, res.json()["error"]["code"]) == (409, "not_finished")
 
+        # A replay recorded without a plan: the Fixer is asked.
         audit_id, events = await run_audit(client, STORE_A)
         proposal = (await client.post(f"/api/audits/{audit_id}/fixes")).json()
         report = events[-1][1]["report"]

@@ -102,7 +102,7 @@ Plays the rest of a replayed audit without delays; this powers "Skip to report".
 ```
 
 - **`kind`** is `setting` when a change to the store's own settings fixes it, `code` when only the site's developers can (`suggestion` says how), or `review` when the finding awaits human review.
-- **Who answers:** only a store whose settings we control (the demo stores) gets settings changes, from the Fixer, in one model call. Any other site gets `code` and `review` items, and no model is asked.
+- **Who answers:** only a store whose settings we control (the demo stores) gets settings changes. A replay uses the Fixer plan recorded with it (`fixPlan` in the recording, checked the same way), so no model is asked. A live audit asks the Fixer, in one model call. Any other site gets `code` and `review` items, and no model is asked.
 - **Repeat calls:** proposals are kept per instance by page and findings, so asking again doesn't call the model.
 - **`canVerify`:** the changes can be applied with `applyFixes` (a demo store, live audits on).
 

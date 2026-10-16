@@ -19,6 +19,8 @@ from pydantic import BaseModel, Field
 
 from app.agents.findings import money
 from app.knowledge import Knowledge
+from app.models import ModelSet
+from app.models.call import ModelCaller
 from app.prices.keys import on_demo_host
 
 PROMPTS = Path(__file__).parent / "prompts"
@@ -50,6 +52,19 @@ class Fix:
 @cache
 def instruction() -> str:
     return (PROMPTS / "fixer.md").read_text(encoding="utf-8")
+
+
+async def write_plan(
+    caller: ModelCaller, models: ModelSet, findings: list[dict[str, Any]], knowledge: Knowledge, current: dict[str, Any]
+) -> FixPlan:
+    """Ask the Fixer once (ModelError when there's no usable answer)."""
+    return await caller.ask(
+        name="fixer",
+        model=models.fast,
+        instruction=instruction(),
+        schema=FixPlan,
+        parts=request_parts(findings, knowledge, current),
+    )
 
 
 def proposal(findings: list[dict[str, Any]], fix: Fix | None) -> list[dict[str, Any]]:
