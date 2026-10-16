@@ -13,6 +13,7 @@ from app.agents.findings import frame as _frame
 from app.agents.findings import make_finding as _finding
 from app.agents.findings import money as _money
 from app.agents.findings import union as _union
+from app.browser.capture import Capture
 from app.knowledge import Knowledge
 from app.prices.facts import price_facts
 
@@ -232,59 +233,69 @@ FEE = re.compile(r"\b(fee|charge|surcharge|handling|convenience)\b", re.I)
 
 
 def late_fees(ev: Evidence, knowledge: Knowledge) -> list[Finding]:
-    """Fees that first appear at payment and weren't disclosed on the product page."""
-    product, payment = (ev.get("product-first") or [None])[0], (ev.get("payment") or [None])[0]
-    if not product or not payment:
+    """Fees the product page didn't disclose, at the first step that shows them: the cart, checkout or payment."""
+    product = (ev.get("product-first") or [None])[0]
+    if not product:
         return []
     disclosed = {d["label"] for d in product.signals.get("feeDisclosures", [])}
-    seen_before = {
-        row["label"]
-        for label in ("cart", "checkout")
-        for c in ev.get(label)
-        for row in (c.signals.get("summary") or {}).get("rows", [])
-    }
-    rows = (payment.signals.get("summary") or {}).get("rows", [])
-    late = [
-        row
-        for row in rows
-        if row["amount"] > 0
-        and FEE.search(row["label"])
-        and row["label"] not in seen_before
-        and not any(d in row["label"].lower() for d in disclosed)
-    ]
-    if not late:
-        return []
+    seen: set[str] = set()
+    for label in ("cart", "checkout", "payment"):
+        for capture in ev.get(label):
+            rows = (capture.signals.get("summary") or {}).get("rows", [])
+            late = [
+                row
+                for row in rows
+                if row["amount"] > 0
+                and FEE.search(row["label"])
+                and row["label"] not in seen
+                and not any(d in row["label"].lower() for d in disclosed)
+            ]
+            if late:
+                return [_late_fees_finding(knowledge, product, capture, late)]
+            seen |= {row["label"] for row in rows}
+    return []
+
+
+def _late_fees_finding(knowledge: Knowledge, product: Capture, capture: Capture, late: list[dict]) -> Finding:
     total = sum(r["amount"] for r in late)
     price = (product.signals.get("priceBlock") or {}).get("price")
-    payment_total = ((payment.signals.get("summary") or {}).get("total") or {}).get("amount")
+    shown_total = ((capture.signals.get("summary") or {}).get("total") or {}).get("amount")
     fee_names = ", ".join(f"{r['label']} ({_money(r['amount'])})" for r in late)
-    union = _union([r["bbox"] for r in late])
-    return [
-        _finding(
-            knowledge,
-            id="f-late-fees",
-            pattern_id="drip_pricing",
-            title=f"{_money(total)} in fees appears only at the payment step",
-            explanation=(
-                (f"The product page showed {_money(price)}. " if price else "")
-                + f"{fee_names} were first shown on the payment step, after the shopper had invested in the journey. "
+    at_payment = capture.step == "payment"
+    where = {"cart": "the cart", "checkout": "checkout", "payment": "payment"}[capture.step]
+    return _finding(
+        knowledge,
+        id="f-late-fees",
+        pattern_id="drip_pricing",
+        title=(
+            f"{_money(total)} in fees appears only at the payment step"
+            if at_payment
+            else f"{_money(total)} in fees first shown in {where}, not on the product page"
+        ),
+        explanation=(
+            (f"The product page showed {_money(price)}. " if price else "")
+            + (
+                f"{fee_names} were first shown on the payment step, after the shopper had invested in the journey. "
                 "None was disclosed on the product, cart or checkout pages."
-            ),
-            confidence=0.95,
-            capture=payment,
-            frames=[
-                _frame(product, (product.signals.get("priceBlock") or {}).get("bbox"), "Price as first shown"),
-                _frame(payment, union, "Price breakdown at payment"),
-            ],
-            observations=[
-                *([f"Product page: {_money(price)}"] if price else []),
-                *([f"Payment total: {_money(payment_total)}"] if payment_total else []),
-                "New at payment: " + ", ".join(f"{r['label'].lower()} {_money(r['amount'])}" for r in late),
-            ],
-            detected_by="evidence",
-            remediation=f"Show the {fee_names} in the first price the shopper sees on the product page, not at payment.",
-        )
-    ]
+                if at_payment
+                else f"{fee_names} first appeared in {where}. The product page didn't show "
+                + ("its amount." if len(late) == 1 else "their amounts.")
+            )
+        ),
+        confidence=0.95,
+        capture=capture,
+        frames=[
+            _frame(product, (product.signals.get("priceBlock") or {}).get("bbox"), "Price as first shown"),
+            _frame(capture, _union([r["bbox"] for r in late]), f"Price breakdown at {where}"),
+        ],
+        observations=[
+            *([f"Product page: {_money(price)}"] if price else []),
+            *([f"{where[0].upper()}{where[1:]} total: {_money(shown_total)}"] if shown_total else []),
+            f"New at {where}: " + ", ".join(f"{r['label'].lower()} {_money(r['amount'])}" for r in late),
+        ],
+        detected_by="evidence",
+        remediation=f"Show the {fee_names} in the first price the shopper sees on the product page, not at {where}.",
+    )
 
 
 ALL_CHECKS = [restarting_timer, frozen_stock, inflated_mrp, sneaked_items, pre_ticked_subscription, late_fees]

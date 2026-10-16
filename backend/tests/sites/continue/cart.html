@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Cart | Pharmacy</title>
+<!-- 1mg-like: the cart's own way on is "Continue", in a column of priced offer cards; the "Add to cart" buttons belong
+     to recommended products, and "Need Help?" leads to the help page. -->
+<style>body{font-family:sans-serif;padding:16px} .cols{display:flex;gap:24px} .row{display:flex;gap:12px}
+.card{border:1px solid #ccc;padding:8px;width:150px} .side>div{border:1px solid #ddd;padding:8px;margin:6px 0;width:320px}
+button{background:#ff6f61;color:#fff;border:0;padding:8px 16px}</style></head>
+<body>
+<div class="top"><input placeholder="Search for Medicines"> <a href="help.html">Need Help?</a></div>
+<div class="cols">
+  <div class="main">
+    <h2>1 item added</h2>
+    <div class="line"><img alt="" width="60" height="60"> Celin 500 Vitamin C Tablet ₹41 <button aria-label="Remove">🗑</button></div>
+    <h3>Top deals</h3>
+    <div class="row">
+      <div class="card"><img alt="" width="100" height="100"><div>Glow Moisturiser</div><div>₹451</div><button>Add to cart</button></div>
+      <div class="card"><img alt="" width="100" height="100"><div>Sunscreen Gel SPF 50</div><div>₹365</div><button>Add to cart</button></div>
+      <div class="card"><img alt="" width="100" height="100"><div>Hair Growth Serum</div><div>₹652</div><button>Add to cart</button></div>
+    </div>
+  </div>
+  <div class="side">
+    <div><img alt="" width="40" height="20"> Care Plan: 3 months for ₹165 <button>Add membership</button></div>
+    <div><img alt="" width="40" height="20"> <label><input type="checkbox"> Health check package for ₹649</label></div>
+    <div><img alt="" width="40" height="20"> Free sample collection, ₹0 extra</div>
+    <div class="bill">
+      <h3>Bill summary</h3>
+      <div class="r"><span>Item total (MRP)</span><span> </span><span>₹45</span></div>
+      <div class="r"><span>Handling charges</span><span> </span><span>₹12</span></div>
+      <div class="r"><span>Total discount</span><span> </span><span>-₹4</span></div>
+      <div class="r"><span>Estimated shipping fee</span><span>As per delivery address</span></div>
+      <div class="r"><span>To be paid</span><span>₹53</span></div>
+    </div>
+    <div><b>Delivering to Gurgaon</b> <button onclick="location.href='address.html'">Continue</button></div>
+  </div>
+</div>
+</body></html>

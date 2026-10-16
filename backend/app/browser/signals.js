@@ -127,30 +127,51 @@
     return typeof el.checkVisibility !== 'function' || el.checkVisibility({ opacityProperty: true, visibilityProperty: true })
   }
 
-  // The product's title: the largest visible h1 (some sites put a screen-reader-only h1 first).
+  // The product's title: the largest visible h1 (some sites put a screen-reader-only h1 first). On a site without one
+  // (Blinkit), the largest visible element outside the site's header and footer whose whole text starts the page's
+  // title: "GOBOULT K35 TWS Earbuds (Space Black)" of "GOBOULT K35 TWS Earbuds (Space Black) Price - Buy Online…".
   const fontPx = (el) => parseFloat(getComputedStyle(el).fontSize)
-  const title = [...document.querySelectorAll('h1')].filter(shown).sort((a, b) => fontPx(b) - fontPx(a))[0]
+  const pageTitle = document.title.replace(/\s+/g, ' ').trim().toLowerCase()
+  const startsPageTitle = (el) => {
+    if (el.children.length || chrome(el)) return false
+    const t = text(el).toLowerCase()
+    return t.length >= 8 && pageTitle.startsWith(t) && shown(el)
+  }
+  const largest = (els) => els.sort((a, b) => fontPx(b) - fontPx(a))[0]
+  const title =
+    largest([...document.querySelectorAll('h1')].filter(shown)) || largest([...document.body.querySelectorAll('*')].filter(startsPageTitle))
 
-  // Inside a list of other products (a carousel, "customers also viewed", variant swatches): an ancestor, below the
-  // product's own area, with 3+ children that each show an image and a price.
+  // Inside a list of other products (a carousel, "customers also viewed", variant swatches): inside one of 3+ sibling
+  // cards, below the product's own area. A card shows a price and either a picture or its own add button (Blinkit's
+  // carousel cards load their pictures only when scrolled to). Price rows in a buy box have neither.
+  const ADD = /^\+?\s?add( to (cart|bag|basket|trolley))?$/i
+  const cards = new WeakMap()
+  const isCard = (c) => {
+    if (!cards.has(c)) {
+      const priced = MONEY.test(c.innerText || '')
+      const own = priced && (c.querySelector('img') || [...c.querySelectorAll('*')].some((e) => !e.children.length && ADD.test(text(e))))
+      cards.set(c, !!own)
+    }
+    return cards.get(c)
+  }
   const productLists = new WeakMap()
   const isProductList = (n) => {
-    if (!productLists.has(n)) {
-      const cards = [...n.children].filter((c) => c.querySelector('img') && MONEY.test(c.innerText || ''))
-      productLists.set(n, cards.length >= 3)
-    }
+    if (!productLists.has(n)) productLists.set(n, [...n.children].filter(isCard).length >= 3)
     return productLists.get(n)
   }
   const otherProducts = (el) => {
-    // Deep: a big marketplace wraps each card in a dozen or more layers.
-    for (let n = el.parentElement, depth = 0; n && n !== document.body && depth < 30; n = n.parentElement, depth++) {
+    // Deep: a big marketplace wraps each card in a dozen or more layers. Only an element inside one of the cards counts,
+    // not one beside them (a cart's "Continue" next to recommendations).
+    for (let card = el, n = el.parentElement, depth = 0; n && n !== document.body && depth < 30; card = n, n = n.parentElement, depth++) {
       if (title && n.contains(title)) return false
-      if (isProductList(n)) return true
+      if (isProductList(n) && isCard(card)) return true
     }
     return false
   }
   // About the product under audit: not the site's header, menus or footer, and not another product's card.
   const aboutProduct = (el) => !chrome(el) && !otherProducts(el)
+  // The navigator skips other products' buttons with the same test (CONTROLS_JS in journeys/generic.py).
+  window.__shophonestOtherProduct = otherProducts
 
   // Countdown timers ("Deal ends in 09:51"). Clock times ("11:59 PM") are deadlines, not countdowns.
   const timers = []
@@ -262,24 +283,31 @@
     cartLines.push({ name: lines[0] || '', text: text(row), amount: prices.length ? money(text(prices[prices.length - 1])) : null, bbox: box(row) })
   }
 
-  // Order summary: label → amount rows under a "price details / summary" heading.
+  // Order summary: label → amount rows under a "price details / bill summary" heading. A row is a label and an amount,
+  // with nothing but spacers or an icon between them (1mg). The total is "Total amount" or "To be paid", not
+  // "Item total" or "Total discount".
   let summary = null
-  const heading = smallest(/^(price details|order summary|summary|bill details|payment summary)$/i, 40)[0]
+  const heading = smallest(
+    /^(price details|order summary|summary|bill details|bill summary|cart summary|price summary|payment summary|payment details)$/i,
+    40,
+  )[0]
+  const TOTAL = /^(total( amount| payable| price)?|grand total|order total|amount payable|net payable|to (be )?pa(y|id)|you pay)\b/i
   if (heading) {
     let container = heading.parentElement
-    while (container && container !== document.body && !/total/i.test(text(container))) container = container.parentElement
+    while (container && container !== document.body && !/total|to (be )?pa(y|id)|payable/i.test(text(container))) {
+      container = container.parentElement
+    }
     if (container) {
       const rows = []
       let total = null
       for (const row of container.querySelectorAll('*')) {
-        if (!visible(row) || row.children.length !== 2) continue
-        const [labelEl, valueEl] = row.children
-        const label = text(labelEl)
-        const value = text(valueEl)
-        if (!label || !value || MONEY.test(label) || !(MONEY.test(value) || /^free$/i.test(value))) continue
+        const parts = [...row.children].filter((c) => text(c))
+        if (!visible(row) || parts.length !== 2) continue
+        const [label, value] = parts.map(text)
+        if (MONEY.test(label) || value.length > 24 || !(MONEY.test(value) || /^free$/i.test(value))) continue
         const amount = /^free$/i.test(value) ? 0 : money(value) * (/^[−-]/.test(value) ? -1 : 1)
         const entry = { label, amount, text: `${label} ${value}`, bbox: box(row) }
-        if (/total/i.test(label)) total = entry
+        if (TOTAL.test(label) && !/discount|saving/i.test(label)) total = entry
         else rows.push(entry)
       }
       summary = { rows, total, bbox: box(container) }
@@ -362,6 +390,8 @@
   // An error page instead of content ("Something went wrong", "Please try again later"): little text, an apology.
   const ERROR = /something went wrong|please try again later|we'?re having trouble|unexpected error|oops[!,.]|page (isn'?t|is not) available/i
   const pageError = body.length < 600 && ERROR.test(body) ? { reason: body.slice(0, 80) } : null
+  // Nothing at all: no text and no picture (a site serving automated browsers a blank page).
+  const emptyPage = !body && ![...document.querySelectorAll('img, svg, canvas, iframe, video')].some(visible) ? { reason: 'Empty page' } : null
 
   // Bot protection: a CAPTCHA frame, or a "prove you're human" / "access denied" page.
   const captcha = [...document.querySelectorAll('iframe')].find(
@@ -409,6 +439,7 @@
     mainPrice: unavailable && !priceBlock ? null : mainPrice,
     botWall,
     pageError,
+    emptyPage,
     unavailable,
   }
 }

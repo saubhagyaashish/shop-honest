@@ -265,6 +265,93 @@ async def test_an_unavailable_product_stops_the_walk_honestly(tmp_path):
     assert any(m.startswith('The product page says "Currently unavailable') for m in logs)
 
 
+@pytest.mark.browser
+async def test_a_page_without_an_h1_still_knows_its_product_and_that_it_is_out_of_stock():
+    s = await signals_of((SITES / "market" / "no-title.html").read_text())
+    assert s["heading"] == "Zoom K35 TWS Earbuds (Space Black)"
+    assert s["unavailable"]["text"] == "Out of stock"
+
+
+def steps_of(events: list[dict]) -> list[tuple[str, str, str | None]]:
+    return [(s["step"], s["status"], s.get("blockedReason")) for s in events[-1]["report"]["steps"]]
+
+
+def logs_of(events: list[dict]) -> list[str]:
+    return [e["message"] for e in events if e["type"] == "agent.log"]
+
+
+@pytest.mark.browser
+async def test_an_empty_page_is_not_checked_let_alone_called_clean(tmp_path):
+    events = await walk_of("empty.html", tmp_path)
+    assert steps_of(events) == [("product", "blocked", "The site showed an empty page (it may be blocking automated browsers)")]
+    assert events[-1]["report"]["findings"] == []
+
+
+@pytest.mark.browser
+async def test_an_out_of_stock_product_never_adds_a_similar_one(tmp_path):
+    events = await walk_of("market/no-title.html", tmp_path)
+    assert steps_of(events)[-1] == ("cart", "blocked", "Product unavailable")
+    assert not any(m.startswith("Adding 1 ×") for m in logs_of(events))
+
+
+@pytest.mark.browser
+async def test_a_cart_waiting_for_a_pincode_and_a_fee_the_product_page_never_mentioned(tmp_path):
+    events = await walk_of("pincode/product.html", tmp_path)
+    assert steps_of(events) == [
+        ("product", "audited", None),
+        ("variant", "audited", None),
+        ("cart", "audited", None),
+        ("checkout", "blocked", "Checkout needs a delivery pincode first"),
+    ]
+    assert not any("Reached checkout" in m for m in logs_of(events))
+    [fee] = events[-1]["report"]["findings"]
+    assert (fee["id"], fee["step"], fee["status"]) == ("f-late-fees", "cart", "needs_review")
+    assert fee["title"] == "₹10 in fees first shown in the cart, not on the product page"
+
+
+@pytest.mark.browser
+async def test_checkout_uses_the_carts_own_continue_not_a_recommendations_add_to_cart(tmp_path):
+    events = await walk_of("continue/product.html", tmp_path)
+    assert steps_of(events)[2:] == [
+        ("cart", "audited", None),
+        ("checkout", "audited", None),
+        ("payment", "blocked", "Needs the shopper's details to continue"),
+    ]
+    assert 'Proceeding to checkout ("Continue").' in logs_of(events)
+    # 1mg's bill: "Item total" is a line, "To be paid" the total, and the handling charge wasn't on the product page.
+    cart = next(e for e in events if e["type"] == "price.observed" and e["label"] == "Cart")
+    assert cart["total"]["amount"] == 53
+    [fee] = events[-1]["report"]["findings"]
+    assert (fee["id"], fee["step"], fee["status"]) == ("f-late-fees", "cart", "needs_review")
+    assert "Handling charges (₹12)" in fee["explanation"]
+
+
+@pytest.mark.browser
+async def test_a_checkout_button_that_leads_elsewhere_is_not_checkout(tmp_path):
+    events = await walk_of("detour/product.html", tmp_path)
+    assert steps_of(events)[-1] == ("checkout", "blocked", "Checkout didn't open")
+    assert not any("Reached checkout" in m for m in logs_of(events))
+
+
+@pytest.mark.browser
+async def test_a_cart_that_never_opens_is_not_reported_as_one(tmp_path):
+    events = await walk_of("stuck/product.html", tmp_path)
+    assert steps_of(events)[-1] == ("cart", "blocked", "Couldn't open the cart")
+    assert "Nothing showed a cart after I added the product, so the walk stops here." in logs_of(events)
+
+
+@pytest.mark.browser
+async def test_a_site_that_refuses_the_connection_is_reported_as_such(tmp_path):
+    app = create_app(make_settings(enable_live=True, nav_linger_s=1, frames_dir=tmp_path), resolver=fake_resolver)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=120) as client:
+        res = await client.post("/api/audits", json={"targetUrl": "http://127.0.0.1:9/p/item", "mode": "live"})
+        assert res.status_code == 202, res.text
+        events = [e for _, e in parse_sse((await client.get(f"/api/audits/{res.json()['auditId']}/events")).text)]
+    await app.state.runner.shutdown()
+    assert events[-1]["type"] == "audit.completed"  # not "Something went wrong"
+    assert steps_of(events) == [("product", "blocked", "The site refused the connection (it may be blocking automated browsers)")]
+
+
 @pytest.mark.internet
 @pytest.mark.skipif(os.environ.get("SHOP_HONEST_INTERNET_TESTS") != "1", reason="set SHOP_HONEST_INTERNET_TESTS=1")
 async def test_automationexercise_logged_out(tmp_path):

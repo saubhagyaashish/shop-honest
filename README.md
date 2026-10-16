@@ -56,7 +56,7 @@ Details: [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Decision
 |---|---|
 | **Planted tricks** (`evals/answer_key.py`, live runs, 2 per store) | Store A **9/9**, with the borderline claim in review · Store B **0 false alarms** · Store C **6/6** before its wall |
 | **Public dataset** (`evals/dataset.py`): 2,356 shopping texts, [Yada et al. 2022](https://github.com/yamanalab/ec-darkpattern) on Mathur et al. 2019 | **Zero-shot**: accuracy **0.961**, precision **0.997**, recall 0.924, F1 **0.959**. For reference, models *trained on this dataset* reach 0.960–0.975 F1 |
-| **Real stores, logged out** | AutomationExercise: product → cart → stops at the sign-in wall. Flipkart: reaches the cart page, which then refuses automated browsers; reported honestly |
+| **Real stores, logged out** | AutomationExercise: product → cart → stops at the sign-in wall. Of six of the 26 platforms that declared themselves free of dark patterns (16 Oct 2026, local model): Tata 1mg reaches the cart and stops at its sign-in popup, with a ₹12 handling charge first shown in the cart sent for review. Flipkart reached its cart once (a ₹10 platform fee, also for review) and later served an error page. Blinkit's product was out of stock. Zepto served an empty page, Myntra refused the connection and Meesho's bot protection stopped the agent. Each is reported as such, never as "clean". |
 
 All numbers come from `gemini-3.6-flash` with the agent graph on. It was as accurate as `gemini-3.8-flash` (F1 0.962) on both evals and far quicker the day we compared them: a Store A audit took 27 s, against 62–255 s. A live audit of Store A uses about 21k input and 5k output tokens.
 
