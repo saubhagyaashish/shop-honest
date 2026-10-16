@@ -334,6 +334,13 @@ async def test_a_checkout_button_that_leads_elsewhere_is_not_checkout(tmp_path):
 
 
 @pytest.mark.browser
+async def test_a_slow_add_to_cart_is_waited_for_before_the_cart_is_opened(tmp_path):
+    events = await walk_of("slow/product.html", tmp_path)
+    assert steps_of(events)[2:] == [("cart", "audited", None), ("checkout", "blocked", "Sign-in required")]
+    assert 'Opening the cart ("View Cart").' in logs_of(events)
+
+
+@pytest.mark.browser
 async def test_a_cart_that_never_opens_is_not_reported_as_one(tmp_path):
     events = await walk_of("stuck/product.html", tmp_path)
     assert steps_of(events)[-1] == ("cart", "blocked", "Couldn't open the cart")
