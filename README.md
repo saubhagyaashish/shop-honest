@@ -4,7 +4,7 @@
 
 AI agents shop like a real customer — product → variant → cart → checkout → payment — and report every dark pattern they meet: screenshot evidence, the rule it breaks (India CCPA + six other jurisdictions), what it costs the shopper, and a fix. **Fix it** applies the changes to a copy of the store and re-audits to prove they worked.
 
-[Open the live app](https://shop-honest-ai.web.app) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Slide deck](Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx)
+[Open the live app](https://shop-honest-ai.web.app) · [Watch the demo](docs/demo/shop-honest-demo.mp4) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Slide deck](Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx)
 
 [![build](https://img.shields.io/github/actions/workflow/status/saubhagyaashish/shop-honest/web.yml?branch=main&label=build)](https://github.com/saubhagyaashish/shop-honest/actions/workflows/web.yml)
 [![website](https://img.shields.io/badge/website-live-brightgreen)](https://shop-honest-ai.web.app)
