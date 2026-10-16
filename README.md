@@ -8,6 +8,7 @@ AI agents shop like a real customer — product → variant → cart → checkou
 
 [![build](https://img.shields.io/github/actions/workflow/status/saubhagyaashish/shop-honest/web.yml?branch=main&label=build)](https://github.com/saubhagyaashish/shop-honest/actions/workflows/web.yml)
 [![website](https://img.shields.io/badge/website-live-brightgreen)](https://shop-honest-ai.web.app)
+![audited](https://img.shields.io/badge/audited-6%20live%20websites-blueviolet)
 ![demo stores](https://img.shields.io/badge/demo%20stores-3-blue)
 ![jurisdictions](https://img.shields.io/badge/jurisdictions-7-brightgreen)
 ![CCPA patterns](https://img.shields.io/badge/CCPA%20patterns-13-orange)
