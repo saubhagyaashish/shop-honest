@@ -8,7 +8,7 @@ import { STEP_LABEL } from '../labels'
 import { formatMoney, percentUp } from '../money'
 import { nothingChecked } from '../coverage'
 import { buildHeadline } from '../headline'
-import { BAND_LABEL, scoreBand } from '../score'
+import { verdictOf } from '../score'
 import type { Decision } from '../components/Report'
 import type { LogEntry } from '../useAudit'
 import { DISPLAY_FONT, registerPdfFonts } from './fonts'
@@ -19,7 +19,7 @@ registerPdfFonts()
 
 const SEVERITY_ORDER: Severity[] = ['high', 'medium', 'low']
 const SEVERITY_COLOUR: Record<Severity, string> = { high: C.pink, medium: C.sun, low: C.line }
-const BAND_COLOUR = { deceptive: C.pink, concerns: C.sun, trustworthy: C.lime }
+const VERDICT_COLOUR = { pink: C.pink, sun: C.sun, lime: C.lime, white: C.white }
 
 export interface AuditPdfProps {
   report: AuditReport
@@ -46,6 +46,7 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
   const coverageText = coverageLine(report)
   // Blocked on the first page: no score and no verdict.
   const unchecked = nothingChecked(report.steps)
+  const verdict = verdictOf(report)
 
   return (
     <Document title={`Shop Honest audit · ${host}`} author="Shop Honest" subject="Dark-pattern audit report" creator="Shop Honest" producer="Shop Honest">
@@ -62,8 +63,8 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
               <Text style={s.kicker}>Trust score</Text>
               <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 46, lineHeight: 1.1 }}>{unchecked ? '–' : report.trustScore}</Text>
               <Text style={s.small}>{unchecked ? 'not rated' : 'out of 100'}</Text>
-              <Text style={{ marginTop: 8, fontWeight: 700, fontSize: 9, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: C.ink, backgroundColor: unchecked ? C.white : BAND_COLOUR[scoreBand(report.trustScore)] }}>
-                {unchecked ? 'Nothing could be checked' : BAND_LABEL[scoreBand(report.trustScore)]}
+              <Text style={{ marginTop: 8, fontWeight: 700, fontSize: 9, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: C.ink, backgroundColor: unchecked ? C.white : VERDICT_COLOUR[verdict.tone] }}>
+                {unchecked ? 'Nothing could be checked' : verdict.label}
               </Text>
             </View>
             <View style={{ flex: 1 }}>

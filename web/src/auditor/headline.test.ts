@@ -17,6 +17,20 @@ describe('headline', () => {
     expect(buildHeadline(report('b'))).toEqual({ lead: 'No dark patterns found.', punch: 'What shoppers see is what they pay.' })
   })
 
+  it('says where a partial audit stopped instead of what shoppers pay', () => {
+    const partial = {
+      ...report('b'),
+      steps: [
+        ...report('b').steps.filter((s) => ['product', 'variant', 'cart'].includes(s.step)),
+        { step: 'checkout' as const, url: 'https://shop.example/checkout', status: 'blocked' as const, blockedReason: 'Sign-in required' },
+      ],
+    }
+    expect(buildHeadline(partial)).toEqual({
+      lead: 'No dark patterns found so far.',
+      punch: 'The agent stopped at checkout (sign-in required), so the rest wasn’t checked.',
+    })
+  })
+
   it('never reassures about a page it could not check', () => {
     const blocked = {
       ...report('b'),

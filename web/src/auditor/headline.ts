@@ -1,5 +1,6 @@
 import type { AuditReport, JurisdictionExposure } from '../shared/contract'
 import { coverageOf } from './coverage'
+import { STEP_LABEL } from './labels'
 import { percentUp } from './money'
 
 export interface Headline {
@@ -23,8 +24,16 @@ export function buildHeadline(report: AuditReport): Headline {
   }
 
   if (confirmed === 0) {
-    const lead = review > 0 ? `No confirmed dark patterns, ${review} claim${review === 1 ? '' : 's'} to check.` : 'No dark patterns found.'
-    return { lead, punch: pct > 0 ? `But shoppers pay ${pct}% more than the price they saw.` : 'What shoppers see is what they pay.' }
+    const none = coverage.complete ? 'No dark patterns found.' : 'No dark patterns found so far.'
+    const lead = review > 0 ? `No confirmed dark patterns, ${review} claim${review === 1 ? '' : 's'} to check.` : none
+    if (pct > 0) return { lead, punch: `But shoppers pay ${pct}% more than the price they saw.` }
+    // Only a whole journey can say what shoppers pay.
+    const stop = coverage.blocked
+    if (stop) {
+      const where = STEP_LABEL[stop.step].toLowerCase()
+      return { lead, punch: `The agent stopped at ${where} (${stop.reason.toLowerCase()}), so the rest wasn’t checked.` }
+    }
+    return { lead, punch: 'What shoppers see is what they pay.' }
   }
   const lead = `${confirmed} dark pattern${confirmed === 1 ? '' : 's'} found.`
   return {
