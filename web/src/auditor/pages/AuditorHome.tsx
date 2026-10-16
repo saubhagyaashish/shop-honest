@@ -64,6 +64,13 @@ function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; 
 }
 
 /** Real stores to try the general navigator on (any public site can be audited). Fill the URL box; "Scan it" runs a live audit. */
+// Short chip names for the demo stores beside the URL box (the cards below carry the full story).
+const DEMO_LABEL: Record<string, string> = {
+  'store-a': 'Store A · rigged',
+  'store-b': 'Store B · honest',
+  'store-c': 'Store C · sign-in wall',
+}
+
 const REAL_STORES = [
   {
     label: 'AutomationExercise · Blue Top',
@@ -178,8 +185,23 @@ export function AuditorHome() {
           <a href="#samples" className="mt-4 inline-block text-sm font-semibold underline decoration-pink decoration-[3px] underline-offset-4">
             No URL handy? Audit a sample store ↓
           </a>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-semibold text-ink/70">Our demo stores:</span>
+            {SAMPLES.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setUrl(window.location.origin + s.path)}
+                title={s.description}
+                className="inline-flex items-center gap-1.5 rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-xs font-bold hover:bg-sun"
+              >
+                <span className={`h-2.5 w-2.5 rounded-full border-2 border-ink ${TONE_BG[s.tone]}`} aria-hidden="true" />
+                {DEMO_LABEL[s.key] ?? s.name}
+              </button>
+            ))}
+          </div>
           {auditSource.mode === 'live' && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <span className="font-semibold text-ink/70">Or a real store, logged out:</span>
               {REAL_STORES.map((s) => (
                 <button
