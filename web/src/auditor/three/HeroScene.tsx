@@ -9,6 +9,12 @@ import type { TrickTag } from './tags'
 const INK = '#111111'
 const CATCH_RADIUS = 0.9
 const HOLD_SECONDS = 3.5
+// The lens's depth and how far it reaches from its centre: the ring all round, and the handle's far end (it points
+// down and right, and swings with the lens's tilt).
+const LENS_Z = 1.4
+const LENS_RING = 0.8
+const HANDLE_TIP = 1.6
+const HANDLE_RADIUS = 0.15
 
 function Bag() {
   const ref = useRef<THREE.Group>(null)
@@ -51,7 +57,7 @@ function Bag() {
 
 function Lens({ lensRef }: { lensRef: RefObject<THREE.Group | null> }) {
   return (
-    <group ref={lensRef} position={[1.6, 0.6, 1.4]}>
+    <group ref={lensRef} position={[1.6, 0.6, LENS_Z]}>
       <mesh>
         <torusGeometry args={[0.62, 0.11, 16, 48]} />
         <meshToonMaterial color={INK} />
@@ -105,11 +111,25 @@ function Scene({ tagEls, setCaught }: { tagEls: RefObject<(HTMLDivElement | null
     const idle = t - lastPointer.current.t > 2.5
     const halfW = state.viewport.width / 2
     const halfH = state.viewport.height / 2
-    const tx = idle ? Math.sin(t * 0.7) * 2.3 * scale : p.x * halfW * 0.95
-    const ty = idle ? (Math.sin(t * 1.1 + 1) * 1.45 + 0.35) * scale : p.y * halfH * 0.95
+    g.rotation.z = THREE.MathUtils.damp(g.rotation.z, -p.x * 0.3, 4, delta)
+
+    // Keep the whole lens, handle included, inside the canvas. The lens sits nearer the camera than z = 0, so its frame
+    // is smaller, and the camera looks at the origin, so that frame's centre sits slightly above y = 0.
+    const cam = state.camera.position
+    const depth = LENS_Z * scale
+    const [edgeW, edgeH] = [(halfW * (cam.z - depth)) / cam.z, (halfH * (cam.z - depth)) / cam.z]
+    const cy = (cam.y * depth) / cam.z
+    const tip = -Math.PI / 4 + g.rotation.z
+    const ring = LENS_RING * scale
+    const right = Math.max(LENS_RING, HANDLE_TIP * Math.cos(tip) + HANDLE_RADIUS) * scale
+    const down = Math.max(LENS_RING, -HANDLE_TIP * Math.sin(tip) + HANDLE_RADIUS) * scale
+    const [minX, maxX] = [-(edgeW - ring), edgeW - right]
+    const [minY, maxY] = [cy - (edgeH - down), cy + (edgeH - ring)]
+    const drift = (wave: number, reach: number, min: number, max: number) => (min + max) / 2 + wave * Math.min(reach, (max - min) / 2)
+    const tx = idle ? drift(Math.sin(t * 0.7), 2.3 * scale, minX, maxX) : THREE.MathUtils.clamp(p.x * halfW * 0.95, minX, maxX)
+    const ty = idle ? drift(Math.sin(t * 1.1 + 1), 1.45 * scale, minY, maxY) : THREE.MathUtils.clamp(p.y * halfH * 0.95, minY, maxY)
     g.position.x = THREE.MathUtils.damp(g.position.x, tx / scale, 5, delta)
     g.position.y = THREE.MathUtils.damp(g.position.y, ty / scale, 5, delta)
-    g.rotation.z = THREE.MathUtils.damp(g.rotation.z, -p.x * 0.3, 4, delta)
 
     g.getWorldPosition(lensPos)
     tagRefs.current.forEach((ref, i) => {
@@ -147,7 +167,7 @@ function Scene({ tagEls, setCaught }: { tagEls: RefObject<(HTMLDivElement | null
       {TRICK_TAGS.map((tag, i) => (
         <TagAnchor key={tag.id} tag={tag} groupRef={(g) => (tagRefs.current[i] = g)} />
       ))}
-      <ContactShadows position={[0, -1.75, 0]} opacity={0.35} scale={8} blur={2.4} far={4} color={INK} />
+      <ContactShadows position={[0, -1.75, 0]} opacity={0.35} scale={6} blur={2.4} far={4} color={INK} />
     </group>
   )
 }

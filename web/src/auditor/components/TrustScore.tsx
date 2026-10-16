@@ -7,6 +7,8 @@ import type { Tone } from '../ui/styles'
 
 const BAND_STROKE: Record<ScoreBand, string> = { trustworthy: '#c6f432', concerns: '#ffd23f', deceptive: '#ff5ca8' }
 const BAND_TONE: Record<ScoreBand, Tone> = { trustworthy: 'lime', concerns: 'sun', deceptive: 'pink' }
+// A verdict that says less than the band ("NEEDS A HUMAN") colours the arc too, so a high score with claims waiting isn't green.
+const VERDICT_STROKE: Partial<Record<Verdict['tone'], string>> = { sun: BAND_STROKE.concerns, pink: BAND_STROKE.deceptive }
 const ARC = 'M24 112 A88 88 0 0 1 200 112'
 
 /**
@@ -18,6 +20,7 @@ export function TrustScore({ score, size = 'md', verdict }: { score: number | nu
   const vibe = verdict?.vibe ?? BAND_VIBE[band]
   const label = verdict?.label ?? BAND_LABEL[band]
   const sm = size === 'sm'
+  const stroke = (verdict && VERDICT_STROKE[verdict.tone]) ?? BAND_STROKE[band]
   return (
     <div className="flex flex-col items-center">
       <div className={`relative ${sm ? 'w-48' : 'w-60'}`}>
@@ -33,7 +36,7 @@ export function TrustScore({ score, size = 'md', verdict }: { score: number | nu
             <motion.path
               d={ARC}
               fill="none"
-              stroke={BAND_STROKE[band]}
+              stroke={stroke}
               strokeWidth="22"
               strokeLinecap="round"
               initial={{ pathLength: 0 }}

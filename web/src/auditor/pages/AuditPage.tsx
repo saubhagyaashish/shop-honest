@@ -1,4 +1,4 @@
-import { ArrowLeft, FileDown, LoaderCircle, RotateCcw, SkipForward } from 'lucide-react'
+import { ArrowLeft, FileDown, LoaderCircle, RotateCcw, Search, SkipForward } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -18,6 +18,7 @@ import { buttonClass, TONE_BG } from '../ui/styles'
 import type { Tone } from '../ui/styles'
 import { auditSource } from '../source'
 import type { FixToApply } from '../source/AuditSource'
+import { AUDIT_NOT_FOUND } from '../source/sseSource'
 import { isDemoAudit } from '../source/withDemoFallback'
 import { useAudit } from '../useAudit'
 import { useRunKind } from '../useRunKind'
@@ -128,46 +129,47 @@ function AuditView({ auditId }: { auditId: string | undefined }) {
 
   return (
     <div className={`mx-auto px-4 pb-8 sm:px-6 ${view === 'report' ? 'max-w-[1248px] pb-24' : 'max-w-[1440px]'}`}>
-      {/* Audit header */}
+      {/* Audit header: one row on desktop; on phones the status row, then the Report | Journey switch */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 py-5">
-        <Link to="/" className={buttonClass('white', 'sm', 'print:hidden')}>
-          <ArrowLeft size={16} strokeWidth={2.6} aria-hidden="true" /> New audit
+        <Link to="/" aria-label="New audit" className={buttonClass('white', 'sm', 'print:hidden')}>
+          <ArrowLeft size={16} strokeWidth={2.6} aria-hidden="true" /> <span className="hidden sm:inline">New audit</span>
         </Link>
-        <div className="order-last flex w-full min-w-0 items-center gap-3 sm:order-none sm:w-auto sm:flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <StatusSticker status={state.status} />
           {runKind && (
             <span className="shrink-0 rounded-md border-2 border-ink bg-white px-2 py-0.5 text-[11px] font-extrabold tracking-wide uppercase">
               {runKind}
             </span>
           )}
-          <span className="truncate rounded-lg border-2 border-ink bg-white px-2.5 py-1 font-mono text-[13px]">{state.targetUrl ?? '…'}</span>
+          {state.targetUrl && (
+            <span className="hidden truncate rounded-lg border-2 border-ink bg-white px-2.5 py-1 font-mono text-[13px] sm:block">{state.targetUrl}</span>
+          )}
           {view !== 'report' && <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums">{elapsed}</span>}
         </div>
-        <div className="flex flex-wrap items-center gap-2.5 print:hidden">
-          {running && skipAhead && (
-            <button type="button" onClick={skipAhead} className={buttonClass('white', 'sm')}>
-              Skip to report <SkipForward size={16} strokeWidth={2.6} aria-hidden="true" />
+        {running && skipAhead && (
+          <button type="button" onClick={skipAhead} className={buttonClass('white', 'sm', 'order-last w-full sm:order-none sm:w-auto print:hidden')}>
+            Skip to report <SkipForward size={16} strokeWidth={2.6} aria-hidden="true" />
+          </button>
+        )}
+        {state.status === 'completed' && (
+          <>
+            <div className="brutal-sm order-last flex w-full rounded-xl bg-white p-1 text-sm font-bold sm:order-none sm:w-auto print:hidden">
+              {(['report', 'live'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setChosenView(v)}
+                  className={`flex-1 rounded-lg px-3 py-1 sm:flex-none ${view === v ? 'bg-ink text-cream' : 'text-ink/60 hover:text-ink'}`}
+                >
+                  {v === 'report' ? 'Report' : 'Journey view'}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={runAgain} aria-label="Run again" className={buttonClass('white', 'sm', 'print:hidden')}>
+              <RotateCcw size={16} strokeWidth={2.6} aria-hidden="true" /> <span className="hidden sm:inline">Run again</span>
             </button>
-          )}
-          {state.status === 'completed' && (
-            <>
-              <div className="brutal-sm flex rounded-xl bg-white p-1 text-sm font-bold">
-                {(['report', 'live'] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setChosenView(v)}
-                    className={`rounded-lg px-3 py-1 ${view === v ? 'bg-ink text-cream' : 'text-ink/60 hover:text-ink'}`}
-                  >
-                    {v === 'report' ? 'Report' : 'Journey view'}
-                  </button>
-                ))}
-              </div>
-              <button type="button" onClick={runAgain} className={buttonClass('white', 'sm')}>
-                <RotateCcw size={16} strokeWidth={2.6} aria-hidden="true" /> Run again
-              </button>
-              {view !== 'report' && (
-              <button type="button" onClick={downloadPdf} disabled={pdfState === 'building'} className={buttonClass('lime', 'sm')}>
+            {view !== 'report' && (
+              <button type="button" onClick={downloadPdf} disabled={pdfState === 'building'} className={buttonClass('lime', 'sm', 'print:hidden')}>
                 {pdfState === 'building' ? (
                   <>
                     <LoaderCircle size={16} strokeWidth={2.6} className="animate-spin" aria-hidden="true" /> Building PDF…
@@ -178,10 +180,9 @@ function AuditView({ auditId }: { auditId: string | undefined }) {
                   </>
                 )}
               </button>
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </>
+        )}
       </div>
 
       {auditId && auditSource.mode === 'live' && isDemoAudit(auditId) && (
@@ -190,11 +191,23 @@ function AuditView({ auditId }: { auditId: string | undefined }) {
         </p>
       )}
 
-      {state.status === 'failed' && (
-        <div className="brutal rounded-2xl bg-pink p-6 text-sm font-semibold">
-          <b className="font-display text-lg">Oof, the audit couldn’t finish.</b> {state.error}
-        </div>
-      )}
+      {state.status === 'failed' &&
+        (state.error === AUDIT_NOT_FOUND ? (
+          <div className="brutal rounded-3xl bg-white p-8">
+            <Sticker tone="sun" rotate={-3}>
+              no such audit 🔍
+            </Sticker>
+            <h1 className="mt-3 font-display text-[30px] leading-tight font-extrabold">We couldn’t find this audit.</h1>
+            <p className="mt-1 max-w-xl text-[15px] text-ink/70">The link may be mistyped, or the audit no longer exists. Start a new one: it takes about half a minute.</p>
+            <Link to="/" className={buttonClass('lime', 'md', 'mt-5')}>
+              <Search size={18} strokeWidth={2.6} aria-hidden="true" /> Audit a store
+            </Link>
+          </div>
+        ) : (
+          <div className="brutal rounded-2xl bg-pink p-6 text-sm font-semibold">
+            <b className="font-display text-lg">Oof, the audit couldn’t finish.</b> {state.error}
+          </div>
+        ))}
 
       {state.status !== 'failed' && view === 'report' && state.report && (
         <Report

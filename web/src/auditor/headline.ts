@@ -1,7 +1,8 @@
-import type { AuditReport, JurisdictionExposure } from '../shared/contract'
+import type { AuditReport, JurisdictionExposure, Money } from '../shared/contract'
 import { coverageOf } from './coverage'
 import { STEP_LABEL } from './labels'
-import { percentUp } from './money'
+import { formatMoney, percentUp } from './money'
+import { project } from './projection'
 
 export interface Headline {
   /** Short statement of what was found. */
@@ -26,7 +27,13 @@ export function buildHeadline(report: AuditReport): Headline {
   if (confirmed === 0) {
     const none = coverage.complete ? 'No dark patterns found.' : 'No dark patterns found so far.'
     const lead = review > 0 ? `No confirmed dark patterns, ${review} claim${review === 1 ? '' : 's'} to check.` : none
-    if (pct > 0) return { lead, punch: `But shoppers pay ${pct}% more than the price they saw.` }
+    // A price that went up with no confirmed finding behind it is a gap to check, not an overcharge.
+    if (drift && pct > 0) {
+      const gap = formatMoney({ amount: drift.payable.amount - drift.advertised.amount, currency: drift.payable.currency })
+      const last = coverage.audited[coverage.audited.length - 1]
+      const when = coverage.complete || !last ? 'Shoppers were charged' : `By the ${STEP_LABEL[last].toLowerCase()} it was`
+      return { lead, punch: `${when} ${formatMoney(drift.payable)} against ${formatMoney(drift.advertised)} shown: ${gap} for a human to check.` }
+    }
     // Only a whole journey can say what shoppers pay.
     const stop = coverage.blocked
     if (stop) {
@@ -43,8 +50,15 @@ export function buildHeadline(report: AuditReport): Headline {
 }
 
 export interface RiskSummary {
-  /** Regime to headline: the strictest in force, if any rule is broken there. */
+  /** Regime to headline: India (the CCPA) if any rule is broken there, else the strictest region with one broken. */
   focus?: JurisdictionExposure
+  /** The strictest region with a rule broken, when it isn't the focus. */
+  strictest?: JurisdictionExposure
+  /** India's ceiling: rules broken × the maximum per contravention (the same figure as in Fix it). */
+  ceiling?: Money
+  perContravention?: Money
+  /** Rules broken under the focus regime's per-contravention penalty. */
+  rulesBroken: number
   /** How many regions have at least one rule broken by a confirmed finding. */
   regionsBroken: number
   regionsChecked: number
@@ -52,9 +66,20 @@ export interface RiskSummary {
 
 export function summariseRisk(report: AuditReport): RiskSummary {
   const exposure = report.exposure
-  if (!exposure) return { regionsBroken: 0, regionsChecked: 0 }
+  if (!exposure) return { rulesBroken: 0, regionsBroken: 0, regionsChecked: 0 }
   const confirmedIds = report.findings.filter((f) => f.status === 'confirmed').map((f) => f.id)
   const broken = exposure.jurisdictions.filter((j) => confirmedIds.some((id) => j.citations[id]))
   const strictest = broken.find((j) => j.code === exposure.strictest)
-  return { focus: strictest ?? broken[0], regionsBroken: broken.length, regionsChecked: exposure.jurisdictions.length }
+  const india = broken.find((j) => j.code === 'IN')
+  const focus = india ?? strictest ?? broken[0]
+  const { fineCeiling, rulesBroken, perContravention } = project(report, new Set())
+  return {
+    focus,
+    strictest: strictest && strictest !== focus ? strictest : undefined,
+    ceiling: india && fineCeiling && fineCeiling.amount > 0 ? fineCeiling : undefined,
+    perContravention: india ? perContravention : undefined,
+    rulesBroken: india ? rulesBroken : 0,
+    regionsBroken: broken.length,
+    regionsChecked: exposure.jurisdictions.length,
+  }
 }

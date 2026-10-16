@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { AuditEvent } from '../shared/contract'
 import { buildHeadline, summariseRisk } from './headline'
 import { buildMockAudit } from './mock/scripts'
+import { project } from './projection'
 
 function report(storeId: 'a' | 'b') {
   const last = buildMockAudit(storeId, `mock-${storeId}-t`, 'http://localhost').at(-1)!.event as Extract<AuditEvent, { type: 'audit.completed' }>
@@ -31,6 +32,20 @@ describe('headline', () => {
     })
   })
 
+  it('calls a higher price with no confirmed finding behind it a gap to check, not an overcharge', () => {
+    const a = report('a')
+    const unconfirmed = { ...a, findings: a.findings.map((f) => ({ ...f, status: 'needs_review' as const })) }
+    expect(buildHeadline(unconfirmed).punch).toBe('Shoppers were charged ₹1,894 against ₹1,499 shown: ₹395 for a human to check.')
+    const partial = {
+      ...unconfirmed,
+      steps: [
+        ...a.steps.filter((s) => ['product', 'variant', 'cart'].includes(s.step)),
+        { step: 'checkout' as const, url: 'https://shop.example/checkout', status: 'blocked' as const, blockedReason: 'Sign-in required' },
+      ],
+    }
+    expect(buildHeadline(partial).punch).toBe('By the cart it was ₹1,894 against ₹1,499 shown: ₹395 for a human to check.')
+  })
+
   it('never reassures about a page it could not check', () => {
     const blocked = {
       ...report('b'),
@@ -44,10 +59,16 @@ describe('headline', () => {
 })
 
 describe('risk summary', () => {
-  it('headlines the strictest regime where rules are broken', () => {
-    const r = summariseRisk(report('a'))
-    expect(r.focus?.code).toBe('GB')
-    expect(r.focus?.penaltyHeadline).toBe('Up to 10% of global turnover')
+  it('headlines India’s ceiling, the figure Fix it shows, and names the strictest region beside it', () => {
+    const a = report('a')
+    const r = summariseRisk(a)
+    expect(r.focus?.code).toBe('IN')
+    expect(r.strictest?.code).toBe('GB')
+    expect(r.strictest?.penaltyHeadline).toBe('Up to 10% of global turnover')
+    expect(r.perContravention).toEqual({ amount: 1_000_000, currency: 'INR' })
+    expect(r.ceiling).toEqual(project(a, new Set()).fineCeiling)
+    expect(r.ceiling?.amount).toBe(r.rulesBroken * 1_000_000)
+    expect(r.rulesBroken).toBeGreaterThan(0)
     expect(r.regionsBroken).toBe(7)
   })
 

@@ -8,6 +8,9 @@ const MAX_RETRIES = 3
 const SILENCE_MS = 60_000
 /** Watchdog reopens per audit before giving up. */
 const MAX_REOPENS = 10
+const LOST = 'Lost the connection to the audit stream.'
+/** The failure an audit page shows for a link to an audit that doesn't exist. */
+export const AUDIT_NOT_FOUND = 'We couldn’t find this audit. The link may be mistyped, or the audit no longer exists.'
 /** Audits this tab started as live runs (kept across a refresh). */
 const LIVE_KEY = 'shophonest-live-audits'
 
@@ -77,6 +80,8 @@ export function createSseSource(baseUrl = '', streamBase = baseUrl): AuditSource
       const url = `${streamBase}/api/audits/${encodeURIComponent(auditId)}/events`
       let source: EventSource
       let finished = false
+      let unsubscribed = false
+      let received = false
       let failures = 0
       let lastId = ''
       let watchdog: ReturnType<typeof setTimeout> | undefined
@@ -87,13 +92,26 @@ export function createSseSource(baseUrl = '', streamBase = baseUrl): AuditSource
         clearTimeout(watchdog)
         source.close()
       }
+      // A stream that fails before its first event may be for an audit that doesn't exist: ask the API which.
+      const lost = async () => {
+        let error = LOST
+        if (!received) {
+          try {
+            const res = await fetch(`${baseUrl}/api/audits/${encodeURIComponent(auditId)}`)
+            if (res.status === 404) error = AUDIT_NOT_FOUND
+          } catch {
+            // unreachable: report the lost stream
+          }
+        }
+        if (!unsubscribed) onEvent({ type: 'audit.failed', error })
+      }
       const arm = () => {
         clearTimeout(watchdog)
         watchdog = setTimeout(() => {
           if (finished) return
           if (reopened >= MAX_REOPENS) {
             stop()
-            onEvent({ type: 'audit.failed', error: 'Lost the connection to the audit stream.' })
+            onEvent({ type: 'audit.failed', error: LOST })
             return
           }
           reopened += 1
@@ -106,6 +124,7 @@ export function createSseSource(baseUrl = '', streamBase = baseUrl): AuditSource
         arm()
         source.onmessage = (message) => {
           failures = 0
+          received = true
           if (message.lastEventId) lastId = message.lastEventId
           arm()
           const event = JSON.parse(message.data as string) as AuditEvent
@@ -117,13 +136,14 @@ export function createSseSource(baseUrl = '', streamBase = baseUrl): AuditSource
           failures += 1
           if (source.readyState === EventSource.CLOSED || failures >= MAX_RETRIES) {
             stop()
-            onEvent({ type: 'audit.failed', error: 'Lost the connection to the audit stream.' })
+            void lost()
           }
         }
       }
 
       open(url)
       return () => {
+        unsubscribed = true
         finished = true
         clearTimeout(watchdog)
         source.close()

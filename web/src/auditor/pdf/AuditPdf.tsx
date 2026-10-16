@@ -78,11 +78,16 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
           <View style={[s.row, { gap: 10, marginTop: 18 }]}>
             <Metric label="Confirmed violations" value={String(confirmed.length)} colour={confirmed.length ? C.pink : C.lime} />
             <Metric label="Sent for human review" value={String(review.length)} colour={review.length ? C.sun : C.white} />
-            {exposure && <Metric label="Extra paid per order" value={driftLabel(report)} colour={exposure.priceDrift.lines.length ? C.pink : C.lime} />}
+            {exposure &&
+              (confirmed.length === 0 && exposure.priceDrift.lines.length ? (
+                <Metric label="Price gap to check" value={driftLabel(report)} colour={C.sun} />
+              ) : (
+                <Metric label="Extra paid per order" value={driftLabel(report)} colour={exposure.priceDrift.lines.length ? C.pink : C.lime} />
+              ))}
           </View>
 
           <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 17, lineHeight: 1.25, marginTop: 20 }}>
-            {t(headline.lead)} <Text style={{ backgroundColor: confirmed.length ? C.pink : C.lime }}>{t(headline.punch)}</Text>
+            {t(headline.lead)} <Text style={{ backgroundColor: confirmed.length ? C.pink : report.findings.length ? C.sun : C.lime }}>{t(headline.punch)}</Text>
           </Text>
           <Text style={[s.h3, { marginTop: 14 }]}>Summary</Text>
           <Text style={s.p}>{t(report.summary)}</Text>

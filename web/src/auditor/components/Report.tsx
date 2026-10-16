@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { AuditReport, Finding, JourneyStep, JurisdictionCode, Severity } from '../../shared/contract'
 import { JOURNEY_STEPS } from '../../shared/contract'
-import { Lock } from 'lucide-react'
+import { ChevronDown, Lock } from 'lucide-react'
 import { STEP_LABEL } from '../labels'
 import { coverageOf, nothingChecked } from '../coverage'
 import { formatMoney } from '../money'
@@ -146,9 +146,6 @@ export function Report({
         onDownloadPdf={onDownloadPdf}
         onSeeFixes={() => document.getElementById('findings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         onFix={onFix}
-        onReaudit={onReaudit}
-        reauditBusy={reauditBusy}
-        reauditError={reauditError}
       />
       <ReportNav items={navItems} className="mt-3" />
 
@@ -282,7 +279,11 @@ export function Report({
               <span className="font-display text-[22px] font-extrabold">
                 Squad chat 💬 <span className="ml-1 text-sm font-semibold text-ink/50">{logs.length} messages · full audit trail</span>
               </span>
-              <span className="sticker bg-white transition group-open:rotate-180 print:hidden">▾</span>
+              <span className="sticker shrink-0 bg-white !text-[13px] print:hidden">
+                <span className="group-open:hidden">Show</span>
+                <span className="hidden group-open:inline">Hide</span>
+                <ChevronDown size={15} strokeWidth={2.8} className="transition group-open:rotate-180" aria-hidden="true" />
+              </span>
             </summary>
             <div className="max-h-[560px] overflow-y-auto border-t-2 border-ink bg-cream px-6 py-5 print:max-h-none">
               <AgentLog logs={logs} follow={false} />
@@ -299,6 +300,7 @@ export function Report({
           onFix={onFix}
           onReaudit={onReaudit}
           reauditBusy={reauditBusy}
+          reauditError={reauditError}
         />
       </div>
 

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AgentName, Finding } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { AGENTS } from '../agents'
@@ -19,9 +19,10 @@ interface Props {
 export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, busy, blockedReason }: Props) {
   const scroller = useRef<HTMLDivElement>(null)
   const image = useRef<HTMLImageElement>(null)
+  const shown = useLoadedImage(screenshotUrl)
 
   const marks = findings.flatMap((f) =>
-    f.evidence.frames.filter((fr) => fr.screenshotUrl === screenshotUrl && fr.bbox).map((fr) => ({ finding: f, bbox: fr.bbox! })),
+    f.evidence.frames.filter((fr) => fr.screenshotUrl === shown && fr.bbox).map((fr) => ({ finding: f, bbox: fr.bbox! })),
   )
   const latestMark = marks.find((m) => m.finding.id === latestFindingId)
 
@@ -34,7 +35,7 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 })
-  }, [screenshotUrl])
+  }, [shown])
 
   const cursorAgent: AgentName = latestMark?.finding.detectedBy ?? 'navigator'
   const cursorAt = latestMark
@@ -59,12 +60,12 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
         )}
       </div>
       <div ref={scroller} className="dot-grid relative min-h-0 overflow-y-auto bg-cream">
-        {screenshotUrl ? (
+        {shown ? (
           <div className="relative">
             <motion.img
               ref={image}
-              key={screenshotUrl}
-              src={screenshotUrl}
+              key={shown}
+              src={shown}
               alt="What the agent sees"
               className="block w-full"
               initial={{ opacity: 0.2, filter: 'blur(4px)' }}
@@ -73,7 +74,7 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
             />
             {busy && (
               <div
-                key={`scan-${screenshotUrl}`}
+                key={`scan-${shown}`}
                 className="pointer-events-none absolute inset-x-0 h-20 animate-scan bg-gradient-to-b from-transparent via-lime/55 to-transparent"
                 aria-hidden="true"
               >
@@ -141,4 +142,23 @@ export function LiveBrowser({ url, screenshotUrl, findings, latestFindingId, bus
       </div>
     </div>
   )
+}
+
+/** The newest screenshot that has finished downloading, so the frame shows the last page instead of going blank. */
+function useLoadedImage(src?: string): string | undefined {
+  const [loaded, setLoaded] = useState<string>()
+  useEffect(() => {
+    if (!src) return
+    let current = true
+    const img = new Image()
+    // A frame that fails to load still replaces the last one, rather than holding it forever.
+    img.onload = img.onerror = () => {
+      if (current) setLoaded(src)
+    }
+    img.src = src
+    return () => {
+      current = false
+    }
+  }, [src])
+  return src ? loaded : undefined
 }

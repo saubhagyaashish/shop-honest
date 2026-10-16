@@ -1,8 +1,8 @@
 import { ArrowUp, ArrowUpRight, FlaskConical, Presentation, Radio, Sparkles, User, Zap } from 'lucide-react'
 import { motion } from 'motion/react'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import type { AgentName, PatternId } from '../../shared/contract'
 import { PATTERNS } from '../../shared/patterns'
 import { useDocumentTitle } from '../../shared/useDocumentTitle'
@@ -12,12 +12,14 @@ import { StoreIllustration } from '../components/StoreIllustration'
 import { PATTERN_ICON } from '../patternIcons'
 import { SAMPLES } from '../samples'
 import type { Sample } from '../samples'
+import { REPO_URL } from '../links'
 import { auditSource } from '../source'
 import { Hero3D } from '../three/Hero3D'
 import { AgentAvatar } from '../ui/AgentAvatar'
 import { CountUp } from '../ui/CountUp'
 import { Marquee } from '../ui/Marquee'
 import { Squiggle } from '../ui/Squiggle'
+import { GithubMark } from '../ui/GithubMark'
 import { Sticker } from '../ui/Sticker'
 import { buttonClass, TONE_BG } from '../ui/styles'
 import type { Tone } from '../ui/styles'
@@ -31,7 +33,6 @@ const TILE_TONES: Tone[] = ['lime', 'pink', 'sun', 'lilac', 'mint', 'peach', 'bl
 // The squad in the order it works, then the person who reviews and decides: two even rows of four.
 const SQUAD_ROWS: (AgentName | 'you')[][] = [PIPELINE.slice(0, 4), [...PIPELINE.slice(4), 'you']]
 
-const REPO_URL = 'https://github.com/saubhagyaashish/shop-honest'
 const DECK_URL = `${REPO_URL}/blob/main/Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx`
 const EVIDENCE_URL = `${REPO_URL}/blob/main/docs/evidence/README.md`
 const TEAM: [string, string][] = [
@@ -82,6 +83,11 @@ export function AuditorHome() {
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   useDocumentTitle('Shop Honest · dark patterns, caught in 4K')
+  // The header links to sections here ("/#squad"); React Router doesn't scroll to a hash by itself.
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [hash])
 
   async function run(target: string, live = false) {
     setError(null)
@@ -251,7 +257,7 @@ export function AuditorHome() {
       </section>
 
       {/* Squad */}
-      <section className="mx-auto max-w-[1240px] px-4 py-16 sm:px-6">
+      <section id="squad" className="mx-auto max-w-[1240px] scroll-mt-24 px-4 py-16 sm:px-6">
         <Reveal>
           <SectionHeading
             kicker="how it works"
@@ -349,15 +355,6 @@ export function AuditorHome() {
         </div>
       </footer>
     </main>
-  )
-}
-
-/** GitHub's mark (lucide no longer ships brand icons). */
-function GithubMark() {
-  return (
-    <svg viewBox="0 0 16 16" width={16} height={16} fill="currentColor" aria-hidden="true">
-      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
-    </svg>
   )
 }
 
