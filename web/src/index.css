@@ -68,6 +68,10 @@
 @keyframes blink {
   to { visibility: hidden; }
 }
+@keyframes shine {
+  0% { transform: translateX(-130%); }
+  40%, 100% { transform: translateX(130%); }
+}
 
 /* Neo-brutalist primitives */
 @utility brutal {
@@ -108,6 +112,23 @@
   white-space: nowrap;
   box-shadow: var(--shadow-brutal-sm);
 }
+/* A glossy sticker with a glint that sweeps across it every few seconds */
+@utility shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-image: linear-gradient(135deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 45%, rgb(17 17 17 / 0.06));
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.95) 48%, rgb(255 255 255 / 0.95) 52%, transparent 70%);
+    transform: translateX(-130%);
+    animation: shine 3.6s ease-in-out 1s infinite;
+    pointer-events: none;
+  }
+}
 @utility dot-grid {
   background-image: radial-gradient(rgb(17 17 17 / 0.1) 1.1px, transparent 1.3px);
   background-size: 20px 20px;
@@ -145,11 +166,13 @@ body {
   .animate-marquee, .animate-marquee-reverse, .animate-wiggle, .animate-scan, .animate-blink { animation: none !important; }
   .flip-card-inner { transition: none; }
   .brutal-btn { transition: none; }
+  .shine::after { animation: none; opacity: 0; }
 }
 
 @media print {
   .brutal, .brutal-sm, .brutal-btn, .sticker { box-shadow: none !important; }
   .dot-grid { background-image: none; }
+  .shine::after { display: none; }
 }
 
 /* Torn till-receipt edges (report "The damage" section) */
