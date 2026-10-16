@@ -124,7 +124,7 @@ export function AuditorHome() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
           >
-            Shop Honest sends AI agents shopping. They walk product → cart → checkout → payment like a real customer and hand you the receipts: a screenshot, the rule broken and a confidence score for every trick.
+            Your store, audited the way your customers see it. Every dark pattern found, fixed and proven, before it costs you a CCPA fine.
           </motion.p>
 
           <motion.form
