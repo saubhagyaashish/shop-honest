@@ -6,6 +6,7 @@ import { AGENTS } from '../agents'
 import { JOURNEY_STEPS } from '../../shared/contract'
 import { STEP_LABEL } from '../labels'
 import { formatMoney, percentUp } from '../money'
+import { nothingChecked } from '../coverage'
 import { buildHeadline } from '../headline'
 import { BAND_LABEL, scoreBand } from '../score'
 import type { Decision } from '../components/Report'
@@ -43,6 +44,8 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
   const meta = { host, auditId: report.auditId }
   const headline = buildHeadline(report)
   const coverageText = coverageLine(report)
+  // Blocked on the first page: no score and no verdict.
+  const unchecked = nothingChecked(report.steps)
 
   return (
     <Document title={`Shop Honest audit · ${host}`} author="Shop Honest" subject="Dark-pattern audit report" creator="Shop Honest" producer="Shop Honest">
@@ -57,10 +60,10 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
           <View style={[s.row, { gap: 18 }]}>
             <View style={[s.box, { width: 170, alignItems: 'center', paddingVertical: 16 }]}>
               <Text style={s.kicker}>Trust score</Text>
-              <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 46, lineHeight: 1.1 }}>{report.trustScore}</Text>
-              <Text style={s.small}>out of 100</Text>
-              <Text style={{ marginTop: 8, fontWeight: 700, fontSize: 9, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: C.ink, backgroundColor: BAND_COLOUR[scoreBand(report.trustScore)] }}>
-                {BAND_LABEL[scoreBand(report.trustScore)]}
+              <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 46, lineHeight: 1.1 }}>{unchecked ? '–' : report.trustScore}</Text>
+              <Text style={s.small}>{unchecked ? 'not rated' : 'out of 100'}</Text>
+              <Text style={{ marginTop: 8, fontWeight: 700, fontSize: 9, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: C.ink, backgroundColor: unchecked ? C.white : BAND_COLOUR[scoreBand(report.trustScore)] }}>
+                {unchecked ? 'Nothing could be checked' : BAND_LABEL[scoreBand(report.trustScore)]}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -142,7 +145,12 @@ export function AuditPdf({ report, logs, jurisdiction, decisions, origin }: Audi
         <Text style={s.h2} break={false}>
           Findings overview
         </Text>
-        {ordered.length === 0 ? (
+        {unchecked ? (
+          <View style={s.box}>
+            <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 14 }}>Nothing could be checked.</Text>
+            <Text>The agent stopped on the first page (see Coverage), so this report makes no finding either way.</Text>
+          </View>
+        ) : ordered.length === 0 ? (
           <View style={[s.box, { backgroundColor: C.lime }]}>
             <Text style={{ fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: 14 }}>No dark patterns found.</Text>
             <Text>Every urgency claim, price, cart line, consent box and fee matched what the shopper was shown.</Text>

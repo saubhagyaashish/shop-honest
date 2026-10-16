@@ -3,7 +3,7 @@ import type { AuditReport, Finding, JourneyStep, JurisdictionCode, Severity } fr
 import { JOURNEY_STEPS } from '../../shared/contract'
 import { Lock } from 'lucide-react'
 import { STEP_LABEL } from '../labels'
-import { coverageOf } from '../coverage'
+import { coverageOf, nothingChecked } from '../coverage'
 import { formatMoney } from '../money'
 import { SectionHead } from '../ui/SectionHead'
 import { Sticker } from '../ui/Sticker'
@@ -163,9 +163,15 @@ export function Report({
         <section id="findings" className="scroll-mt-32">
           <SectionHead
             kicker="the receipts 🧾"
-            title={clean ? 'Nothing caught' : 'What we caught'}
+            title={nothingChecked(report.steps) ? 'Nothing checked' : clean ? 'Nothing caught' : 'What we caught'}
             count={confirmed.length}
-            note={clean ? undefined : 'Each row is one trick. Open it for the screenshot, the rule it breaks and the fix.'}
+            note={
+              nothingChecked(report.steps)
+                ? 'The agent stopped on the first page, so no step below was checked.'
+                : clean
+                  ? undefined
+                  : 'Each row is one trick. Open it for the screenshot, the rule it breaks and the fix.'
+            }
           />
 
           <ol className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

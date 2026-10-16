@@ -38,6 +38,8 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
   const clean = report.findings.length === 0
   const target = targetLabel(report.targetUrl)
   const coverage = coverageOf(report.steps)
+  // Blocked on the first page: no score, no verdict, only why.
+  const checked = coverage.audited.length > 0
   const lastAudited = coverage.audited[coverage.audited.length - 1]
   const reached = coverage.complete ? 'charged' : `by ${lastAudited ? STEP_LABEL[lastAudited] : 'the last step'}`
 
@@ -48,9 +50,9 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      {clean && <Confetti />}
+      {clean && checked && <Confetti />}
       <div className="grid items-center gap-8 lg:grid-cols-[200px_minmax(0,1fr)]">
-        <TrustScore score={report.trustScore} size="sm" />
+        <TrustScore score={checked ? report.trustScore : null} size="sm" />
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink/60">
@@ -63,9 +65,15 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
           </div>
           <h1 className="mt-3 font-display text-[28px] leading-[1.15] font-extrabold tracking-tight sm:text-[34px]">
             {lead}{' '}
-            <span className={`box-decoration-clone px-1.5 ${clean ? 'bg-lime' : 'bg-pink'}`}>{punch}</span>
+            <span className={`box-decoration-clone px-1.5 ${!checked ? 'bg-sun' : clean ? 'bg-lime' : 'bg-pink'}`}>{punch}</span>
           </h1>
 
+          {!checked ? (
+            <p className="mt-6 max-w-2xl text-[15px] font-medium text-ink/70">
+              Nothing on this page could be checked, so there’s no score and no verdict. The report below shows where and why
+              the agent stopped. A site that blocks automated browsers isn’t clean, just unchecked.
+            </p>
+          ) : (
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             <ImpactTile
               tone={confirmed ? 'white' : 'lime'}
@@ -104,6 +112,7 @@ export function VerdictHero({ report, pdfBusy, onDownloadPdf, onSeeFixes, onFix,
               }
             />
           </div>
+          )}
 
           <div className="mt-6 flex flex-wrap items-center gap-3 print:hidden">
             {onFix && !clean && (

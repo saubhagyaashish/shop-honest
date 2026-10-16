@@ -10,6 +10,11 @@ export interface Coverage {
   complete: boolean
 }
 
+/** The agent couldn't check a single step (blocked on the first page): no score and no verdict, only the reason. */
+export function nothingChecked(steps: StepCapture[]): boolean {
+  return coverageOf(steps).audited.length === 0
+}
+
 /** How much of the journey the audit actually covered. */
 export function coverageOf(steps: StepCapture[]): Coverage {
   const audited = JOURNEY_STEPS.filter((s) => steps.some((c) => c.step === s && (c.status ?? 'audited') === 'audited'))
