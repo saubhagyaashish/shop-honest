@@ -1,14 +1,18 @@
 # Shop Honest
 
-**Dark patterns? Caught in 4K.** Shop Honest sends AI agents shopping like a real customer: product page → variant → cart → checkout → payment. It reports every dark pattern it meets, and for each one gives:
-- screenshot evidence;
-- the rule it breaks under India's CCPA dark-pattern guidelines (and six other jurisdictions);
-- what it costs the shopper;
-- a fix.
+**Dark patterns? Caught in 4K.**
 
-**Fix it** then applies the fixes to a copy of the store and audits the copy again, to prove they worked.
+AI agents shop like a real customer — product → variant → cart → checkout → payment — and report every dark pattern they meet: screenshot evidence, the rule it breaks (India CCPA + six other jurisdictions), what it costs the shopper, and a fix. **Fix it** applies the changes to a copy of the store and re-audits to prove they worked.
 
-**Live: <https://shop-honest-ai.web.app>** · [Slide deck](Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx) · Google Cloud AI Builder Cup 2026 · Retail & Commerce · Team Zero Context
+[Open the live app](https://shop-honest-ai.web.app) · [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Slide deck](Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx)
+
+[![build](https://img.shields.io/github/actions/workflow/status/saubhagyaashish/shop-honest/web.yml?branch=main&label=build)](https://github.com/saubhagyaashish/shop-honest/actions/workflows/web.yml)
+[![website](https://img.shields.io/badge/website-live-brightgreen)](https://shop-honest-ai.web.app)
+![demo stores](https://img.shields.io/badge/demo%20stores-3-blue)
+![jurisdictions](https://img.shields.io/badge/jurisdictions-7-brightgreen)
+![CCPA patterns](https://img.shields.io/badge/CCPA%20patterns-13-orange)
+
+Built for the Google Cloud AI Builder Cup 2026 · Retail & Commerce · Team Zero Context
 
 > In November 2025, 26 Indian e-commerce platforms declared themselves free of dark patterns. In August 2026 the CCPA fined nine platforms, including Zepto, one of the 26, for a handling fee added during checkout and a membership put in the cart (Zepto says the fees were disclosed). A self-declaration isn't an audit. Shop Honest is the audit: it checks the whole journey the way a shopper meets it, measures what it can, and proves each fix.
 
