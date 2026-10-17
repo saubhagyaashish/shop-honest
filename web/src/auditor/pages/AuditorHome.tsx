@@ -8,7 +8,10 @@ import { PATTERNS } from '../../shared/patterns'
 import { useDocumentTitle } from '../../shared/useDocumentTitle'
 import { ANSWER_KEY } from '../../store/answerKey'
 import { AGENTS, PIPELINE } from '../agents'
+import { LaunchSequence } from '../components/LaunchSequence'
+import type { LaunchState } from '../components/LaunchSequence'
 import { StoreIllustration } from '../components/StoreIllustration'
+import { holdBeforeOpen } from '../launch'
 import { PATTERN_ICON } from '../patternIcons'
 import { SAMPLES } from '../samples'
 import type { Sample } from '../samples'
@@ -87,8 +90,9 @@ const REAL_STORES = [
 export function AuditorHome() {
   const navigate = useNavigate()
   const [url, setUrl] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [starting, setStarting] = useState(false)
+  // The audit being started, shown by the launch sequence until the audit page opens (or what stopped it).
+  const [launch, setLaunch] = useState<{ target: string; startedAt: number; state: LaunchState } | null>(null)
+  const starting = launch !== null && launch.state.kind !== 'error'
   useDocumentTitle('Shop Honest · dark patterns, caught in 4K')
   // The header links to sections here ("/#squad"); React Router doesn't scroll to a hash by itself.
   const { hash } = useLocation()
@@ -97,17 +101,20 @@ export function AuditorHome() {
   }, [hash])
 
   async function run(target: string) {
-    setError(null)
-    setStarting(true)
+    const startedAt = performance.now()
+    setLaunch({ target, startedAt, state: { kind: 'waiting' } })
     try {
       if (auditSource.mode !== 'live') {
         throw new Error('Live auditing requires the backend. Start the live build with the audit service connected.')
       }
       const auditId = await auditSource.start(target, { live: true })
+      // The server has answered: tick everything off, then open the audit.
+      setLaunch({ target, startedAt, state: { kind: 'ready' } })
+      await new Promise((resolve) => setTimeout(resolve, holdBeforeOpen(performance.now() - startedAt)))
       navigate(`/audit/${auditId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start the audit.')
-      setStarting(false)
+      const message = err instanceof Error ? err.message : 'Could not start the audit.'
+      setLaunch({ target, startedAt, state: { kind: 'error', message } })
     }
   }
 
@@ -184,7 +191,6 @@ export function AuditorHome() {
               Scan it <Zap size={18} strokeWidth={2.6} aria-hidden="true" />
             </button>
           </motion.form>
-          {error && <p className="brutal-sm mt-4 max-w-xl rounded-xl bg-sun px-4 py-2.5 text-sm font-medium">{error}</p>}
           <a href="#samples" className="mt-4 inline-block text-sm font-semibold underline decoration-pink decoration-[3px] underline-offset-4">
             No URL handy? Audit a sample store ↓
           </a>
@@ -378,6 +384,17 @@ export function AuditorHome() {
           </div>
         </div>
       </footer>
+
+      {launch && (
+        <LaunchSequence
+          key={launch.startedAt}
+          target={launch.target}
+          startedAt={launch.startedAt}
+          state={launch.state}
+          onRetry={() => void run(launch.target)}
+          onClose={() => setLaunch(null)}
+        />
+      )}
     </main>
   )
 }
