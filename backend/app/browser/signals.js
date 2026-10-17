@@ -129,9 +129,11 @@
 
   // The product's title: the largest visible h1 (some sites put a screen-reader-only h1 first). On a site without one
   // (Blinkit), the largest visible element outside the site's header and footer whose whole text starts the page's
-  // title: "GOBOULT K35 TWS Earbuds (Space Black)" of "GOBOULT K35 TWS Earbuds (Space Black) Price - Buy Online…".
+  // title: "GOBOULT K35 TWS Earbuds (Space Black)" of "GOBOULT K35 TWS Earbuds (Space Black) Price - Buy Online…". A title
+  // that opens with "Buy" (Bewakoof's "Buy Men's Black … Online at Bewakoof") is read without it.
   const fontPx = (el) => parseFloat(getComputedStyle(el).fontSize)
-  const pageTitle = document.title.replace(/\s+/g, ' ').trim().toLowerCase()
+  const docTitle = document.title.replace(/\s+/g, ' ').trim().replace(/^(buy|shop|order)\s+/i, '')
+  const pageTitle = docTitle.toLowerCase()
   const startsPageTitle = (el) => {
     if (el.children.length || chrome(el)) return false
     const t = text(el).toLowerCase()
@@ -164,6 +166,9 @@
     // not one beside them (a cart's "Continue" next to recommendations).
     for (let card = el, n = el.parentElement, depth = 0; n && n !== document.body && depth < 30; card = n, n = n.parentElement, depth++) {
       if (title && n.contains(title)) return false
+      // A bar fixed or stuck to the screen is the page's own (Posterized's "₹549 · Add to cart"), even when it sits in
+      // a row of cards. Cards inside a fixed panel (a drawer's "You may also like") still count: their row comes first.
+      if (['fixed', 'sticky'].includes(getComputedStyle(card).position)) return false
       if (isProductList(n) && isCard(card)) return true
     }
     return false
@@ -344,11 +349,15 @@
     .slice(0, 12)
     .map((el) => ({ text: text(el), section: sectionOf(el), bbox: textBox(el) }))
 
-  // The product's name: the page's h1, else the heading nearest the price, else the title minus the site's name.
+  // The product's name: the page's h1, else the heading nearest the price (not one that is only a price, as Bewakoof's
+  // "₹799" is), else the title minus the site's name.
+  const onlyPrice = (el) => MONEY.test(text(el)) && !/[a-z]{2}/i.test(text(el).replace(MONEY_ALL, ''))
   const productName = () => {
     if (title && text(title)) return text(title).replace(/\.{3}\s*more$/i, '').trim()
     const anchor = mainPrice && smallest(MONEY, 40).find((el) => text(el) && mainPrice.text.includes(text(el)))
-    const headings = [...document.querySelectorAll('h2, h3, [itemprop=name]')].filter((h) => shown(h) && !chrome(h) && text(h).length > 1)
+    const headings = [...document.querySelectorAll('h2, h3, [itemprop=name]')].filter(
+      (h) => shown(h) && !chrome(h) && text(h).length > 1 && !onlyPrice(h),
+    )
     if (anchor) {
       // Same column as the price (overlapping horizontally), at or above it, closest first: not a sidebar's headings.
       const a = anchor.getBoundingClientRect()
@@ -360,7 +369,7 @@
         .sort((x, y) => x.score - y.score)[0]
       if (near) return text(near.h)
     }
-    return (document.title || '').split(/\s[|–—-]\s/)[0].trim()
+    return docTitle.split(/\s[|–—-]\s/)[0].replace(/\s+online(\s+at\s.*)?$/i, '').trim()
   }
 
   // Fees disclosed in page text ("+ ₹9 platform fee per order").

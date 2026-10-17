@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Cart | Fixture Watches</title>
+<style>body{font-family:sans-serif;padding:16px} .btn{display:inline-block;padding:10px 16px;background:#111;color:#fff;cursor:pointer}</style></head>
+<body>
+<h2>Shopping Cart</h2>
+<div id="cart"></div>
+<script>
+const item = sessionStorage.getItem('item')
+document.getElementById('cart').innerHTML = item
+  ? `<table><tr><td>${item}</td><td>₹4,699</td><td><a class="remove">×</a></td></tr></table>
+     <a class="btn" onclick="location.href='../checkout.html'">Proceed To Checkout</a>`
+  : '<p>Your cart is currently empty.</p>'
+</script>
+</body></html>

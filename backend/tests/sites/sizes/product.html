@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Buy Men's Venom Oversized T-shirt Online at Fixture Wear</title>
+<!-- bewakoof.com-like: no h1, the price in an h3 and the name in a plain span. Sizes are labels around hidden radios under
+     "Select Size", with classes that say nothing, and XL sold out (struck through). ADD TO BAG without a size opens a
+     "Select Size" bottom sheet over the page; with one, it adds and shows "GO TO BAG". -->
+<style>
+body{font-family:sans-serif;margin:0;padding:16px}
+.name{font-size:20px;color:#555} h3{font-size:22px;margin:8px 0}
+.row{display:flex;gap:8px} .row label{border:1px solid #999;padding:8px 14px;cursor:pointer} .row input{display:none}
+.row label.kx9{border-color:#000;font-weight:bold} .row label.q7z{text-decoration:line-through;color:#aaa}
+.btn{background:#fd3;border:0;padding:12px 40px;font-weight:bold;cursor:pointer}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none}
+.sheet div{position:absolute;bottom:0;left:0;right:0;height:260px;background:#fff;padding:16px}
+</style></head>
+<body>
+<div><span class="name">Men's Venom Oversized T-shirt</span></div>
+<h3>₹799</h3>
+<p>Select Size</p>
+<div class="row">
+  <label><input type="radio" name="size" value="S"><span>S</span></label>
+  <label><input type="radio" name="size" value="M"><span>M</span></label>
+  <label class="q7z"><input type="radio" name="size" value="XL" disabled><span>XL</span></label>
+</div>
+<p><button class="btn" id="add">ADD TO BAG</button></p>
+<p id="added" hidden>ITEM ADDED TO BAG <a href="cart.html">GO TO BAG</a></p>
+<div class="sheet" id="sheet"><div><p>Choose your perfect fit! Select Size</p></div></div>
+<script>
+  document.querySelectorAll('.row input').forEach((radio) => radio.addEventListener('change', () => {
+    document.querySelectorAll('.row label').forEach((label) => label.classList.toggle('kx9', label.contains(radio)))
+  }))
+  document.getElementById('add').addEventListener('click', () => {
+    const size = document.querySelector('.row input:checked')
+    if (!size) { document.getElementById('sheet').style.display = 'block'; return }
+    sessionStorage.setItem('item', `Men's Venom Oversized T-shirt (${size.value})`)
+    document.getElementById('added').hidden = false
+  })
+  document.getElementById('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') e.target.style.display = 'none' })
+</script>
+</body></html>

@@ -29,6 +29,8 @@ class RequestGuard:
         self._resolver = resolver
         self._verdicts: dict[tuple[str, bool], bool] = {}
         self.blocked: list[str] = []
+        # The navigations among them: the page itself tried to leave the approved sites (a tracker refused doesn't count).
+        self.left: list[str] = []
 
     async def allows(self, url: str, navigation: bool) -> bool:
         parts = urlsplit(url)
@@ -68,6 +70,8 @@ class RequestGuard:
             await route.continue_()
         else:
             self.blocked.append(request.url)
+            if navigation:
+                self.left.append(request.url)
             log.warning("blocked request to %s", request.url)
             await route.abort("blockedbyclient")
 

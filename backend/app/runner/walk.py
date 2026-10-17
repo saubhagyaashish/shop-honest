@@ -18,7 +18,7 @@ from app.agents.findings import money
 from app.browser.capture import Capture, read_signals, screenshot
 from app.browser.session import RequestGuard
 from app.config import Settings
-from app.contract.models import JourneyStep
+from app.contract.models import JOURNEY_STEPS, JourneyStep
 from app.knowledge import Knowledge
 from app.prices.facts import MIN_WEEKS, price_facts
 from app.prices.history import Observation, PriceHistory
@@ -132,6 +132,16 @@ class Walk:
             event["screenshotUrl"] = step["screenshotUrl"] = capture.screenshot_url
         self.steps = [s for s in self.steps if s["step"] != self.step] + [step]
         await self._emit(event)
+
+    async def stuck(self, reason: str) -> None:
+        """The journey can't move on from a step it has finished (a popup it couldn't close, a page that stopped
+        responding): that step stays audited, and the one it was heading for is the blocked one."""
+        assert self.step is not None
+        done = any(s["step"] == self.step and s["status"] == "audited" for s in self.steps)
+        following = JOURNEY_STEPS[JOURNEY_STEPS.index(self.step) + 1 :]
+        if done and following:
+            await self.start_step(following[0])
+        await self.blocked(reason)
 
     async def price_on_product_page(self, capture: Capture) -> None:
         block = capture.signals.get("priceBlock") or capture.signals.get("mainPrice") or {}

@@ -41,6 +41,25 @@ async def test_subresources_may_be_public_but_never_internal():
     assert await guard.allows("data:image/png;base64,AAAA", navigation=False)
 
 
+async def test_only_a_blocked_navigation_counts_as_leaving_the_site():
+    """A tracker the guard refuses (New Relic's beacon on veirdo.in) isn't the page leaving the approved site."""
+    from types import SimpleNamespace
+
+    class Route:
+        async def abort(self, reason: str) -> None: ...
+
+        async def continue_(self) -> None: ...
+
+    def request(url: str, navigation: bool) -> SimpleNamespace:
+        return SimpleNamespace(url=url, is_navigation_request=lambda: navigation, frame=SimpleNamespace(parent_frame=None))
+
+    guard = RequestGuard(make_settings(), resolver)
+    await guard.handle(Route(), request("http://rebind.example/beacon", navigation=False))  # type: ignore[arg-type]
+    assert (guard.blocked, guard.left) == (["http://rebind.example/beacon"], [])
+    await guard.handle(Route(), request("http://rebind.example/admin", navigation=True))  # type: ignore[arg-type]
+    assert guard.left == ["http://rebind.example/admin"]
+
+
 async def test_private_targets_can_be_switched_off():
     guard = RequestGuard(make_settings(allow_private_targets=False), resolver)
     assert not await guard.allows("http://localhost:5173/demo/store-a/p/sonicbuds-pro", navigation=True)

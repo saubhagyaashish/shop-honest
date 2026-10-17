@@ -359,6 +359,112 @@ async def test_a_site_that_refuses_the_connection_is_reported_as_such(tmp_path):
     assert steps_of(events) == [("product", "blocked", "The site refused the connection (it may be blocking automated browsers)")]
 
 
+# Real stores' popups, size pickers and cart drawers, built from plain divs rather than dialogs and radio groups
+
+
+@pytest.mark.browser
+async def test_popups_without_a_dialog_role_are_closed_even_when_one_covers_add_to_cart(tmp_path):
+    events = await walk_of("popup/product.html", tmp_path)
+    assert steps_of(events) == [
+        ("product", "audited", None),
+        ("variant", "audited", None),
+        ("cart", "audited", None),
+        ("checkout", "blocked", "Sign-in required"),
+    ]
+    logs = logs_of(events)
+    assert 'Closed a popup ("×").' in logs  # its close control is an icon with no words
+    assert 'A popup ("Wait! Take 10% off your first order") covered "Add to cart"; closed it with Escape.' in logs
+    assert not any("login.html" in json.dumps(e) for e in events)  # never pressed "Sign up"
+
+
+@pytest.mark.browser
+async def test_a_popup_that_will_not_close_stops_the_walk_on_the_way_to_the_cart(tmp_path):
+    events = await walk_of("popup/locked.html", tmp_path)
+    assert steps_of(events) == [
+        ("product", "audited", None),
+        ("variant", "audited", None),  # chosen before the popup appeared: still audited
+        ("cart", "blocked", 'A popup covered "Add to cart"'),
+    ]
+    stopped = 'A popup ("Download our app for 10% off") covers "Add to cart" and I couldn\'t close it, so the walk stops here.'
+    assert stopped in logs_of(events)
+
+
+@pytest.mark.browser
+async def test_sizes_built_from_labels_are_chosen_before_adding(tmp_path):
+    events = await walk_of("sizes/product.html", tmp_path)
+    assert steps_of(events) == [
+        ("product", "audited", None),
+        ("variant", "audited", None),
+        ("cart", "audited", None),
+        ("checkout", "blocked", "Sign-in required"),
+    ]
+    logs = logs_of(events)
+    assert "Choosing another option: S." in logs  # the first size that can be bought (XL is sold out)
+    assert 'Adding 1 × Men\'s Venom Oversized T-shirt to the cart ("ADD TO BAG").' in logs  # its name, not its "₹799"
+    assert 'Opening the cart ("GO TO BAG").' in logs
+    assert 'Proceeding to checkout ("PROCEED").' in logs  # the cart's lone "Proceed" is its checkout
+
+
+@pytest.mark.browser
+async def test_a_cart_drawer_is_the_cart_and_a_framed_checkout_login_is_a_sign_in_wall(tmp_path):
+    events = await walk_of("drawer/product.html", tmp_path)
+    assert steps_of(events) == [
+        ("product", "audited", None),
+        ("variant", "audited", None),
+        ("cart", "audited", None),
+        ("checkout", "blocked", "Sign-in required"),
+    ]
+    logs = logs_of(events)
+    assert 'The cart opened in a panel on the page ("MY CART (1)").' in logs
+    assert 'Proceeding to checkout ("PROCEED TO BUY").' in logs
+    assert not any(m.startswith("Opening the cart") for m in logs)  # not the header's bubble, which the drawer covers
+
+
+@pytest.mark.browser
+async def test_a_sticky_buy_bar_among_product_cards_is_the_pages_own(tmp_path):
+    events = await walk_of("builder/product.html", tmp_path)
+    assert steps_of(events)[2:] == [("cart", "audited", None), ("checkout", "blocked", "Sign-in required")]
+    assert 'Adding 1 × Build Your Wall | Custom Poster Wall Collage to the cart ("Add to cart").' in logs_of(events)
+
+
+async def test_a_walk_that_cannot_move_on_blocks_the_step_it_was_heading_for(tmp_path):
+    from types import SimpleNamespace
+
+    from app.runner.walk import Walk
+    from app.stores.frames import LocalFrameStore
+
+    events: list[dict] = []
+
+    async def emit(event: dict) -> None:
+        events.append(event)
+
+    url = "https://shop.example/p/1"
+    walk = Walk(
+        audit_id="aud_t",
+        target_url=url,
+        page=SimpleNamespace(url=url),  # type: ignore[arg-type]
+        guard=None,  # type: ignore[arg-type]
+        frames=LocalFrameStore(tmp_path),
+        knowledge=load_knowledge(REPO_DIR / "shared"),
+        settings=make_settings(),
+        emit=emit,
+    )
+    audited = [{"step": s, "url": url, "status": "audited"} for s in ("product", "variant")]
+
+    # The variant was audited; pressing "Add to cart" failed: the cart is the step that couldn't be reached.
+    walk.steps, walk.step = list(audited), "variant"
+    await walk.stuck('A popup covered "Add to cart"')
+    assert [(s["step"], s["status"]) for s in walk.steps] == [("product", "audited"), ("variant", "audited"), ("cart", "blocked")]
+    assert [(e["type"], e["step"]) for e in events] == [("step.started", "cart"), ("step.blocked", "cart")]
+
+    # A step not yet audited is the one blocked.
+    events.clear()
+    walk.steps, walk.step = audited[:1], "variant"
+    await walk.stuck("The page stopped responding")
+    assert [(s["step"], s["status"]) for s in walk.steps] == [("product", "audited"), ("variant", "blocked")]
+    assert [e["type"] for e in events] == ["step.blocked"]
+
+
 @pytest.mark.internet
 @pytest.mark.skipif(os.environ.get("SHOP_HONEST_INTERNET_TESTS") != "1", reason="set SHOP_HONEST_INTERNET_TESTS=1")
 async def test_automationexercise_logged_out(tmp_path):

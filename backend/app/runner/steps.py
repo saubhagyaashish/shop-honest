@@ -109,10 +109,10 @@ class LiveAudit:
                     if not walk.steps:
                         raise
                     # Keep what was audited: the report covers the steps reached.
-                    reason = "Left the approved site" if guard.blocked else "The page stopped responding"
+                    reason = "Left the approved site" if guard.left else "The page stopped responding"
                     log.warning("audit %s stopped at %s: %s", self.audit_id, walk.step, err)
                     await walk.log("navigator", f"Couldn't go further: {reason.lower()}. Reporting what I reached.")
-                    await walk.blocked(reason)
+                    await walk.stuck(reason)
 
     async def collect_reviews(self) -> None:
         """The browser is closed; model reviews may still be running. They get what's left of the time limit."""

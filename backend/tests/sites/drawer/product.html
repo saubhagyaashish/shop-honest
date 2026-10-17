@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Stay Sick Red Oversized T-shirt | Fixture Tees</title>
+<!-- veirdo.in-like (Shopify): ADD TO CART slides in a cart drawer, a plain fixed section with no dialog role, holding the
+     item, its total and PROCEED TO BUY. The header's cart is a count bubble with no link, and the shade behind the
+     drawer covers it. PROCEED TO BUY opens a one-click checkout (GoKwik) in a frame over the page, on the same address,
+     whose first screen is a mobile-number login. -->
+<style>
+body{font-family:sans-serif;margin:0} header{padding:12px 16px;background:#eee} main{padding:16px}
+.btn{background:#1d6;border:0;padding:12px 40px;font-weight:bold;cursor:pointer}
+#shade{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none}
+#cart-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;background:#fff;padding:16px;display:none;box-sizing:border-box}
+#checkout{position:fixed;top:40px;left:400px;width:450px;height:700px;border:0;background:#fff;display:none;z-index:5}
+</style></head>
+<body>
+<header><a href="/">Fixture Tees</a> <button class="cart-icon-bubble" onclick="openDrawer()">0</button></header>
+<main>
+  <h1>Stay Sick Red Oversized T-shirt</h1>
+  <p>₹799</p>
+  <button class="btn" id="add">ADD TO CART</button>
+</main>
+<div id="shade"></div>
+<section id="cart-drawer">
+  <p>MY CART (1)</p>
+  <ul><li>Stay Sick Red Oversized T-shirt <span>₹799</span> <button aria-label="Remove item">×</button></li></ul>
+  <p>TOTAL ₹799</p>
+  <button class="btn" onclick="document.getElementById('checkout').style.display = 'block'">PROCEED TO BUY</button>
+</section>
+<iframe id="checkout" title="Checkout" srcdoc="<body style='font-family:sans-serif'><p>₹799 · 1 item</p>
+  <p>Login to continue</p><label>Enter Mobile Number <input type='tel' value='+91 '></label><button>Continue</button></body>"></iframe>
+<script>
+  function openDrawer() {
+    document.getElementById('shade').style.display = 'block'
+    document.getElementById('cart-drawer').style.display = 'block'
+  }
+  document.getElementById('add').addEventListener('click', () => {
+    document.querySelector('.cart-icon-bubble').textContent = '1'
+    openDrawer()
+  })
+</script>
+</body></html>

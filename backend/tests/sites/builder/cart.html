@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Cart | Fixture Posters</title></head>
+<body style="font-family:sans-serif;padding:16px">
+<h2>Your cart</h2>
+<div id="cart"></div>
+<script>
+const item = sessionStorage.getItem('item')
+document.getElementById('cart').innerHTML = item
+  ? `<table><tr><td>${item}</td><td>₹549</td><td><button>Remove</button></td></tr></table>
+     <button onclick="location.href='../checkout.html'">Check out</button>`
+  : '<p>Your cart is empty</p>'
+</script>
+</body></html>

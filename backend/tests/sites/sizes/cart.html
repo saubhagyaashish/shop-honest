@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>My Bag | Fixture Wear</title></head>
+<body style="font-family:sans-serif;padding:16px">
+<h2>My Bag</h2>
+<div id="bag"></div>
+<script>
+const item = sessionStorage.getItem('item')
+document.getElementById('bag').innerHTML = item
+  ? `<ul><li>${item} <span>₹799</span> <button>Remove</button></li></ul>
+     <button onclick="location.href='../checkout.html'">PROCEED</button>`
+  : '<p>Your bag is empty</p>'
+</script>
+</body></html>
