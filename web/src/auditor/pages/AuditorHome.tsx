@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowUpRight, FlaskConical, Presentation, Radio, Sparkles, User, Zap } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, FlaskConical, Play, Presentation, Radio, Sparkles, User, Zap } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Fragment, useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
@@ -38,6 +38,7 @@ const SQUAD_ROWS: (AgentName | 'you')[][] = [PIPELINE.slice(0, 4), [...PIPELINE.
 
 const DECK_URL = `${REPO_URL}/blob/main/Zero%20Context%20-%20Shop%20Honest%20-%20AI%20Builder%20Cup.pptx`
 const EVIDENCE_URL = `${REPO_URL}/blob/main/docs/evidence/README.md`
+const DEMO_VIDEO_URL = 'https://www.youtube.com/watch?v=_mG4SobZ9E0'
 const TEAM: [string, string][] = [
   ['Saubhagya Ashish', 'https://www.linkedin.com/in/saubhagya-ashish'],
   ['Suvojit Konar', 'https://www.linkedin.com/in/suvojitkonar/'],
@@ -364,6 +365,9 @@ export function AuditorHome() {
               </span>
             </div>
             <nav aria-label="Project links" className="flex flex-wrap gap-3">
+              <a href={DEMO_VIDEO_URL} target="_blank" rel="noreferrer" className={buttonClass('white', 'sm')}>
+                <Play size={16} strokeWidth={2.6} aria-hidden="true" /> Watch the demo
+              </a>
               <a href={REPO_URL} target="_blank" rel="noreferrer" className={buttonClass('white', 'sm')}>
                 <GithubMark /> GitHub
               </a>
