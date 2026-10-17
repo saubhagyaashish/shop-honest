@@ -4,6 +4,7 @@
 // patterns and roles only: no site-specific ids. Every fact carries a
 // bounding box as fractions of the full-page screenshot.
 () => {
+  /*OVERLAY*/
   const W = document.documentElement.scrollWidth
   const H = document.documentElement.scrollHeight
   // Indian prices: ₹1,499 · Rs. 500 · INR 499.
@@ -251,8 +252,24 @@
     }
   }
 
-  // Dialogs (offers, newsletters, consent) and their buttons.
-  const dialogs = [...document.querySelectorAll('[role=dialog], [aria-modal=true], dialog[open]')].filter(visible).map((el) => ({
+  // Dialogs (offers, newsletters, consent) and their buttons: marked up as dialogs, or plain layers over the page (a
+  // store telling the shopper it has put a membership in their cart). A layer around a marked-up dialog is its
+  // backdrop, so the two are one dialog; a layer with no words is only a shade; a cart opened as a panel is the cart,
+  // not an interruption.
+  const marked = [...document.querySelectorAll('[role=dialog], [aria-modal=true], dialog[open]')].filter(visible)
+  const overlays = layers()
+  const dialogRoots = [
+    ...marked,
+    ...overlays.filter(
+      (l) =>
+        !overlays.some((o) => o !== l && o.contains(l)) &&
+        firstLine(l) &&
+        !cartPanel(l) &&
+        !marked.some((d) => d.contains(l) || l.contains(d)),
+    ),
+  ]
+  const inDialog = (el) => !!el.closest('[role=dialog], [aria-modal=true], dialog') || dialogRoots.some((d) => d.contains(el))
+  const dialogs = dialogRoots.map((el) => ({
     text: text(el),
     buttons: [...el.querySelectorAll('button, a, [role=button]')].filter(visible).map((b) => ({ text: text(b), ...prominence(b), bbox: box(b) })),
     bbox: box(el),
@@ -275,17 +292,50 @@
     })
     .filter(Boolean)
 
-  // Cart lines: rows that have a Remove control.
+  // Cart lines: one per Remove control. A control that says it closes something (a banner's ×) isn't a Remove.
   const cartLines = []
-  const removes = (b) =>
-    /^(remove|delete|×|✕|✖|x)$/i.test(text(b)) ||
-    /remove|delete/i.test(`${b.getAttribute('aria-label') || ''} ${b.getAttribute('title') || ''} ${b.className || ''}`)
-  for (const control of [...document.querySelectorAll('button, a, [role=button]')].filter((b) => visible(b) && removes(b))) {
-    const row = control.closest('li, tr, [role=listitem], article') || control.parentElement?.parentElement
-    if (!row) continue
-    const lines = (row.innerText || '').split('\n').map((s) => s.trim()).filter(Boolean)
-    const prices = smallest(MONEY, 40).filter((el) => row.contains(el) && !struck(el))
-    cartLines.push({ name: lines[0] || '', text: text(row), amount: prices.length ? money(text(prices[prices.length - 1])) : null, bbox: box(row) })
+  const removes = (b) => {
+    const about = `${b.getAttribute('aria-label') || ''} ${b.getAttribute('title') || ''} ${b.getAttribute('class') || ''}`
+    return !/close|dismiss/i.test(about) && (/^(remove|delete|×|✕|✖|x)$/i.test(text(b)) || /remove|delete/i.test(about))
+  }
+  const removeControls = [...document.querySelectorAll('button, a, [role=button]')].filter((b) => visible(b) && removes(b))
+  // The line's own box: from its Remove, the highest box that holds no other line's Remove, no way on (checkout) or other
+  // product's "Add to cart" (recommendations), no order summary and not much text. A list item or table row that shows
+  // a price is the line at once. (On one fashion store the Remove sits five boxes deep inside its line.)
+  const ONWARD = /^(proceed( to (checkout|buy))?|checkout|check out|place order|continue|buy now)\b/i
+  const SUMMARY = /^(price details|order summary|summary|bill details|bill summary|cart summary|price summary|payment summary)$/i
+  const rowOf = (control) => {
+    let row = null
+    for (let n = control.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (removeControls.some((c) => c !== control && n.contains(c)) || (n.innerText || '').length > 500) break
+      if ([...n.querySelectorAll('a, button, [role=button]')].some((b) => ONWARD.test(text(b)) || ADD.test(text(b)))) break
+      if ([...n.querySelectorAll('h1, h2, h3, h4, h5, h6, [role=heading]')].some((h) => SUMMARY.test(text(h)))) break
+      row = n
+      if (n.matches('li, tr, [role=listitem], article') && MONEY.test(text(n))) break
+    }
+    return row || control.closest('li, tr, [role=listitem], article')
+  }
+  // What the line costs: its price in the largest type, not a struck-out one or a saving ("Member Savings: ₹ 100").
+  const SAVING = /sav(e|ing)|discount|\boff\b|cashback|\bmrp\b/i
+  const saving = (el) => SAVING.test(text(el)) || (text(el.parentElement).length <= 30 && SAVING.test(text(el.parentElement)))
+  const allPrices = smallest(MONEY, 40)
+  for (const control of removeControls) {
+    const row = rowOf(control)
+    if (!row || !MONEY.test(text(row))) continue
+    const prices = allPrices.filter((el) => row.contains(el) && !struck(el) && !saving(el))
+    // A price written straight into the line ("<s>₹3,490</s> ₹1,449") has no element of its own: read it from the text.
+    const struckOut = allPrices.filter((el) => row.contains(el) && struck(el)).map((el) => money(text(el)))
+    const written = [...text(row).matchAll(MONEY_ALL)].map((m) => toNumber(m[1])).find((n) => !struckOut.includes(n))
+    const amount = prices.length ? money(text(prices.reduce((a, b) => (fontPx(b) > fontPx(a) ? b : a)))) : (written ?? null)
+    // Its name: the first line in words, without its prices or its buttons' words ("REMOVE", "×"; not a size "M").
+    const buttons = [...row.querySelectorAll('button, [role=button], select')]
+      .map(text)
+      .filter((t) => t.length >= 3 || (t && !/[a-z0-9]/i.test(t)))
+    const name = (row.innerText || '')
+      .split('\n')
+      .map((line) => buttons.reduce((s, b) => s.split(b).join(' '), line.replace(MONEY_ALL, '')).replace(/\s+/g, ' ').trim())
+      .find((line) => /[a-z]{3}/i.test(line)) || ''
+    cartLines.push({ name, text: text(row), amount, bbox: box(row) })
   }
 
   // Order summary: label → amount rows under a "price details / bill summary" heading. A row is a label and an amount,
@@ -324,7 +374,7 @@
   const seenControls = new Set()
   for (const el of document.querySelectorAll('button, a[href], [role=button], input[type=submit], input[type=radio]')) {
     const target = el.type === 'radio' ? el.closest('label') || el : el
-    if (!visible(target) || chrome(target) || target.closest('[role=dialog], [aria-modal=true], dialog')) continue
+    if (!visible(target) || chrome(target) || inDialog(target)) continue
     const t = (text(target) || el.getAttribute('aria-label') || el.value || '').slice(0, 100)
     if (!t || seenControls.has(t)) continue
     seenControls.add(t)
@@ -345,7 +395,7 @@
     /\b(most (customers|people|shoppers)|popular|recommended|best ?seller|selling fast|in (high )?demand|(people|others) (are )?(viewing|looking)|limited (time|stock|offer)|don'?t miss|last chance|exclusive|one-time|guaranteed?)\b/i,
     120,
   )
-    .filter((el) => aboutProduct(el) && !claimed.has(text(el)) && !el.closest('[role=dialog], [aria-modal=true], dialog'))
+    .filter((el) => aboutProduct(el) && !claimed.has(text(el)) && !inDialog(el))
     .slice(0, 12)
     .map((el) => ({ text: text(el), section: sectionOf(el), bbox: textBox(el) }))
 

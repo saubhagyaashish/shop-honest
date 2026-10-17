@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>My Bag | Fixture Tees</title>
+<!-- Built like a real D2C fashion store's bag (17 Oct 2026; the store and its wording aren't reproduced here): the bag
+     holds a paid membership the shopper never chose, and a popup over it, a plain fixed div with no dialog role, says
+     so and makes saying no sound foolish. A top banner has a close ×. Each line's REMOVE sits several boxes deep
+     inside the line; the T-shirt's line shows its price, its M.R.P. struck out and a member saving; the
+     recommendations below have their own "Add to cart". The popup closes with Escape. -->
+<style>
+body{font-family:sans-serif;margin:0}
+.topbar{background:#111;color:#fff;padding:6px;text-align:center} .topbar button{background:none;border:0;color:#fff;float:right}
+.wrap{display:flex;gap:24px;padding:16px} .left{width:720px} .right{width:360px}
+.cartbox{border:1px solid #ddd;padding:12px;margin-bottom:12px}
+.price{font-size:13px;font-weight:700} .saving{font-size:12px;color:#080}
+.actions button, .foot button{background:#fff;border:1px solid #999;padding:6px 12px}
+.place{background:#087;color:#fff;border:0;padding:14px 40px;font-weight:bold}
+.recs{display:flex;gap:12px} .rec{width:160px} .rec img{width:160px;height:120px;background:#ddd;display:block}
+.r{display:flex;justify-content:space-between}
+.modalcon{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center}
+.modalbox{background:#fff;width:540px;padding:24px;text-align:center;border-radius:24px}
+.yes{display:block;width:320px;margin:12px auto;background:#e8604c;color:#fff;border:0;padding:14px;font-weight:bold}
+.no{display:block;width:320px;margin:12px auto;background:#fff;color:#e8604c;border:1px solid #e8604c;padding:14px;font-weight:bold}
+</style></head>
+<body>
+<div class="topbar">MEMBER PRICES APPLIED <button aria-label="Close" class="closeIcon">×</button></div>
+<div class="wrap">
+  <div class="left">
+    <div class="cartboxlist"><div class="cartbox">
+      <div class="info"><p>Galaxy Print Oversized T-shirt</p><p>Men's T-shirts</p><p>Size: M · Qty: 1</p>
+        <p><span class="price">₹ 999</span> <s class="price">₹ 1099</s></p><p>MRP incl. of all taxes</p>
+        <p class="saving">Member Savings: ₹ 100</p></div>
+      <div class="actions"><button>REMOVE</button> <button>MOVE TO WISHLIST</button></div>
+    </div></div>
+    <div class="excluBox"><div class="cartbox"><div class="row"><div class="info">
+      <p>Fixture Club Membership</p><p>12 months membership</p><p class="price">₹ 199</p>
+      <p>By buying the membership you agree to its terms.</p>
+      <div class="foot"><div class="savecart"><div class="col"><button>REMOVE</button></div></div></div>
+    </div></div></div></div>
+    <h3>YOU MAY ALSO LIKE</h3>
+    <div class="recs">
+      <div class="rec"><img alt=""><p>Travel Mug</p><p>₹ 399.00</p><button>Add to cart</button></div>
+      <div class="rec"><img alt=""><p>Canvas Tote</p><p>₹ 799.00</p><button>Add to cart</button></div>
+      <div class="rec"><img alt=""><p>Sticker Pack</p><p>₹ 899.00</p><button>Add to cart</button></div>
+    </div>
+  </div>
+  <div class="right">
+    <h3>Price details</h3>
+    <div class="r"><span>Total MRP (Incl. of all taxes)</span><span>₹ 1298.00</span></div>
+    <div class="r"><span>Member Savings</span><span>- ₹ 100.00</span></div>
+    <div class="r"><span>Total Amount (Incl. of GST)</span><span>₹ 1198.00</span></div>
+    <button class="place" onclick="location.href='../checkout.html'">PLACE ORDER</button>
+  </div>
+</div>
+<div class="modalcon" id="member"><div class="modalbox">
+  <p><b>We've put a membership in your cart, so you save ₹100 more on this order.</b></p>
+  <p>Only ₹199 a year for member prices on everything.</p>
+  <button class="yes">YES, GIVE ME MEMBER PRICES</button>
+  <button class="no">NO, I'D RATHER PAY MORE</button>
+</div></div>
+<script>
+  const close = () => document.getElementById('member')?.remove()
+  document.querySelectorAll('#member button').forEach((b) => b.addEventListener('click', close))
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close() })
+</script>
+</body></html>

@@ -70,6 +70,32 @@ def test_elements_already_reported_by_a_measured_check_are_left_out():
     assert any("UPGRADE TO EXPRESS" in t for t in with_checks) and any("standard delivery" in t for t in with_checks)
 
 
+def test_a_popup_over_a_measured_finding_still_reaches_the_model():
+    """A popup saying the store has put a membership in the cart is drawn over the very line that was sneaked in: what the
+    measured finding covers on the page is left out, the popup and its buttons are not."""
+    from app.browser.capture import Capture
+
+    def box(x: float, y: float, w: float, h: float) -> dict[str, float]:
+        return {"x": x, "y": y, "w": w, "h": h}
+
+    shot = "/api/audits/aud_t/frames/4.jpg"
+    no = {"text": "NO, I'D RATHER PAY MORE", "look": "outlined button", "bbox": box(0.3, 0.35, 0.3, 0.03)}
+    wishlist = {"text": "MOVE TO WISHLIST", "kind": "button", "look": "outlined button", "bbox": box(0.3, 0.4, 0.1, 0.02)}
+    popup = {"text": "We've put a membership in your cart", "bbox": box(0.25, 0.1, 0.5, 0.5), "buttons": [no]}
+    cart = Capture(
+        n=4,
+        step="cart",
+        label="cart",
+        url="https://shop.example/cart",
+        screenshot_url=shot,
+        signals={"dialogs": [popup], "controls": [wishlist]},
+    )
+    sneaked = {"id": "f-sneaked-item", "evidence": {"frames": [{"screenshotUrl": shot, "bbox": box(0.05, 0.3, 0.6, 0.2)}]}}
+    texts = [e.text for e in build_elements(cart, [sneaked])]
+    assert "NO, I'D RATHER PAY MORE" in texts and "We've put a membership in your cart" in texts
+    assert "MOVE TO WISHLIST" not in texts
+
+
 def test_measured_urgency_never_reaches_the_model():
     ev, _ = load_walk("store-a")
     texts = " ".join(e.text for e in build_elements(ev.captures["product-first"], []))

@@ -1,0 +1,102 @@
+{
+  "provider": "gemini",
+  "model": "Gemini (gemini-3.6-flash)",
+  "runs": 2,
+  "at": "2026-10-17T16:03:58.627841+00:00",
+  "results": {
+    "store-a": [
+      {
+        "expected": 9,
+        "found": 9,
+        "hits": 9,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": null,
+        "seconds": 21.8,
+        "tokens_in": 17394,
+        "tokens_out": 3637
+      },
+      {
+        "expected": 9,
+        "found": 10,
+        "hits": 9,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [
+          "interface_interference@product (confirmed)"
+        ],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": null,
+        "seconds": 22.7,
+        "tokens_in": 21021,
+        "tokens_out": 4814
+      }
+    ],
+    "store-b": [
+      {
+        "expected": 0,
+        "found": 0,
+        "hits": 0,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 0,
+        "review_agreed": 0,
+        "blocked": null,
+        "seconds": 14.9,
+        "tokens_in": 9737,
+        "tokens_out": 1062
+      },
+      {
+        "expected": 0,
+        "found": 0,
+        "hits": 0,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 0,
+        "review_agreed": 0,
+        "blocked": null,
+        "seconds": 14.5,
+        "tokens_in": 9737,
+        "tokens_out": 1275
+      }
+    ],
+    "store-c": [
+      {
+        "expected": 6,
+        "found": 6,
+        "hits": 6,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": "checkout",
+        "seconds": 13.3,
+        "tokens_in": 8943,
+        "tokens_out": 2245
+      },
+      {
+        "expected": 6,
+        "found": 7,
+        "hits": 6,
+        "missed": [],
+        "false_alarms": [],
+        "extras": [
+          "interface_interference@product (confirmed)"
+        ],
+        "review_expected": 1,
+        "review_agreed": 1,
+        "blocked": "checkout",
+        "seconds": 19.0,
+        "tokens_in": 12543,
+        "tokens_out": 3299
+      }
+    ]
+  }
+}

@@ -13,6 +13,7 @@ import httpx
 import pytest
 
 from app.agents.judge import Judge
+from app.browser.capture import SIGNALS_JS
 from app.config import REPO_DIR
 from app.journeys.generic import CHECKOUT, allowed
 from app.knowledge import load_knowledge
@@ -23,7 +24,7 @@ from scripts.live import serve_dist
 from tests.conftest import EVENT_VALIDATOR, fake_resolver, make_settings, parse_sse
 
 SITES = Path(__file__).parent / "sites"
-SIGNALS = (REPO_DIR / "backend" / "app" / "browser" / "signals.js").read_text(encoding="utf-8")
+SIGNALS = SIGNALS_JS
 
 
 # The click guard
@@ -425,6 +426,35 @@ async def test_a_sticky_buy_bar_among_product_cards_is_the_pages_own(tmp_path):
     events = await walk_of("builder/product.html", tmp_path)
     assert steps_of(events)[2:] == [("cart", "audited", None), ("checkout", "blocked", "Sign-in required")]
     assert 'Adding 1 × Build Your Wall | Custom Poster Wall Collage to the cart ("Add to cart").' in logs_of(events)
+
+
+@pytest.mark.browser
+async def test_a_cart_line_is_the_items_own_box_with_its_own_price():
+    # A fashion store's bag: a banner's close button isn't a line; the T-shirt costs ₹999, not its ₹100 member saving; the
+    # membership's REMOVE sits five boxes deep inside its line; the recommendations aren't lines.
+    s = await signals_of((SITES / "member" / "cart.html").read_text())
+    lines = [(line["name"], line["amount"]) for line in s["cartLines"]]
+    assert lines == [("Galaxy Print Oversized T-shirt", 999), ("Fixture Club Membership", 199)]
+    [popup] = s["dialogs"]  # a plain fixed div with no dialog role
+    assert "NO, I'D RATHER PAY MORE" in [b["text"] for b in popup["buttons"]]
+    assert "NO, I'D RATHER PAY MORE" not in [c["text"] for c in s["controls"]]  # listed once, as the popup's
+    # 1mg's line is its own row, not the column it shares with "Top deals" (the last price there is ₹652).
+    s = await signals_of((SITES / "continue" / "cart.html").read_text())
+    assert [(line["name"], line["amount"]) for line in s["cartLines"]] == [("Celin 500 Vitamin C Tablet", 41)]
+
+
+@pytest.mark.browser
+async def test_a_membership_put_in_the_cart_is_found_and_sent_to_review(tmp_path):
+    events = await walk_of("member/product.html", tmp_path)
+    assert steps_of(events)[2:] == [("cart", "audited", None), ("checkout", "blocked", "Sign-in required")]
+    report = events[-1]["report"]
+    [sneaked] = report["findings"]
+    # A site we didn't build: a person confirms what the cart's layout suggests.
+    assert (sneaked["id"], sneaked["status"]) == ("f-sneaked-item", "needs_review")
+    assert sneaked["title"] == "Fixture Club Membership added to the cart without consent"
+    assert "Extra line: Fixture Club Membership, ₹199" in sneaked["evidence"]["observations"]
+    [line] = [x for x in report["exposure"]["priceDrift"]["lines"] if x["kind"] == "sneaked_item"]
+    assert (line["label"], line["amount"]["amount"], line["findingId"]) == ("Fixture Club Membership", 199, "f-sneaked-item")
 
 
 async def test_a_walk_that_cannot_move_on_blocks_the_step_it_was_heading_for(tmp_path):

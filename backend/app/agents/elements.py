@@ -2,7 +2,7 @@
 
 Only what needs judgement goes in: dialogs and their buttons, controls, claims,
 persuasive notes and checkboxes. Countdowns, stock, prices, cart contents and
-fees are measured by checks.py instead, and an element a measured finding
+fees are measured by checks.py instead, and a page element a measured finding
 already covers is left out, so the model can neither repeat nor contradict it.
 """
 
@@ -43,6 +43,9 @@ def looks(control: dict[str, Any]) -> str:
     )
 
 
+POPUP_KINDS = {"popup", "popup button"}
+
+
 def build_elements(capture: Capture, findings: list[Finding]) -> list[Element]:
     s = capture.signals
     covered = [f["evidence"]["frames"] for f in findings]
@@ -66,7 +69,9 @@ def build_elements(capture: Capture, findings: list[Finding]) -> list[Element]:
 
     elements = []
     for kind, text, bbox, facts, context, metrics in raw:
-        if not text or _already_reported(capture, bbox, covered):
+        # A popup is never what a measured finding is about, even drawn over its box (a membership popup over the very
+        # cart line that was sneaked in), so only page elements can be already reported.
+        if not text or (kind not in POPUP_KINDS and _already_reported(capture, bbox, covered)):
             continue
         ref = f"e{len(elements) + 1}"
         elements.append(Element(ref=ref, kind=kind, text=text, bbox=bbox, facts=facts, context=context, metrics=metrics))

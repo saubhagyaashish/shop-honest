@@ -8,7 +8,9 @@ from playwright.async_api import Page
 
 from app.contract.models import JourneyStep
 
-SIGNALS_JS = (Path(__file__).parent / "signals.js").read_text(encoding="utf-8")
+# Layers over the page (popups, sheets, drawers): one definition for signals.js and the navigator's scripts.
+OVERLAY_JS = (Path(__file__).parent / "overlay.js").read_text(encoding="utf-8")
+SIGNALS_JS = (Path(__file__).parent / "signals.js").read_text(encoding="utf-8").replace("/*OVERLAY*/", OVERLAY_JS)
 
 
 @dataclass

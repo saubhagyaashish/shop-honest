@@ -28,7 +28,7 @@ from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import Page
 from playwright.async_api import TimeoutError as PlaywrightTimeout
 
-from app.browser.capture import Capture
+from app.browser.capture import OVERLAY_JS, Capture
 
 if TYPE_CHECKING:
     from app.runner.walk import Walk
@@ -86,34 +86,8 @@ FRAME_SIGN_IN = re.compile(
 STUCK_STOP = "Checkout didn't open"
 PINCODE_STOP = "Checkout needs a delivery pincode first"
 
-# A layer over the page, however a site marks it up (a popup, a bottom sheet, a cart drawer): the outermost fixed box of
-# a good size that is on screen and on top. A fixed header is too short to count; a fixed shell around the whole page
-# (one holding its main content or title) is the page itself; a fixed box nothing of which is on top (a hidden drawer's
-# see-through frame, a background) isn't over anything. Spliced into the scripts below at /*OVERLAY*/.
-OVERLAY_JS = """
-  const onTop = (n) => [n, ...n.children].map((c) => c.getBoundingClientRect()).filter((r) => r.width >= 150 && r.height >= 100)
-    .some((r) => {
-      const x = Math.min(Math.max(r.left + r.width / 2, 0), innerWidth - 1)
-      const y = Math.min(Math.max(r.top + r.height / 2, 0), innerHeight - 1)
-      const hit = document.elementFromPoint(x, y)
-      return !!hit && n.contains(hit)
-    })
-  const isLayer = (n) => {
-    const s = getComputedStyle(n)
-    if (s.position !== 'fixed' || s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return false
-    const r = n.getBoundingClientRect()
-    return r.width >= 300 && r.height >= 200 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth
-      && !n.querySelector('main, [role=main], header, h1') && onTop(n)
-  }
-  const overlayOf = (el) => {
-    let found = null
-    for (let n = el; n && n !== document.body; n = n.parentElement) if (isLayer(n)) found = n
-    return found
-  }
-  const layers = () => [...document.body.querySelectorAll('*')].filter(isLayer)
-  // What an element says about itself beyond its words: a close icon's class, id, aria-label or title.
-  const said = (n) => ['class', 'id', 'aria-label', 'title'].map((a) => n.getAttribute(a) || '').join(' ')
-"""
+# The scripts below take the shared layer helpers (browser/overlay.js: isLayer, overlayOf, layers, said, cartPanel…)
+# at /*OVERLAY*/.
 
 # What a page shows once an add has gone through: a popup ("Added! View Cart"), the cart itself (a page, or a panel
 # over this one), or a link to it.
@@ -240,7 +214,7 @@ COVER_JS = """([ref, any]) => {
   return { text: line.slice(0, 60), closer: closer ? words(closer) || '×' : null, bare, x, y }
 }""".replace("/*OVERLAY*/", OVERLAY_JS)
 
-# Size and colour choices however a site builds them (Bewakoof's labels, The Souled Store's list items, Veirdo's radio
+# Size and colour choices however a site builds them (Bewakoof's labels, other stores' list items, Veirdo's radio
 # labels): a row of two or more short, small choices under a heading such as "Select Size". Each is marked for pressing
 # ("o1", "o2"…), with whether it's chosen already and whether it can be bought. Sizes must read like sizes, so a row of
 # words that happens to sit under a size heading isn't mistaken for one. The first such row, or null.
@@ -328,18 +302,17 @@ OPTION_STATE_JS = """(ref) => {
     n.getAttribute('aria-selected'), n.matches('input') ? n.checked : ''].join('|')).join('/')
 }"""
 
-# A cart that opens as a panel over the page after an add (Veirdo's "MY CART (1)" drawer): a layer that names a cart,
-# bag or basket near its top, shows a price and holds the product just added. Its first line, or null.
+# A cart that opens as a panel over the page after an add (Veirdo's "MY CART (1)" drawer): a layer whose first line names
+# a cart, bag or basket (cartPanel), that shows a price and holds the product just added. Its first line, or null.
 CART_PANEL_JS = """(name) => {
   /*OVERLAY*/
   const want = ((name || '').toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => w.length >= 3).slice(0, 4)
   for (const layer of layers()) {
     const t = (layer.innerText || '').replace(/\\s+/g, ' ').trim()
-    if (!/\\b(cart|bag|basket)\\b/i.test(t.slice(0, 60)) || !/(₹|\\bRs\\.?|\\bINR)\\s?[\\d,]+/i.test(t)) continue
+    if (!cartPanel(layer) || !/(₹|\\bRs\\.?|\\bINR)\\s?[\\d,]+/i.test(t)) continue
     const lower = t.toLowerCase()
     if (want.length && want.filter((w) => lower.includes(w)).length < Math.min(2, want.length)) continue
-    // Its first line in words ("MY CART (1)"), not a count badge's "1".
-    return ((layer.innerText || '').split('\\n').map((s) => s.trim()).find((s) => /[a-z]{3}/i.test(s)) || 'Cart').slice(0, 40)
+    return firstLine(layer).slice(0, 40)
   }
   return null
 }""".replace("/*OVERLAY*/", OVERLAY_JS)
